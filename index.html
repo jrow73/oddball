@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="ODDBALL is an online dice-driven baseball companion and league lab."
+    />
+    <title>ODDBALL | Roll a game. Build a league.</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="ODDBALL home">
+        <span class="brand-mark" aria-hidden="true">O</span>
+        <span>ODDBALL</span>
+      </a>
+      <span class="build-label">Foundation build</span>
+    </header>
+
+    <main id="main-content">
+      <section class="hero" id="top" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow">Online Dice-Driven Baseball And League Lab</p>
+          <h1 id="hero-title">Roll a game.<br />Build a league.</h1>
+          <p class="hero-summary">
+            A browser-based baseball dice companion designed to make every roll
+            understandable, every decision reviewable, and every league your own.
+          </p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#modes">Explore the vision</a>
+            <a class="button button-secondary" href="#foundation">See what is decided</a>
+          </div>
+        </div>
+
+        <div class="scoreboard" aria-label="ODDBALL project status">
+          <div class="scoreboard-heading">
+            <span>Project status</span>
+            <span class="status-light"><i aria-hidden="true"></i> Planning</span>
+          </div>
+          <div class="scoreboard-grid">
+            <div>
+              <span class="scoreboard-label">Ruleset</span>
+              <strong>Deadball 2E</strong>
+            </div>
+            <div>
+              <span class="scoreboard-label">Era</span>
+              <strong>Modern first</strong>
+            </div>
+            <div>
+              <span class="scoreboard-label">Platform</span>
+              <strong>Browser</strong>
+            </div>
+            <div>
+              <span class="scoreboard-label">Storage</span>
+              <strong id="storage-status">Checking…</strong>
+            </div>
+          </div>
+          <div class="diamond" aria-hidden="true">
+            <span class="base base-second"></span>
+            <span class="base base-third"></span>
+            <span class="mound"></span>
+            <span class="base base-first"></span>
+            <span class="base base-home"></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="modes" aria-labelledby="modes-title">
+        <div class="section-heading">
+          <p class="eyebrow">One engine, three ways to play</p>
+          <h2 id="modes-title">Start at the table. Grow into a universe.</h2>
+        </div>
+        <div class="mode-grid">
+          <article class="mode-card">
+            <span class="card-number">01</span>
+            <h3>Dice Companion</h3>
+            <p>
+              Resolve individual plays with transparent dice, modifiers, and rulings
+              while keeping score on paper.
+            </p>
+            <span class="card-tag">Standalone priority</span>
+          </article>
+          <article class="mode-card">
+            <span class="card-number">02</span>
+            <h3>Exhibition Game</h3>
+            <p>
+              Track a complete game digitally with human, computer, or mixed control
+              and flexible simulation pacing.
+            </p>
+            <span class="card-tag">Planned</span>
+          </article>
+          <article class="mode-card">
+            <span class="card-number">03</span>
+            <h3>League Simulator</h3>
+            <p>
+              Build schedules, manage rosters, follow standings, and decide which
+              games to manage or automate.
+            </p>
+            <span class="card-tag">Future milestone</span>
+          </article>
+        </div>
+      </section>
+
+      <section class="section foundation" id="foundation" aria-labelledby="foundation-title">
+        <div class="section-heading">
+          <p class="eyebrow">Foundation</p>
+          <h2 id="foundation-title">Decisions already on the scorecard</h2>
+        </div>
+        <div class="foundation-layout">
+          <ul class="decision-list">
+            <li><span>01</span>Vanilla HTML, CSS, and JavaScript</li>
+            <li><span>02</span>GitHub Pages hosting direction</li>
+            <li><span>03</span>Local-first play with export and import</li>
+            <li><span>04</span>Deadball Second Edition, Modern rules first</li>
+            <li><span>05</span>Explainable results and user overrides</li>
+            <li><span>06</span>Ruleset logic separated from league systems</li>
+          </ul>
+          <aside class="note-card">
+            <p class="eyebrow">Next planning inning</p>
+            <h3>Define the first playable slice</h3>
+            <p>
+              Before rules implementation, we will turn the Dice Companion concept
+              into a small set of screens, data inputs, outcomes, and acceptance checks.
+            </p>
+            <p class="note-small">
+              The licensing gate will be enabled after its final wording and behavior
+              are confirmed.
+            </p>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div>
+        <strong>ODDBALL</strong>
+        <p>Online Dice-Driven Baseball And League Lab</p>
+      </div>
+      <div class="credit">
+        <img
+          src="./Based%20on%20Akers%20Games%20logo.png"
+          alt="Based on Akers Games"
+          width="56"
+          height="74"
+        />
+        <p>
+          Deadball was created by W. M. Akers.<br />
+          <a href="https://akersgames.com" target="_blank" rel="noopener noreferrer">
+            Visit Akers Games
+          </a>
+        </p>
+      </div>
+      <p class="copyright">© <span id="current-year">2026</span> ODDBALL</p>
+    </footer>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
+
