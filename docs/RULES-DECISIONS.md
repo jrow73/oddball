@@ -59,7 +59,7 @@ Date: 2026-11-02
 
 ## RD-004 — Ordinary Hit Table results without DEF checks
 
-Status: **Implemented; awaiting acceptance**
+Status: **Approved**
 Date: 2026-11-02
 
 ### Verified source rules
@@ -76,4 +76,23 @@ Date: 2026-11-02
 - A home run scores the batter and every occupied runner, then clears the bases.
 - Hit Table 3-6 and 15-17 are identified with their named fielder but pause before resolution because they require a defensive-hit check. That check will be implemented as its own reviewed increment.
 - The ordinary-hit path requires a valid d20 result. Dice that are not required by the resulting rule path do not affect the ruling.
+
+## RD-005 — Defensive Hit Table checks
+
+Status: **Implemented; awaiting acceptance**
+Date: 2026-11-02
+
+### Verified source rules
+
+- Page 28: A Hit Table result marked DEF uses d12 for the named fielder. D+ adds 1 and D- subtracts 1.
+- Page 28 Defense Table: modified 0-2 is an error with the batter safe and runners advancing one base; 3-9 leaves the hit unchanged; 10-11 reduces the hit one level; 12+ turns the hit into an out.
+- Page 28 worked example: a defensive single with an unmodified DEF 11 still reaches first. A D+ modifier raises it to 12 and turns it into an out.
+
+### Implementation decisions
+
+- Defensive errors use the named fielder's scorekeeping number, put the batter on first, and advance every existing runner one base.
+- Modified DEF 3-9 preserves the original single or double and its ordinary advancement.
+- Modified DEF 10-11 reduces a double to a standard single. A single remains a single, following the worked example; it is removed only at modified DEF 12+.
+- Modified DEF 12+ adds one out and holds existing runners. When it is the third out, the suggested next context clears the bases.
+- The result is displayed as **OUT** rather than inventing a detailed scorekeeping sequence that the Defense Table does not supply.
 

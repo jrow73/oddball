@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-11-02 — Defensive Hit Table increment
+
+### Added
+
+- Defensive Hit Table resolution for named infielders and outfielders
+- D+ and D- modification for defensive-hit checks
+- Error, unchanged-hit, reduced-hit, and hit-turned-out result bands
+- Six focused tests for every defensive band and third-out cleanup
+- Rules decision RD-005 documenting the single-at-10-11 interpretation from the worked example
+
+### Changed
+
+- Automatic mode now rolls DEF only when the resulting hit or possible-error path requires it
+- Marked the ordinary Hit Table increment as approved
+
 ## 2026-11-02 — Ordinary Hit Table increment
 
 ### Added

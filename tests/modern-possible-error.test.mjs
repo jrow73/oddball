@@ -186,12 +186,89 @@ test("resolves a bases-loaded home run as four runs with empty bases", () => {
   assert.equal(result.stateDelta.runsScored, 4);
 });
 
-test("stops explicitly when a Hit Table result requires a defensive check", () => {
-  const result = resolveAtBat({ ...example, swingRoll: 20, hitRoll: 3 });
+test("resolves a defensive single error with one-base advancement", () => {
+  const result = resolveAtBat({
+    ...example,
+    bases: { first: true, second: true, third: true },
+    swingRoll: 20,
+    hitRoll: 3,
+    defRoll: 2,
+    defModifier: 0,
+  });
 
-  assert.equal(result.supported, false);
-  assert.equal(result.outcomeCode, "defensive-hit-pending");
-  assert.match(result.summary, /Single, DEF \(1B\)/);
+  assert.equal(result.score, "E-3");
+  assert.equal(result.stateDelta.runsScored, 1);
+  assert.deepEqual(result.stateDelta.bases, { first: true, second: true, third: true });
+});
+
+test("leaves a defensive single unchanged on modified DEF 3-9", () => {
+  const result = resolveAtBat({
+    ...example,
+    swingRoll: 20,
+    hitRoll: 3,
+    defRoll: 5,
+    defModifier: 0,
+  });
+
+  assert.equal(result.score, "1B");
+  assert.equal(result.modifiedDef, 5);
+  assert.deepEqual(result.stateDelta.bases, { first: true, second: true, third: false });
+});
+
+test("keeps a defensive single at modified DEF 10-11", () => {
+  const result = resolveAtBat({
+    ...example,
+    swingRoll: 20,
+    hitRoll: 3,
+    defRoll: 11,
+    defModifier: 0,
+  });
+
+  assert.equal(result.score, "1B");
+  assert.match(result.calculations.at(-1), /single remains a single/);
+});
+
+test("reduces a defensive double to a single on modified DEF 10-11", () => {
+  const result = resolveAtBat({
+    ...example,
+    swingRoll: 20,
+    hitRoll: 15,
+    defRoll: 10,
+    defModifier: 0,
+  });
+
+  assert.equal(result.score, "1B");
+  assert.deepEqual(result.stateDelta.bases, { first: true, second: true, third: false });
+});
+
+test("turns a defensive hit into an out at modified DEF 12+", () => {
+  const result = resolveAtBat({
+    ...example,
+    swingRoll: 20,
+    hitRoll: 3,
+    defRoll: 11,
+    defModifier: 1,
+  });
+
+  assert.equal(result.score, "OUT");
+  assert.equal(result.outcomeCode, "defensive-out");
+  assert.equal(result.stateDelta.outsAfter, 1);
+  assert.deepEqual(result.stateDelta.bases, { first: true, second: false, third: false });
+});
+
+test("clears the bases when a defensive play makes the third out", () => {
+  const result = resolveAtBat({
+    ...example,
+    outs: 2,
+    bases: { first: true, second: true, third: true },
+    swingRoll: 20,
+    hitRoll: 16,
+    defRoll: 12,
+    defModifier: 0,
+  });
+
+  assert.equal(result.stateDelta.outsAfter, 3);
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: false, third: false });
 });
 
 test("requires a valid Hit Table roll for an ordinary hit", () => {

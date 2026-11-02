@@ -131,20 +131,162 @@ function hitTableResult(hitRoll) {
     return { score: "1B", label: "Single", batterBases: 1, runnerAdvance: 1 };
   }
   if (hitRoll >= 3 && hitRoll <= 6) {
-    const fielders = { 3: "1B", 4: "2B", 5: "3B", 6: "SS" };
-    return { defensive: true, label: `Single, DEF (${fielders[hitRoll]})` };
+    const fielders = {
+      3: { position: "1B", fielder: "first baseman", number: 3 },
+      4: { position: "2B", fielder: "second baseman", number: 4 },
+      5: { position: "3B", fielder: "third baseman", number: 5 },
+      6: { position: "SS", fielder: "shortstop", number: 6 },
+    };
+    const play = fielders[hitRoll];
+    return {
+      defensive: true,
+      label: `Single, DEF (${play.position})`,
+      score: "1B",
+      batterBases: 1,
+      runnerAdvance: 1,
+      play,
+    };
   }
   if (hitRoll <= 14) {
     return { score: "1B", label: "Single", batterBases: 1, runnerAdvance: 2 };
   }
   if (hitRoll <= 17) {
-    const fielders = { 15: "LF", 16: "CF", 17: "RF" };
-    return { defensive: true, label: `Double, DEF (${fielders[hitRoll]})` };
+    const fielders = {
+      15: { position: "LF", fielder: "left fielder", number: 7 },
+      16: { position: "CF", fielder: "center fielder", number: 8 },
+      17: { position: "RF", fielder: "right fielder", number: 9 },
+    };
+    const play = fielders[hitRoll];
+    return {
+      defensive: true,
+      label: `Double, DEF (${play.position})`,
+      score: "2B",
+      batterBases: 2,
+      runnerAdvance: 2,
+      play,
+    };
   }
   if (hitRoll === 18) {
     return { score: "2B", label: "Double", batterBases: 2, runnerAdvance: 3 };
   }
   return { score: "HR", label: "Home run", batterBases: 4, runnerAdvance: 4 };
+}
+
+function resolveDefensiveHit({ bases, calculations, input, mss, tableResult }) {
+  const defenseErrors = [];
+  if (!isIntegerBetween(input.defRoll, 1, 12)) {
+    defenseErrors.push({ field: "def-roll", message: "The DEF roll must be from 1 through 12." });
+  }
+  if (![-1, 0, 1].includes(input.defModifier)) {
+    defenseErrors.push({ field: "def-modifier", message: "Choose D-, no trait, or D+." });
+  }
+  if (defenseErrors.length > 0) {
+    return { supported: false, outcomeCode: "invalid-input", errors: defenseErrors, mss };
+  }
+
+  const modifiedDef = input.defRoll + input.defModifier;
+  calculations.push(
+    `DEF ${input.defRoll} ${input.defModifier >= 0 ? "+" : "-"} ${Math.abs(input.defModifier)} = modified DEF ${modifiedDef}`,
+  );
+
+  if (modifiedDef <= 2) {
+    const errorState = advanceAllOnError(bases);
+    calculations.push("Modified DEF 0-2 -> error; batter safe and runners advance one base");
+    return {
+      supported: true,
+      outcomeCode: "error",
+      classification: "ordinary-hit",
+      mss,
+      hitRoll: input.hitRoll,
+      modifiedDef,
+      play: tableResult.play,
+      score: `E-${tableResult.play.number}`,
+      summary: `Error by ${tableResult.play.fielder}; batter safe at first.`,
+      detail: errorState.runnerMoves.join("; ") + ".",
+      calculations,
+      stateDelta: {
+        outsBefore: input.outs,
+        outsAfter: input.outs,
+        outsAdded: 0,
+        runsScored: errorState.runsScored,
+        bases: errorState.bases,
+        runnerMoves: errorState.runnerMoves,
+      },
+      sourceRefs: ["Deadball 2E pp. 26, 28"],
+    };
+  }
+
+  if (modifiedDef >= 12) {
+    const outsAfter = input.outs + 1;
+    const nextBases = outsAfter === 3
+      ? { first: false, second: false, third: false }
+      : copyBases(bases);
+    const runnerMoves = Object.values(bases).some(Boolean) ? ["Existing runners hold"] : [];
+    calculations.push("Modified DEF 12+ -> hit turned into an out");
+    return {
+      supported: true,
+      outcomeCode: "defensive-out",
+      classification: "ordinary-hit",
+      mss,
+      hitRoll: input.hitRoll,
+      modifiedDef,
+      play: tableResult.play,
+      score: "OUT",
+      summary: `Outstanding defensive play by ${tableResult.play.position}; batter out.`,
+      detail: runnerMoves.length > 0 ? runnerMoves.join("; ") + "." : "No runners advance.",
+      calculations,
+      stateDelta: {
+        outsBefore: input.outs,
+        outsAfter,
+        outsAdded: 1,
+        runsScored: 0,
+        bases: nextBases,
+        runnerMoves,
+      },
+      sourceRefs: ["Deadball 2E pp. 26, 28"],
+    };
+  }
+
+  let score = tableResult.score;
+  let label = tableResult.score === "2B" ? "Double" : "Single";
+  let batterBases = tableResult.batterBases;
+  let runnerAdvance = tableResult.runnerAdvance;
+
+  if (modifiedDef >= 10 && tableResult.score === "2B") {
+    score = "1B";
+    label = "Single";
+    batterBases = 1;
+    runnerAdvance = 1;
+    calculations.push("Modified DEF 10-11 -> double reduced one level to a single");
+  } else if (modifiedDef >= 10) {
+    calculations.push("Modified DEF 10-11 -> single remains a single; only 12+ turns it into an out");
+  } else {
+    calculations.push("Modified DEF 3-9 -> hit unchanged");
+  }
+
+  const movement = moveRunnersOnHit(bases, batterBases, runnerAdvance);
+  return {
+    supported: true,
+    outcomeCode: score === "2B" ? "double" : "single",
+    classification: "ordinary-hit",
+    mss,
+    hitRoll: input.hitRoll,
+    modifiedDef,
+    play: tableResult.play,
+    score,
+    summary: `${label} after DEF check; existing runners advance ${runnerAdvance} ${runnerAdvance === 1 ? "base" : "bases"}.`,
+    detail: movement.runnerMoves.join("; ") + ".",
+    calculations,
+    stateDelta: {
+      outsBefore: input.outs,
+      outsAfter: input.outs,
+      outsAdded: 0,
+      runsScored: movement.runsScored,
+      bases: movement.bases,
+      runnerMoves: movement.runnerMoves,
+    },
+    sourceRefs: ["Deadball 2E pp. 26, 28"],
+  };
 }
 
 function resolveOrdinaryHit({ bases, input, mss }) {
@@ -165,17 +307,7 @@ function resolveOrdinaryHit({ bases, input, mss }) {
   ];
 
   if (tableResult.defensive) {
-    return {
-      supported: false,
-      outcomeCode: "defensive-hit-pending",
-      classification: "ordinary-hit",
-      mss,
-      hitRoll: input.hitRoll,
-      summary: `${tableResult.label}.`,
-      detail: "This Hit Table result requires the defensive-hit check, which is the next rules increment.",
-      calculations,
-      sourceRefs: ["Deadball 2E p. 26"],
-    };
+    return resolveDefensiveHit({ bases, calculations, input, mss, tableResult });
   }
 
   const movement = moveRunnersOnHit(

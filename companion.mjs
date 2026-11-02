@@ -90,7 +90,11 @@ function collectInput() {
       numberValue("obt"),
     );
     if (classification === "ordinary-hit") {
-      document.querySelector("#hit-roll").value = String(rollDie(20));
+      const hitRoll = rollDie(20);
+      document.querySelector("#hit-roll").value = String(hitRoll);
+      if ([3, 4, 5, 6, 15, 16, 17].includes(hitRoll)) {
+        document.querySelector("#def-roll").value = String(rollDie(12));
+      }
     }
     if (classification === "possible-error") {
       document.querySelector("#def-roll").value = String(rollDie(12));

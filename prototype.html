@@ -16,7 +16,7 @@
         <span class="brand-mark" aria-hidden="true">O</span>
         <span>ODDBALL</span>
       </a>
-      <span class="build-label">Vertical slice 0.4</span>
+      <span class="build-label">Vertical slice 0.5</span>
     </header>
 
     <main id="prototype-main" class="prototype-shell">
@@ -25,13 +25,13 @@
           <p class="eyebrow">Milestone 2 · Functional vertical slice</p>
           <h1 id="prototype-title">Resolve one play.</h1>
           <p>
-            Ordinary hits, walks, and possible errors now resolve through neighboring
-            Modern-rules paths. Defensive hit checks remain the next boundary.
+            Ordinary hits now include defensive checks, alongside walks and possible
+            errors. Critical hits and the remaining out bands are still outside this slice.
           </p>
         </div>
         <div class="prototype-notice live" role="note">
           <strong>Next rule path active</strong>
-          <span>Hits + walks + possible errors · no saved game state</span>
+          <span>Defensive hits + walks + possible errors · no saved game state</span>
         </div>
       </section>
 
@@ -184,7 +184,7 @@
 
               <div class="defense-row">
                 <div>
-                  <p class="panel-kicker">If a possible error occurs</p>
+                  <p class="panel-kicker">When the result calls for DEF</p>
                   <strong>DEF check</strong>
                 </div>
                 <label class="compact-field">d12 <input id="def-roll" type="number" value="2" min="1" max="12" /></label>
@@ -201,7 +201,7 @@
             </div>
 
             <button class="resolve-button" type="submit">
-              Resolve play <span>Hit + walk + error slice</span>
+              Resolve play <span>Defensive hit + walk + error</span>
             </button>
           </section>
 
@@ -261,13 +261,12 @@
 
       <section class="prototype-review" aria-labelledby="review-title">
         <p class="eyebrow">Acceptance fixtures</p>
-        <h2 id="review-title">Replay a hit, walk, or MSS 47</h2>
+        <h2 id="review-title">Replay a defensive hit</h2>
         <p>
           Select <strong>Enter my dice</strong>. Swing 20 plus Pitch Die 8 is an ordinary
-          hit; Hit Table 11 is a single that advances existing runners two bases.
-          Swing 30 plus Pitch Die 8 remains the bases-loaded walk fixture. Swing 39
-          plus Pitch Die 8, DEF 2, and D+ remains the possible-error fixture: F-7,
-          one out, and the runner holding at first.
+          hit. Hit Table 15 calls for a double with a left-field DEF check. DEF 10 with
+          no trait reduces it to a single; DEF 11 with D+ turns it into an out. The
+          earlier walk and MSS 47 possible-error fixtures remain supported.
         </p>
         <a class="button button-secondary" href="./index.html">Return to project foundation</a>
       </section>
