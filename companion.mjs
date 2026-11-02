@@ -1,4 +1,4 @@
-import { PITCH_DIE_SIDES, resolvePossibleError } from "./rules/deadball/modern.mjs";
+import { PITCH_DIE_SIDES, resolveAtBat } from "./rules/deadball/modern.mjs";
 
 const form = document.querySelector("#companion-form");
 const resultPanel = document.querySelector("#result-panel");
@@ -181,7 +181,7 @@ function applySuggestedContext() {
 form.addEventListener("submit", (event) => {
   event.preventDefault();
   clearFieldErrors();
-  renderResult(resolvePossibleError(collectInput()));
+  renderResult(resolveAtBat(collectInput()));
 });
 
 form.addEventListener("change", (event) => {

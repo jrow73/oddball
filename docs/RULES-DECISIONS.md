@@ -39,3 +39,21 @@ Date: 2026-11-02
 - Overrides: Preserve both the calculated result and the user override note
 - Persistence: None in this vertical slice
 
+## RD-003 — Walks and forced advancement
+
+Status: **Implemented; awaiting acceptance**
+Date: 2026-11-02
+
+### Verified source rules
+
+- Page 26: MSS above BT and less than or equal to OBT is a walk; the batter advances to first.
+- Page 27: The Swing Result Table defines the walk band as BT+1 through OBT and again states that the batter advances to first.
+
+### Implementation decisions
+
+- A walk adds no out and uses score notation **BB**.
+- The batter always takes first. Existing runners advance only when forced by an unbroken chain of occupied bases beginning at first.
+- A bases-loaded walk scores exactly one run and leaves all three bases occupied.
+- Runners on second or third hold when first base is empty. This is ordinary baseball forced-advancement behavior, not an additional Deadball table instruction.
+- The DEF roll and defensive trait are ignored for a walk because no possible-error check occurs.
+

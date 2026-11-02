@@ -51,9 +51,10 @@ for (const expected of [
 }
 
 for (const expected of [
-  "First slice active",
-  "Replay MSS 47",
-  "pop-up to left",
+  "Next rule path active",
+  "Replay a walk or MSS 47",
+  "possible-error fixture: F-7",
+  "bases loaded",
   "runner holding at first",
   'href="./prototype.css"',
   'src="./companion.mjs"',

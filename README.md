@@ -7,7 +7,7 @@ ODDBALL is a planned browser-based baseball dice companion and league simulator.
 
 ## Current status
 
-This repository contains the foundation build and the first functional Dice Companion vertical slice. It resolves the Modern-rules possible-error path with explainable calculations, suggested state changes, and retained manual overrides. Other plate-appearance outcomes, saved games, trait generation, digital scorekeeping, and league simulation are not yet implemented.
+This repository contains the foundation build and the first functional Dice Companion vertical slice. It resolves Modern-rules walks and possible errors with explainable calculations, suggested state changes, and retained manual overrides. Other plate-appearance outcomes, saved games, trait generation, digital scorekeeping, and league simulation are not yet implemented.
 
 ## Run locally
 
@@ -61,5 +61,5 @@ The supplied Akers Games image remains unchanged in the project root. The rulebo
 
 ## Next decision
 
-Test and accept the possible-error vertical slice before expanding the rules boundary. See [docs/FIRST-PLAYABLE-SLICE.md](docs/FIRST-PLAYABLE-SLICE.md), [docs/RULES-DECISIONS.md](docs/RULES-DECISIONS.md), and open `prototype.html` with Live Server.
+Review and accept the walk and forced-advancement increment before expanding the rules boundary again. See [docs/FIRST-PLAYABLE-SLICE.md](docs/FIRST-PLAYABLE-SLICE.md), [docs/RULES-DECISIONS.md](docs/RULES-DECISIONS.md), and open `prototype.html` with Live Server.
 

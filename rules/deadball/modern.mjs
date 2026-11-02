@@ -79,7 +79,6 @@ function describeUnsupported(classification, mss, bt, obt) {
     oddity: "an oddity",
     "critical-hit": "a critical hit",
     "ordinary-hit": "an ordinary hit",
-    walk: "a walk",
     "productive-out": "a productive-out result",
     out: "an out outside the possible-error range",
   };
@@ -89,11 +88,58 @@ function describeUnsupported(classification, mss, bt, obt) {
     classification,
     supported: false,
     summary: `MSS ${mss} is ${labels[classification]}.`,
-    detail: `This first slice resolves only possible errors from ${obt + 1} through ${obt + 5}.`,
+    detail: `This build resolves walks from ${bt + 1} through ${obt} and possible errors from ${obt + 1} through ${obt + 5}.`,
     calculations: [
       `Swing Score + Pitch Die = MSS ${mss}`,
-      `BT ${bt}; OBT ${obt}; possible-error range ${obt + 1}-${obt + 5}`,
+      `BT ${bt}; OBT ${obt}; walk range ${bt + 1}-${obt}; possible-error range ${obt + 1}-${obt + 5}`,
     ],
+  };
+}
+
+function resolveWalk({ bases, bt, input, mss }) {
+  const nextBases = {
+    first: true,
+    second: bases.first || bases.second,
+    third: (bases.first && bases.second) || bases.third,
+  };
+  const runnerMoves = ["Batter to first"];
+  let runsScored = 0;
+
+  if (bases.first) runnerMoves.push("Runner on first to second");
+  if (bases.first && bases.second) runnerMoves.push("Runner on second to third");
+  else if (bases.second) runnerMoves.push("Runner on second holds");
+
+  if (bases.first && bases.second && bases.third) {
+    runnerMoves.push("Runner on third scores");
+    runsScored = 1;
+  } else if (bases.third) {
+    runnerMoves.push("Runner on third holds");
+  }
+
+  return {
+    supported: true,
+    outcomeCode: "walk",
+    classification: "walk",
+    mss,
+    score: "BB",
+    summary: "Walk; batter advances to first.",
+    detail: runnerMoves.join("; ") + ".",
+    calculations: [
+      `Swing ${input.swingRoll} + Pitch Die ${input.pitchRoll} = MSS ${mss}`,
+      `BT ${bt} + 1 through OBT ${input.obt} -> walk`,
+      runsScored > 0
+        ? "Bases loaded -> every runner is forced forward; runner on third scores"
+        : "Existing runners advance only when forced by the batter taking first",
+    ],
+    stateDelta: {
+      outsBefore: input.outs,
+      outsAfter: input.outs,
+      outsAdded: 0,
+      runsScored,
+      bases: nextBases,
+      runnerMoves,
+    },
+    sourceRefs: ["Deadball 2E pp. 26-27"],
   };
 }
 
@@ -195,7 +241,7 @@ function resolveSuccessfulOut({ bases, mss, outs, play }) {
   };
 }
 
-export function resolvePossibleError(input) {
+export function resolveAtBat(input) {
   const errors = validateCoreInput(input);
   if (errors.length > 0) {
     return { supported: false, outcomeCode: "invalid-input", errors };
@@ -204,6 +250,10 @@ export function resolvePossibleError(input) {
   const bases = copyBases(input.bases);
   const mss = input.swingRoll + input.pitchRoll;
   const classification = classifyMss(mss, input.bt, input.obt);
+
+  if (classification === "walk") {
+    return resolveWalk({ bases, bt: input.bt, input, mss });
+  }
 
   if (classification !== "possible-error") {
     return {
@@ -274,4 +324,6 @@ export function resolvePossibleError(input) {
     sourceRefs: ["Deadball 2E pp. 27-30"],
   };
 }
+
+export const resolvePossibleError = resolveAtBat;
 

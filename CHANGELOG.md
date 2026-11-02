@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-11-02 — Walk and forced-advancement increment
+
+### Added
+
+- Walk resolution for the BT+1 through OBT result band
+- Forced advancement for every occupied-base combination, including a bases-loaded walk
+- Five focused walk tests covering empty, partially occupied, and loaded bases
+- Rules decision RD-003 distinguishing source text from ordinary baseball force behavior
+
+### Changed
+
+- Generalized the rules entry point from a possible-error-only resolver to an at-bat resolver
+- Updated the Dice Companion copy and acceptance fixtures to cover both supported paths
+
 ## 2026-11-02 — Functional possible-error vertical slice
 
 ### Added
