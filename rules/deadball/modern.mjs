@@ -78,7 +78,7 @@ function describeUnsupported(classification, mss, bt, obt) {
   const labels = {
     oddity: "an oddity",
     "critical-hit": "a critical hit",
-    "ordinary-hit": "an ordinary hit",
+    "ordinary-hit": "an ordinary hit without a Hit Table roll",
     "productive-out": "a productive-out result",
     out: "an out outside the possible-error range",
   };
@@ -88,11 +88,125 @@ function describeUnsupported(classification, mss, bt, obt) {
     classification,
     supported: false,
     summary: `MSS ${mss} is ${labels[classification]}.`,
-    detail: `This build resolves walks from ${bt + 1} through ${obt} and possible errors from ${obt + 1} through ${obt + 5}.`,
+    detail: `This build resolves ordinary hits with a supported Hit Table result, walks from ${bt + 1} through ${obt}, and possible errors from ${obt + 1} through ${obt + 5}.`,
     calculations: [
       `Swing Score + Pitch Die = MSS ${mss}`,
       `BT ${bt}; OBT ${obt}; walk range ${bt + 1}-${obt}; possible-error range ${obt + 1}-${obt + 5}`,
     ],
+  };
+}
+
+function moveRunnersOnHit(bases, batterBases, runnerAdvance) {
+  const nextBases = { first: false, second: false, third: false };
+  const runnerMoves = [];
+  let runsScored = 0;
+
+  for (const [base, startingBase] of [["third", 3], ["second", 2], ["first", 1]]) {
+    if (!bases[base]) continue;
+    const destination = startingBase + runnerAdvance;
+    if (destination > 3) {
+      runsScored += 1;
+      runnerMoves.push(`Runner on ${base} scores`);
+    } else {
+      const destinationName = destination === 2 ? "second" : "third";
+      nextBases[destinationName] = true;
+      runnerMoves.push(`Runner on ${base} to ${destinationName}`);
+    }
+  }
+
+  if (batterBases > 3) {
+    runsScored += 1;
+    runnerMoves.push("Batter scores");
+  } else {
+    const batterDestination = batterBases === 1 ? "first" : "second";
+    nextBases[batterDestination] = true;
+    runnerMoves.push(`Batter to ${batterDestination}`);
+  }
+
+  return { bases: nextBases, runnerMoves, runsScored };
+}
+
+function hitTableResult(hitRoll) {
+  if (hitRoll <= 2 || (hitRoll >= 7 && hitRoll <= 9)) {
+    return { score: "1B", label: "Single", batterBases: 1, runnerAdvance: 1 };
+  }
+  if (hitRoll >= 3 && hitRoll <= 6) {
+    const fielders = { 3: "1B", 4: "2B", 5: "3B", 6: "SS" };
+    return { defensive: true, label: `Single, DEF (${fielders[hitRoll]})` };
+  }
+  if (hitRoll <= 14) {
+    return { score: "1B", label: "Single", batterBases: 1, runnerAdvance: 2 };
+  }
+  if (hitRoll <= 17) {
+    const fielders = { 15: "LF", 16: "CF", 17: "RF" };
+    return { defensive: true, label: `Double, DEF (${fielders[hitRoll]})` };
+  }
+  if (hitRoll === 18) {
+    return { score: "2B", label: "Double", batterBases: 2, runnerAdvance: 3 };
+  }
+  return { score: "HR", label: "Home run", batterBases: 4, runnerAdvance: 4 };
+}
+
+function resolveOrdinaryHit({ bases, input, mss }) {
+  if (!isIntegerBetween(input.hitRoll, 1, 20)) {
+    return {
+      supported: false,
+      outcomeCode: "invalid-input",
+      errors: [{ field: "hit-roll", message: "The Hit Table roll must be from 1 through 20." }],
+      mss,
+    };
+  }
+
+  const tableResult = hitTableResult(input.hitRoll);
+  const calculations = [
+    `Swing ${input.swingRoll} + Pitch Die ${input.pitchRoll} = MSS ${mss}`,
+    `MSS 6 through BT ${input.bt} -> ordinary hit`,
+    `Hit Table d20 ${input.hitRoll} -> ${tableResult.label}`,
+  ];
+
+  if (tableResult.defensive) {
+    return {
+      supported: false,
+      outcomeCode: "defensive-hit-pending",
+      classification: "ordinary-hit",
+      mss,
+      hitRoll: input.hitRoll,
+      summary: `${tableResult.label}.`,
+      detail: "This Hit Table result requires the defensive-hit check, which is the next rules increment.",
+      calculations,
+      sourceRefs: ["Deadball 2E p. 26"],
+    };
+  }
+
+  const movement = moveRunnersOnHit(
+    bases,
+    tableResult.batterBases,
+    tableResult.runnerAdvance,
+  );
+  const advancementText = tableResult.score === "HR"
+    ? "batter and all runners score"
+    : `existing runners advance ${tableResult.runnerAdvance} ${tableResult.runnerAdvance === 1 ? "base" : "bases"}`;
+  calculations.push(`${tableResult.label} -> ${advancementText}`);
+
+  return {
+    supported: true,
+    outcomeCode: tableResult.score === "HR" ? "home-run" : tableResult.score === "2B" ? "double" : "single",
+    classification: "ordinary-hit",
+    mss,
+    hitRoll: input.hitRoll,
+    score: tableResult.score,
+    summary: `${tableResult.label}; ${advancementText}.`,
+    detail: movement.runnerMoves.join("; ") + ".",
+    calculations,
+    stateDelta: {
+      outsBefore: input.outs,
+      outsAfter: input.outs,
+      outsAdded: 0,
+      runsScored: movement.runsScored,
+      bases: movement.bases,
+      runnerMoves: movement.runnerMoves,
+    },
+    sourceRefs: ["Deadball 2E pp. 26-27"],
   };
 }
 
@@ -250,6 +364,10 @@ export function resolveAtBat(input) {
   const bases = copyBases(input.bases);
   const mss = input.swingRoll + input.pitchRoll;
   const classification = classifyMss(mss, input.bt, input.obt);
+
+  if (classification === "ordinary-hit") {
+    return resolveOrdinaryHit({ bases, input, mss });
+  }
 
   if (classification === "walk") {
     return resolveWalk({ bases, bt: input.bt, input, mss });

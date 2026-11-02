@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-11-02 — Ordinary Hit Table increment
+
+### Added
+
+- d20 Hit Table input and path-specific automatic rolling
+- Standard singles, runner-advancing singles, the runner-advancing double, and home runs
+- Structured baserunner movement and scoring for supported ordinary hits
+- Six focused tests for hit advancement, scoring, defensive boundaries, and input validation
+- Rules decision RD-004 documenting the deliberately deferred defensive-hit results
+
+### Changed
+
+- Expanded the Dice Companion acceptance fixtures to include an ordinary hit
+- Marked the walk and forced-advancement increment as approved
+
 ## 2026-11-02 — Walk and forced-advancement increment
 
 ### Added

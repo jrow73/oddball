@@ -1,4 +1,4 @@
-import { PITCH_DIE_SIDES, resolveAtBat } from "./rules/deadball/modern.mjs";
+import { PITCH_DIE_SIDES, classifyMss, resolveAtBat } from "./rules/deadball/modern.mjs";
 
 const form = document.querySelector("#companion-form");
 const resultPanel = document.querySelector("#result-panel");
@@ -60,12 +60,12 @@ function showErrors(errors) {
 
 function setManualDiceAvailability() {
   const manual = selectedDiceMode() === "manual";
-  for (const id of ["swing-roll", "pitch-roll", "def-roll"]) {
+  for (const id of ["swing-roll", "pitch-roll", "hit-roll", "def-roll"]) {
     document.querySelector(`#${id}`).disabled = !manual;
   }
   document.querySelector("#dice-help").textContent = manual
     ? "Enter physical or known rolls."
-    : "ODDBALL will roll d100, the selected Pitch Die, and d12 DEF.";
+    : "ODDBALL will roll the dice required by the resulting rule path.";
 }
 
 function updateContextDiamond() {
@@ -80,9 +80,21 @@ function collectInput() {
   const automatic = selectedDiceMode() === "automatic";
 
   if (automatic) {
-    document.querySelector("#swing-roll").value = String(rollDie(100));
-    document.querySelector("#pitch-roll").value = String(rollDie(pitchDieSides));
-    document.querySelector("#def-roll").value = String(rollDie(12));
+    const swingRoll = rollDie(100);
+    const pitchRoll = rollDie(pitchDieSides);
+    document.querySelector("#swing-roll").value = String(swingRoll);
+    document.querySelector("#pitch-roll").value = String(pitchRoll);
+    const classification = classifyMss(
+      swingRoll + pitchRoll,
+      numberValue("bt"),
+      numberValue("obt"),
+    );
+    if (classification === "ordinary-hit") {
+      document.querySelector("#hit-roll").value = String(rollDie(20));
+    }
+    if (classification === "possible-error") {
+      document.querySelector("#def-roll").value = String(rollDie(12));
+    }
   }
 
   return {
@@ -97,6 +109,7 @@ function collectInput() {
     pitchDieSides,
     swingRoll: numberValue("swing-roll"),
     pitchRoll: numberValue("pitch-roll"),
+    hitRoll: numberValue("hit-roll"),
     defRoll: numberValue("def-roll"),
     defModifier: numberValue("def-modifier"),
   };

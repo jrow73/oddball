@@ -10,6 +10,7 @@ const example = {
   pitchDieSides: 8,
   swingRoll: 39,
   pitchRoll: 8,
+  hitRoll: 8,
   defRoll: 2,
   defModifier: 1,
 };
@@ -74,11 +75,11 @@ test("maps possible-error endings 0 and 1 to shortstop and 2 to second base", ()
 });
 
 test("reports outcomes outside the vertical slice without inventing a resolution", () => {
-  const result = resolveAtBat({ ...example, swingRoll: 20 });
+  const result = resolveAtBat({ ...example, swingRoll: 40 });
 
   assert.equal(result.supported, false);
   assert.equal(result.outcomeCode, "outside-first-slice");
-  assert.equal(result.classification, "ordinary-hit");
+  assert.equal(result.classification, "productive-out");
 });
 
 test("rejects missing and out-of-range dice instead of treating them as zero", () => {
@@ -141,5 +142,62 @@ test("does not advance unforced runners on second and third", () => {
   assert.deepEqual(result.stateDelta.bases, { first: true, second: true, third: true });
   assert.equal(result.stateDelta.runsScored, 0);
   assert.match(result.detail, /Runner on second holds; Runner on third holds/);
+});
+
+test("resolves a standard single with runners advancing one base", () => {
+  const result = resolveAtBat({ ...example, swingRoll: 20, hitRoll: 8 });
+
+  assert.equal(result.score, "1B");
+  assert.deepEqual(result.stateDelta.bases, { first: true, second: true, third: false });
+  assert.equal(result.stateDelta.runsScored, 0);
+});
+
+test("resolves a Hit Table 10-14 single with runners advancing two bases", () => {
+  const result = resolveAtBat({
+    ...example,
+    bases: { first: false, second: true, third: false },
+    swingRoll: 20,
+    hitRoll: 11,
+  });
+
+  assert.equal(result.score, "1B");
+  assert.deepEqual(result.stateDelta.bases, { first: true, second: false, third: false });
+  assert.equal(result.stateDelta.runsScored, 1);
+});
+
+test("resolves Hit Table 18 as a double with runners advancing three bases", () => {
+  const result = resolveAtBat({ ...example, swingRoll: 20, hitRoll: 18 });
+
+  assert.equal(result.score, "2B");
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: true, third: false });
+  assert.equal(result.stateDelta.runsScored, 1);
+});
+
+test("resolves a bases-loaded home run as four runs with empty bases", () => {
+  const result = resolveAtBat({
+    ...example,
+    bases: { first: true, second: true, third: true },
+    swingRoll: 20,
+    hitRoll: 20,
+  });
+
+  assert.equal(result.score, "HR");
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: false, third: false });
+  assert.equal(result.stateDelta.runsScored, 4);
+});
+
+test("stops explicitly when a Hit Table result requires a defensive check", () => {
+  const result = resolveAtBat({ ...example, swingRoll: 20, hitRoll: 3 });
+
+  assert.equal(result.supported, false);
+  assert.equal(result.outcomeCode, "defensive-hit-pending");
+  assert.match(result.summary, /Single, DEF \(1B\)/);
+});
+
+test("requires a valid Hit Table roll for an ordinary hit", () => {
+  const result = resolveAtBat({ ...example, swingRoll: 20, hitRoll: Number.NaN });
+
+  assert.equal(result.outcomeCode, "invalid-input");
+  assert.match(result.errors[0].message, /Hit Table roll/);
 });
 

@@ -52,9 +52,10 @@ for (const expected of [
 
 for (const expected of [
   "Next rule path active",
-  "Replay a walk or MSS 47",
+  "Replay a hit, walk, or MSS 47",
+  "Hit Table 11",
   "possible-error fixture: F-7",
-  "bases loaded",
+  "bases-loaded walk fixture",
   "runner holding at first",
   'href="./prototype.css"',
   'src="./companion.mjs"',

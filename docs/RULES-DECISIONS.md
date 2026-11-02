@@ -41,7 +41,7 @@ Date: 2026-11-02
 
 ## RD-003 — Walks and forced advancement
 
-Status: **Implemented; awaiting acceptance**
+Status: **Approved**
 Date: 2026-11-02
 
 ### Verified source rules
@@ -56,4 +56,24 @@ Date: 2026-11-02
 - A bases-loaded walk scores exactly one run and leaves all three bases occupied.
 - Runners on second or third hold when first base is empty. This is ordinary baseball forced-advancement behavior, not an additional Deadball table instruction.
 - The DEF roll and defensive trait are ignored for a walk because no possible-error check occurs.
+
+## RD-004 — Ordinary Hit Table results without DEF checks
+
+Status: **Implemented; awaiting acceptance**
+Date: 2026-11-02
+
+### Verified source rules
+
+- Page 26: MSS at or below BT is a hit and requires a d20 Hit Table roll.
+- Page 26 Hit Table: 1-2 and 7-9 are singles; 10-14 are singles with runners advancing two bases; 18 is a double with runners advancing three bases; 19-20 are home runs.
+- Page 27: MSS 6 through BT is an ordinary hit. MSS 2-5 is a critical hit and remains outside this increment.
+
+### Implementation decisions
+
+- A standard single advances existing runners one base and places the batter on first.
+- Hit Table 10-14 places the batter on first while existing runners advance two bases.
+- Hit Table 18 places the batter on second while existing runners advance three bases.
+- A home run scores the batter and every occupied runner, then clears the bases.
+- Hit Table 3-6 and 15-17 are identified with their named fielder but pause before resolution because they require a defensive-hit check. That check will be implemented as its own reviewed increment.
+- The ordinary-hit path requires a valid d20 result. Dice that are not required by the resulting rule path do not affect the ruling.
 

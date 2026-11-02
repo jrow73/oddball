@@ -388,15 +388,36 @@ input:disabled {
   font-size: 1.5rem;
 }
 
+.secondary-rolls {
+  display: grid;
+  grid-template-columns: 0.72fr 1.28fr;
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+
+.hit-roll-card,
 .defense-row {
   display: grid;
-  grid-template-columns: 1fr 70px auto 70px auto 48px;
   gap: 0.5rem;
   align-items: center;
-  margin-top: 1rem;
   padding: 0.8rem;
   border: 1px solid var(--line);
   border-radius: 10px;
+}
+
+.hit-roll-card {
+  grid-template-columns: 1fr 70px;
+}
+
+.hit-roll-card > span:first-child {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.defense-row {
+  grid-template-columns: 1fr 70px auto 70px;
+  gap: 0.5rem;
+  align-items: center;
 }
 
 .compact-field {
@@ -715,7 +736,7 @@ input:disabled {
   }
 
   .defense-row {
-    grid-template-columns: 1fr 62px auto 62px auto 44px;
+    grid-template-columns: 1fr 62px auto 62px;
   }
 }
 
@@ -730,6 +751,14 @@ input:disabled {
 
   .die-total {
     grid-column: 1 / -1;
+  }
+
+  .secondary-rolls {
+    grid-template-columns: 1fr;
+  }
+
+  .hit-roll-card {
+    grid-template-columns: 1fr 70px;
   }
 
   .defense-row {
