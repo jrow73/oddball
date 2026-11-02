@@ -1,5 +1,39 @@
 # Changelog
 
+## 2026-11-02 — Functional possible-error vertical slice
+
+### Added
+
+- Pure Modern-rules module for possible-error resolution
+- App-generated and manual dice modes
+- BT and OBT batter inputs with optional participant names
+- Structured result explanations and source references
+- Suggested context confirmation
+- Manual override retention
+- Automated tests for MSS bands, successful DEF checks, errors, special fielder mappings, unsupported outcomes, and missing dice
+- Rules decision log based on verified rulebook pages 26–30
+
+### Changed
+
+- Converted the review wireframe into a functional Dice Companion slice
+- Corrected the MSS 47 wording from generic “flyout” to the Out Table’s “pop-up to LF” (F-7)
+- Marked the approved planning defaults and Milestone 1 as complete
+
+## 2026-11-02 — First playable slice planning
+
+### Added
+
+- Draft Dice Companion slice specification
+- Responsive, nonfunctional review wireframe
+- Fourteen proposed acceptance checks
+- Five explicit workflow questions for user approval
+
+### Changed
+
+- Foundation page now links to the first-slice review
+- Roadmap marks Milestone 1 as drafted for review
+- Project check now validates the wireframe and specification files
+
 ## 2026-11-02 — Source cleanup and purchase link
 
 ### Changed

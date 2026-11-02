@@ -4,7 +4,8 @@
   "private": true,
   "description": "Online Dice-Driven Baseball And League Lab",
   "scripts": {
-    "check": "node scripts/check-project.mjs"
+    "check": "node scripts/check-project.mjs && node --test",
+    "test": "node --test"
   }
 }
 

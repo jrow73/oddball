@@ -7,13 +7,20 @@ const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "
 
 const requiredFiles = [
   "index.html",
+  "prototype.html",
+  "prototype.css",
+  "companion.mjs",
   "styles.css",
   "app.js",
   "README.md",
   "CHANGELOG.md",
   "docs/PROJECT-BRIEF.md",
   "docs/DEVELOPMENT-WORKFLOW.md",
+  "docs/FIRST-PLAYABLE-SLICE.md",
+  "docs/RULES-DECISIONS.md",
   "docs/ROADMAP.md",
+  "rules/deadball/modern.mjs",
+  "tests/modern-possible-error.test.mjs",
   "Based on Akers Games logo.png",
 ];
 
@@ -28,6 +35,7 @@ for (const relativePath of requiredFiles) {
 }
 
 const html = await readFile(path.join(projectRoot, "index.html"), "utf8");
+const prototype = await readFile(path.join(projectRoot, "prototype.html"), "utf8");
 
 for (const expected of [
   "Online Dice-Driven Baseball And League Lab",
@@ -39,6 +47,19 @@ for (const expected of [
 ]) {
   if (!html.includes(expected)) {
     failures.push(`index.html is missing: ${expected}`);
+  }
+}
+
+for (const expected of [
+  "First slice active",
+  "Replay MSS 47",
+  "pop-up to left",
+  "runner holding at first",
+  'href="./prototype.css"',
+  'src="./companion.mjs"',
+]) {
+  if (!prototype.includes(expected)) {
+    failures.push(`prototype.html is missing: ${expected}`);
   }
 }
 

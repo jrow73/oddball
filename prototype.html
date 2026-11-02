@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="First functional ODDBALL Dice Companion vertical slice." />
+    <title>Dice Companion | ODDBALL</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./prototype.css" />
+  </head>
+  <body class="prototype-page">
+    <a class="skip-link" href="#prototype-main">Skip to Dice Companion</a>
+
+    <header class="site-header">
+      <a class="brand" href="./index.html" aria-label="Return to ODDBALL foundation">
+        <span class="brand-mark" aria-hidden="true">O</span>
+        <span>ODDBALL</span>
+      </a>
+      <span class="build-label">Vertical slice 0.2</span>
+    </header>
+
+    <main id="prototype-main" class="prototype-shell">
+      <section class="prototype-intro" aria-labelledby="prototype-title">
+        <div>
+          <p class="eyebrow">Milestone 2 · Functional vertical slice</p>
+          <h1 id="prototype-title">Resolve one play.</h1>
+          <p>
+            The first rules path is live: Modern-rules possible errors. Other outcomes
+            are identified but intentionally stop before resolution.
+          </p>
+        </div>
+        <div class="prototype-notice live" role="note">
+          <strong>First slice active</strong>
+          <span>Possible errors only · no saved game state</span>
+        </div>
+      </section>
+
+      <form id="companion-form" novalidate>
+        <div id="validation-summary" class="validation-summary" role="alert" hidden></div>
+
+        <div class="companion-layout">
+          <aside class="context-panel" aria-labelledby="context-title">
+            <div class="panel-heading">
+              <span class="step-number">01</span>
+              <div>
+                <p class="panel-kicker">Before the pitch</p>
+                <h2 id="context-title">Play context</h2>
+              </div>
+            </div>
+
+            <fieldset>
+              <legend>Outs</legend>
+              <div class="segmented-control">
+                <label><input type="radio" name="outs" value="0" checked /> <span>0</span></label>
+                <label><input type="radio" name="outs" value="1" /> <span>1</span></label>
+                <label><input type="radio" name="outs" value="2" /> <span>2</span></label>
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend>Occupied bases</legend>
+              <div class="base-toggles">
+                <label><input type="checkbox" name="runner-first" checked /> <span>1st</span></label>
+                <label><input type="checkbox" name="runner-second" /> <span>2nd</span></label>
+                <label><input type="checkbox" name="runner-third" /> <span>3rd</span></label>
+              </div>
+            </fieldset>
+
+            <div class="mini-diamond" aria-label="Runner context is controlled above">
+              <span class="mini-base second"></span>
+              <span class="mini-base third"></span>
+              <span class="mini-base first occupied"></span>
+              <span class="mini-base home"></span>
+            </div>
+
+            <div class="context-note">
+              <strong>Paper-scorekeeping mode</strong>
+              <p>Only the context needed for this play is required.</p>
+            </div>
+          </aside>
+
+          <section class="resolution-panel" aria-labelledby="resolve-title">
+            <div class="panel-heading">
+              <span class="step-number">02</span>
+              <div>
+                <p class="panel-kicker">Ratings and dice</p>
+                <h2 id="resolve-title">Set up the play</h2>
+              </div>
+            </div>
+
+            <div class="participant-grid">
+              <section class="participant-card" aria-labelledby="batter-title">
+                <div class="participant-heading">
+                  <span>B</span>
+                  <div>
+                    <p class="panel-kicker">At bat</p>
+                    <h3 id="batter-title">Batter</h3>
+                  </div>
+                </div>
+                <label class="name-field">
+                  <span>Name <small>optional</small></span>
+                  <input type="text" id="batter-name" placeholder="Example batter" />
+                </label>
+                <div class="rating-pair">
+                  <label class="field-label">
+                    BT
+                    <input id="bt" type="number" value="31" min="5" max="99" />
+                  </label>
+                  <label class="field-label">
+                    OBT
+                    <input id="obt" type="number" value="42" min="6" max="99" />
+                  </label>
+                </div>
+                <p class="field-hint">BT is shown for the batter profile; this test path uses OBT.</p>
+              </section>
+
+              <section class="participant-card" aria-labelledby="pitcher-title">
+                <div class="participant-heading">
+                  <span>P</span>
+                  <div>
+                    <p class="panel-kicker">On the mound</p>
+                    <h3 id="pitcher-title">Pitcher</h3>
+                  </div>
+                </div>
+                <label class="name-field">
+                  <span>Name <small>optional</small></span>
+                  <input type="text" id="pitcher-name" placeholder="Example pitcher" />
+                </label>
+                <label class="field-label">
+                  Pitch Die
+                  <select id="pitch-die" aria-label="Pitch Die size">
+                    <option value="4">d4</option>
+                    <option value="6">d6</option>
+                    <option value="8" selected>d8</option>
+                    <option value="10">d10</option>
+                    <option value="12">d12</option>
+                    <option value="20">d20</option>
+                  </select>
+                </label>
+                <p class="field-hint">Only ratings relevant to this slice are required.</p>
+              </section>
+            </div>
+
+            <fieldset class="dice-mode">
+              <legend>How are you rolling?</legend>
+              <div class="mode-options">
+                <label>
+                  <input type="radio" name="dice-mode" value="automatic" checked />
+                  <span><strong>Roll for me</strong><small>ODDBALL rolls every required die</small></span>
+                </label>
+                <label>
+                  <input type="radio" name="dice-mode" value="manual" />
+                  <span><strong>Enter my dice</strong><small>Use physical or known rolls</small></span>
+                </label>
+              </div>
+              <p id="dice-help" class="field-hint"></p>
+            </fieldset>
+
+            <div class="dice-grid">
+              <label class="die-input">
+                <span>Swing</span>
+                <input id="swing-roll" type="number" value="39" min="1" max="100" />
+              </label>
+              <span class="operator" aria-hidden="true">+</span>
+              <label class="die-input">
+                <span>Pitch Die</span>
+                <input id="pitch-roll" type="number" value="8" min="1" max="20" />
+              </label>
+              <span class="operator" aria-hidden="true">=</span>
+              <div class="die-total" aria-live="polite">
+                <span>MSS</span>
+                <strong id="mss-output">—</strong>
+              </div>
+            </div>
+
+            <div class="defense-row">
+              <div>
+                <p class="panel-kicker">If a possible error occurs</p>
+                <strong>DEF check</strong>
+              </div>
+              <label class="compact-field">d12 <input id="def-roll" type="number" value="2" min="1" max="12" /></label>
+              <span class="operator" aria-hidden="true">+</span>
+              <label class="compact-field">
+                Trait
+                <select id="def-modifier" aria-label="Defender trait">
+                  <option value="-1">D−</option>
+                  <option value="0">None</option>
+                  <option value="1" selected>D+</option>
+                </select>
+              </label>
+            </div>
+
+            <button class="resolve-button" type="submit">
+              Resolve play <span>Possible-error slice</span>
+            </button>
+          </section>
+
+          <section id="result-panel" class="result-panel" aria-labelledby="result-title" tabindex="-1" data-state="ready">
+            <div class="result-status">
+              <span>Calculated result</span>
+              <span id="result-source">Deadball 2E · Modern</span>
+            </div>
+            <p id="result-call" class="result-call">—</p>
+            <h2 id="result-title">Ready to resolve.</h2>
+            <p id="result-detail" class="result-detail">
+              Use “Roll for me,” or select manual entry and use 39 + 8 with OBT 42 to replay the acceptance example.
+            </p>
+
+            <div class="state-delta" aria-label="Suggested state after the play">
+              <div><span>Outs</span><strong id="outs-delta">—</strong></div>
+              <div><span>Runs</span><strong id="runs-delta">—</strong></div>
+              <div><span>1st</span><strong id="result-base-first">—</strong></div>
+              <div><span>2nd</span><strong id="result-base-second">—</strong></div>
+              <div><span>3rd</span><strong id="result-base-third">—</strong></div>
+            </div>
+
+            <ol id="calculation-trail" class="calculation-trail"></ol>
+
+            <div class="result-actions" aria-label="Result actions">
+              <button id="edit-inputs" type="button" disabled>Edit inputs</button>
+              <button id="override-ruling" type="button" disabled>Override ruling</button>
+              <button id="apply-context" type="button" disabled>Confirm next context</button>
+            </div>
+            <p id="context-confirmation" class="confirmation-message" role="status" hidden></p>
+
+            <div id="override-form" class="override-form" hidden>
+              <h3>Manual override</h3>
+              <label>
+                Displayed outcome
+                <input id="override-outcome" type="text" placeholder="Enter corrected ruling" />
+              </label>
+              <label>
+                Note <span>optional</span>
+                <textarea id="override-note" rows="3" placeholder="Why was this changed?"></textarea>
+              </label>
+              <button id="save-override" type="button">Save override</button>
+            </div>
+
+            <div id="override-display" class="override-display" hidden>
+              <span>Manual override retained with calculated result</span>
+              <strong id="override-summary"></strong>
+              <p id="override-note-display"></p>
+            </div>
+
+            <p class="result-footnote">
+              Suggested context changes only after confirmation; paper scorekeeping remains authoritative.
+            </p>
+          </section>
+        </div>
+      </form>
+
+      <section class="prototype-review" aria-labelledby="review-title">
+        <p class="eyebrow">Acceptance fixture</p>
+        <h2 id="review-title">Replay MSS 47</h2>
+        <p>
+          Select <strong>Enter my dice</strong>. With BT 31, OBT 42, Swing 39,
+          Pitch Die 8, DEF 2, and D+, the result should be F-7: a pop-up to left,
+          one out, and the runner holding at first.
+        </p>
+        <a class="button button-secondary" href="./index.html">Return to project foundation</a>
+      </section>
+    </main>
+
+    <script type="module" src="./companion.mjs"></script>
+  </body>
+</html>
+

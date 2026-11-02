@@ -14,6 +14,8 @@ Status: **Initial baseline created**
 
 ## Milestone 1 — First playable slice definition
 
+Status: **Approved**
+
 Goal: agree on a narrow Dice Companion workflow before rules implementation.
 
 Decisions to make:
@@ -26,22 +28,28 @@ Decisions to make:
 - Optional state retained between plays
 - Exact licensing gate wording and behavior; the purchase URL is confirmed as `https://akersgames.com`
 
-Deliverable: a written interaction specification, wireframe, and acceptance checks.
+Deliverables:
+
+- [First playable slice specification](FIRST-PLAYABLE-SLICE.md)
+- Functional browser slice at `prototype.html`
+- Fourteen acceptance checks covering workflow, deterministic rules behavior, explanation, correction, missing data, and accessibility
 
 ## Milestone 2 — Dice Companion vertical slice
 
+Status: **Implemented; awaiting user acceptance**
+
 Goal: resolve a deliberately limited set of Modern-rule plate appearances end to end.
 
-Likely components:
+Implemented components:
 
 - Rules data separated from engine code
-- Seedable or injectable dice rolls for tests
+- Cryptographically unbiased browser dice plus manual deterministic entry
 - Play context form
 - Result explanation
 - Manual override
 - Focused automated rules tests
 
-Candidate acceptance example: resolve the documented MSS 47 possible-error scenario with a runner on first and explain why a successful left-field catch leaves the runner at first.
+Acceptance example: resolve the documented MSS 47 possible-error scenario with a runner on first and explain why a successful left-field pop-up leaves the runner at first.
 
 ## Milestone 3 — Complete standalone Dice Companion
 

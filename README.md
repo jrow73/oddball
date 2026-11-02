@@ -7,7 +7,7 @@ ODDBALL is a planned browser-based baseball dice companion and league simulator.
 
 ## Current status
 
-This repository contains the foundation build: a responsive project landing page, planning documents, and a dependency-free project check. It does **not** yet contain a playable rules engine, trait generator, digital scorekeeper, or league simulator.
+This repository contains the foundation build and the first functional Dice Companion vertical slice. It resolves the Modern-rules possible-error path with explainable calculations, suggested state changes, and retained manual overrides. Other plate-appearance outcomes, saved games, trait generation, digital scorekeeping, and league simulation are not yet implemented.
 
 ## Run locally
 
@@ -26,14 +26,23 @@ The check uses Node.js built-ins only; no package installation is required.
 ```text
 ODDBALL/
 ├── index.html
+├── prototype.html
+├── prototype.css
+├── companion.mjs
 ├── styles.css
 ├── app.js
 ├── docs/
 │   ├── DEVELOPMENT-WORKFLOW.md
+│   ├── FIRST-PLAYABLE-SLICE.md
 │   ├── PROJECT-BRIEF.md
+│   ├── RULES-DECISIONS.md
 │   └── ROADMAP.md
+├── rules/
+│   └── deadball/modern.mjs
 ├── scripts/
 │   └── check-project.mjs
+├── tests/
+│   └── modern-possible-error.test.mjs
 └── Based on Akers Games logo.png
 ```
 
@@ -52,5 +61,5 @@ The supplied Akers Games image remains unchanged in the project root. The rulebo
 
 ## Next decision
 
-Define the first playable Dice Companion slice before implementing the rules engine. See [docs/ROADMAP.md](docs/ROADMAP.md).
+Test and accept the possible-error vertical slice before expanding the rules boundary. See [docs/FIRST-PLAYABLE-SLICE.md](docs/FIRST-PLAYABLE-SLICE.md), [docs/RULES-DECISIONS.md](docs/RULES-DECISIONS.md), and open `prototype.html` with Live Server.
 
