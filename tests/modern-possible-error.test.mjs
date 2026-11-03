@@ -74,12 +74,16 @@ test("maps possible-error endings 0 and 1 to shortstop and 2 to second base", ()
   assert.equal(endingTwo.play.position, "2B");
 });
 
-test("reports outcomes outside the vertical slice without inventing a resolution", () => {
-  const result = resolveAtBat({ ...example, swingRoll: 40 });
+test("resolves an Out Table strikeout with runners holding", () => {
+  const result = resolveAtBat({
+    ...example,
+    bases: { first: true, second: true, third: true },
+    swingRoll: 42,
+  });
 
-  assert.equal(result.supported, false);
-  assert.equal(result.outcomeCode, "outside-first-slice");
-  assert.equal(result.classification, "productive-out");
+  assert.equal(result.score, "K");
+  assert.equal(result.stateDelta.outsAfter, 1);
+  assert.deepEqual(result.stateDelta.bases, { first: true, second: true, third: true });
 });
 
 test("rejects missing and out-of-range dice instead of treating them as zero", () => {
@@ -276,5 +280,181 @@ test("requires a valid Hit Table roll for an ordinary hit", () => {
 
   assert.equal(result.outcomeCode, "invalid-input");
   assert.match(result.errors[0].message, /Hit Table roll/);
+});
+
+test("upgrades a defensive single to a critical double without a DEF roll", () => {
+  const result = resolveAtBat({
+    ...example,
+    pitchDieSides: 4,
+    swingRoll: 1,
+    pitchRoll: 1,
+    hitRoll: 6,
+    defRoll: Number.NaN,
+  });
+
+  assert.equal(result.score, "2B");
+  assert.equal(result.outcomeCode, "critical-double");
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: true, third: true });
+  assert.match(result.calculations.at(-1), /no DEF roll/);
+});
+
+test("gives existing runners the extra base on a critical upgraded single", () => {
+  const result = resolveAtBat({
+    ...example,
+    pitchDieSides: 4,
+    swingRoll: 1,
+    pitchRoll: 1,
+    hitRoll: 11,
+  });
+
+  assert.equal(result.score, "2B");
+  assert.equal(result.stateDelta.runsScored, 1);
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: true, third: false });
+});
+
+test("upgrades a defensive double to a critical triple without defense", () => {
+  const result = resolveAtBat({
+    ...example,
+    pitchDieSides: 4,
+    swingRoll: 1,
+    pitchRoll: 1,
+    hitRoll: 15,
+    defRoll: Number.NaN,
+  });
+
+  assert.equal(result.score, "3B");
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: false, third: true });
+  assert.equal(result.stateDelta.runsScored, 1);
+});
+
+test("adds one runner base to Hit Table 18 on a critical triple", () => {
+  const result = resolveAtBat({
+    ...example,
+    bases: { first: true, second: true, third: true },
+    pitchDieSides: 4,
+    swingRoll: 1,
+    pitchRoll: 1,
+    hitRoll: 18,
+  });
+
+  assert.equal(result.score, "3B");
+  assert.equal(result.stateDelta.runsScored, 3);
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: false, third: true });
+});
+
+test("keeps a critical Hit Table home run at home-run level", () => {
+  const result = resolveAtBat({
+    ...example,
+    bases: { first: true, second: true, third: true },
+    pitchDieSides: 4,
+    swingRoll: 1,
+    pitchRoll: 1,
+    hitRoll: 20,
+  });
+
+  assert.equal(result.score, "HR");
+  assert.equal(result.stateDelta.runsScored, 4);
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: false, third: false });
+});
+
+test("requires a valid Hit Table roll for a critical hit", () => {
+  const result = resolveAtBat({
+    ...example,
+    pitchDieSides: 4,
+    swingRoll: 1,
+    pitchRoll: 1,
+    hitRoll: Number.NaN,
+  });
+
+  assert.equal(result.outcomeCode, "invalid-input");
+  assert.match(result.errors[0].message, /Hit Table roll/);
+});
+
+test("advances runners on a productive outfield out below MSS 70", () => {
+  const result = resolveAtBat({
+    ...example,
+    bases: { first: false, second: true, third: true },
+    swingRoll: 59,
+  });
+
+  assert.equal(result.score, "F-7");
+  assert.equal(result.stateDelta.runsScored, 1);
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: false, third: true });
+});
+
+test("advances a loaded set of runners legally on an MSS below 50 groundball", () => {
+  const result = resolveAtBat({
+    ...example,
+    bt: 20,
+    obt: 30,
+    bases: { first: true, second: true, third: true },
+    swingRoll: 38,
+  });
+
+  assert.equal(result.score, "6-3");
+  assert.equal(result.stateDelta.runsScored, 1);
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: true, third: true });
+});
+
+test("resolves MSS 50-69 on the infield as a fielder's choice", () => {
+  const result = resolveAtBat({ ...example, swingRoll: 48 });
+
+  assert.equal(result.score, "FC");
+  assert.equal(result.outcomeCode, "fielders-choice");
+  assert.deepEqual(result.stateDelta.bases, { first: true, second: false, third: false });
+});
+
+test("resolves MSS 70+ on the infield as a double play", () => {
+  const result = resolveAtBat({ ...example, swingRoll: 68 });
+
+  assert.equal(result.score, "DP");
+  assert.equal(result.stateDelta.outsAfter, 2);
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: false, third: false });
+});
+
+test("resolves an eligible MSS 100+ infield result as a triple play", () => {
+  const result = resolveAtBat({
+    ...example,
+    outs: 0,
+    bases: { first: true, second: true, third: false },
+    swingRoll: 98,
+  });
+
+  assert.equal(result.score, "TP");
+  assert.equal(result.stateDelta.outsAfter, 3);
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: false, third: false });
+});
+
+test("does not score a productive-out run when the batter makes the third out", () => {
+  const result = resolveAtBat({
+    ...example,
+    outs: 2,
+    bases: { first: false, second: false, third: true },
+    swingRoll: 59,
+  });
+
+  assert.equal(result.stateDelta.outsAfter, 3);
+  assert.equal(result.stateDelta.runsScored, 0);
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: false, third: false });
+});
+
+test("describes every loaded-base runner holding on an MSS 70+ outfield out", () => {
+  const result = resolveAtBat({
+    ...example,
+    outs: 1,
+    bases: { first: true, second: true, third: true },
+    swingRoll: 70,
+  });
+
+  assert.equal(result.score, "F-8");
+  assert.equal(result.stateDelta.outsAfter, 2);
+  assert.deepEqual(result.stateDelta.bases, { first: true, second: true, third: true });
+  assert.deepEqual(result.stateDelta.runnerMoves, [
+    "Runner on first holds",
+    "Runner on second holds",
+    "Runner on third holds",
+  ]);
+  assert.match(result.summary, /Pop-up to CF/);
+  assert.match(result.detail, /Runner on first holds; Runner on second holds; Runner on third holds/);
 });
 

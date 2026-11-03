@@ -1,5 +1,39 @@
 # Changelog
 
+## 2026-11-02 — Neutral-trait critical-hit increment
+
+### Added
+
+- MSS 2-5 critical-hit resolution for neutral batting traits
+- One-level Hit Table upgrades from single to double and double to triple
+- The required extra base for every existing runner
+- Critical handling of DEF-marked entries without a defensive roll
+- Six focused tests for upgrades, runner advancement, home runs, and validation
+- Rules decision RD-007 separating this increment from batting bonus traits
+
+### Changed
+
+- Automatic mode now rolls the Hit Table for critical hits but never rolls DEF for them
+- Marked the common out-resolution increment as approved
+
+## 2026-11-02 — Common out-resolution increment
+
+### Added
+
+- Full Out Table mapping for strikeouts, infield groundballs, and outfield pop-ups
+- Productive-out advancement below MSS 70
+- Fielder's choices, double plays, and eligible triple plays
+- Third-out cleanup and run suppression
+- Seven focused tests for common out paths and multi-runner advancement
+- Rules decision RD-006 documenting advancement and inning-ending behavior
+
+### Changed
+
+- Corrected the shared out helper to preserve legal base states with multiple runners
+- Expanded MSS 70+ outfield-out explanations to name every occupied runner who holds
+- Standardized result headings as concise play rulings and moved individual runner actions to the detail line
+- Marked the defensive Hit Table increment as approved
+
 ## 2026-11-02 — Defensive Hit Table increment
 
 ### Added

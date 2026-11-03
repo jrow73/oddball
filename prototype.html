@@ -16,7 +16,7 @@
         <span class="brand-mark" aria-hidden="true">O</span>
         <span>ODDBALL</span>
       </a>
-      <span class="build-label">Vertical slice 0.5</span>
+      <span class="build-label">Vertical slice 0.7</span>
     </header>
 
     <main id="prototype-main" class="prototype-shell">
@@ -25,13 +25,14 @@
           <p class="eyebrow">Milestone 2 · Functional vertical slice</p>
           <h1 id="prototype-title">Resolve one play.</h1>
           <p>
-            Ordinary hits now include defensive checks, alongside walks and possible
-            errors. Critical hits and the remaining out bands are still outside this slice.
+            Common Modern-rules plate appearances now resolve through neutral-trait
+            critical hits, ordinary hits, walks, possible errors, productive outs,
+            and ordinary outs. Oddities and batting bonus traits remain outside this slice.
           </p>
         </div>
         <div class="prototype-notice live" role="note">
           <strong>Next rule path active</strong>
-          <span>Defensive hits + walks + possible errors · no saved game state</span>
+          <span>Common at-bats · no saved game state</span>
         </div>
       </section>
 
@@ -111,7 +112,7 @@
                     <input id="obt" type="number" value="42" min="6" max="99" />
                   </label>
                 </div>
-                <p class="field-hint">BT and OBT define the supported walk and possible-error bands.</p>
+                <p class="field-hint">BT and OBT define the result bands. Batting bonus traits are not yet applied.</p>
               </section>
 
               <section class="participant-card" aria-labelledby="pitcher-title">
@@ -201,7 +202,7 @@
             </div>
 
             <button class="resolve-button" type="submit">
-              Resolve play <span>Defensive hit + walk + error</span>
+              Resolve play <span>Common at-bat slice</span>
             </button>
           </section>
 
@@ -261,12 +262,12 @@
 
       <section class="prototype-review" aria-labelledby="review-title">
         <p class="eyebrow">Acceptance fixtures</p>
-        <h2 id="review-title">Replay a defensive hit</h2>
+        <h2 id="review-title">Replay a neutral-trait critical hit</h2>
         <p>
-          Select <strong>Enter my dice</strong>. Swing 20 plus Pitch Die 8 is an ordinary
-          hit. Hit Table 15 calls for a double with a left-field DEF check. DEF 10 with
-          no trait reduces it to a single; DEF 11 with D+ turns it into an out. The
-          earlier walk and MSS 47 possible-error fixtures remain supported.
+          Select <strong>Enter my dice</strong>, choose d4, and leave a runner on first.
+          Swing 1 plus Pitch Die 1 gives MSS 2. Hit Table 6 normally calls for a
+          defensive single to shortstop; the critical hit upgrades it to a double,
+          sends the runner to third, and requires no DEF roll.
         </p>
         <a class="button button-secondary" href="./index.html">Return to project foundation</a>
       </section>

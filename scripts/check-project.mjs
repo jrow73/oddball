@@ -52,11 +52,10 @@ for (const expected of [
 
 for (const expected of [
   "Next rule path active",
-  "Replay a defensive hit",
-  "Hit Table 15",
-  "DEF 11 with D+ turns it into an out",
-  "earlier walk and MSS 47 possible-error fixtures",
-  "earlier walk and MSS 47 possible-error fixtures remain supported",
+  "Replay a neutral-trait critical hit",
+  "MSS 2",
+  "upgrades it to a double",
+  "requires no DEF roll",
   'href="./prototype.css"',
   'src="./companion.mjs"',
 ]) {

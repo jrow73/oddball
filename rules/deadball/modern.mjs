@@ -13,6 +13,19 @@ const POSSIBLE_ERROR_PLAYS = Object.freeze({
   9: { position: "RF", fielder: "right fielder", number: 9, kind: "popup", score: "F-9" },
 });
 
+const OUT_PLAYS = Object.freeze({
+  0: { position: "K", fielder: "pitcher", kind: "strikeout", score: "K" },
+  1: { position: "K", fielder: "pitcher", kind: "strikeout", score: "K" },
+  2: { position: "K", fielder: "pitcher", kind: "strikeout", score: "K" },
+  3: { position: "1B", fielder: "first baseman", kind: "groundball", score: "G-3" },
+  4: { position: "2B", fielder: "second baseman", kind: "groundball", score: "4-3" },
+  5: { position: "3B", fielder: "third baseman", kind: "groundball", score: "5-3" },
+  6: { position: "SS", fielder: "shortstop", kind: "groundball", score: "6-3" },
+  7: { position: "LF", fielder: "left fielder", kind: "popup", score: "F-7" },
+  8: { position: "CF", fielder: "center fielder", kind: "popup", score: "F-8" },
+  9: { position: "RF", fielder: "right fielder", kind: "popup", score: "F-9" },
+});
+
 function isIntegerBetween(value, minimum, maximum) {
   return Number.isInteger(value) && value >= minimum && value <= maximum;
 }
@@ -88,7 +101,7 @@ function describeUnsupported(classification, mss, bt, obt) {
     classification,
     supported: false,
     summary: `MSS ${mss} is ${labels[classification]}.`,
-    detail: `This build resolves ordinary hits with a supported Hit Table result, walks from ${bt + 1} through ${obt}, and possible errors from ${obt + 1} through ${obt + 5}.`,
+    detail: "This build resolves neutral-trait critical hits, ordinary hits, walks, possible errors, productive outs, and ordinary outs. Oddities and batting bonus traits remain outside the slice.",
     calculations: [
       `Swing Score + Pitch Die = MSS ${mss}`,
       `BT ${bt}; OBT ${obt}; walk range ${bt + 1}-${obt}; possible-error range ${obt + 1}-${obt + 5}`,
@@ -118,7 +131,7 @@ function moveRunnersOnHit(bases, batterBases, runnerAdvance) {
     runsScored += 1;
     runnerMoves.push("Batter scores");
   } else {
-    const batterDestination = batterBases === 1 ? "first" : "second";
+    const batterDestination = batterBases === 1 ? "first" : batterBases === 2 ? "second" : "third";
     nextBases[batterDestination] = true;
     runnerMoves.push(`Batter to ${batterDestination}`);
   }
@@ -201,7 +214,7 @@ function resolveDefensiveHit({ bases, calculations, input, mss, tableResult }) {
       modifiedDef,
       play: tableResult.play,
       score: `E-${tableResult.play.number}`,
-      summary: `Error by ${tableResult.play.fielder}; batter safe at first.`,
+      summary: `Error by ${tableResult.play.fielder}.`,
       detail: errorState.runnerMoves.join("; ") + ".",
       calculations,
       stateDelta: {
@@ -232,8 +245,8 @@ function resolveDefensiveHit({ bases, calculations, input, mss, tableResult }) {
       modifiedDef,
       play: tableResult.play,
       score: "OUT",
-      summary: `Outstanding defensive play by ${tableResult.play.position}; batter out.`,
-      detail: runnerMoves.length > 0 ? runnerMoves.join("; ") + "." : "No runners advance.",
+      summary: `Outstanding defensive play by ${tableResult.play.position}.`,
+      detail: runnerMoves.length > 0 ? "Batter out. Existing runners hold." : "Batter out; no runners advance.",
       calculations,
       stateDelta: {
         outsBefore: input.outs,
@@ -274,7 +287,7 @@ function resolveDefensiveHit({ bases, calculations, input, mss, tableResult }) {
     modifiedDef,
     play: tableResult.play,
     score,
-    summary: `${label} after DEF check; existing runners advance ${runnerAdvance} ${runnerAdvance === 1 ? "base" : "bases"}.`,
+    summary: `${label} after DEF check.`,
     detail: movement.runnerMoves.join("; ") + ".",
     calculations,
     stateDelta: {
@@ -327,7 +340,7 @@ function resolveOrdinaryHit({ bases, input, mss }) {
     mss,
     hitRoll: input.hitRoll,
     score: tableResult.score,
-    summary: `${tableResult.label}; ${advancementText}.`,
+    summary: `${tableResult.label}.`,
     detail: movement.runnerMoves.join("; ") + ".",
     calculations,
     stateDelta: {
@@ -339,6 +352,56 @@ function resolveOrdinaryHit({ bases, input, mss }) {
       runnerMoves: movement.runnerMoves,
     },
     sourceRefs: ["Deadball 2E pp. 26-27"],
+  };
+}
+
+function resolveCriticalHit({ bases, input, mss }) {
+  if (!isIntegerBetween(input.hitRoll, 1, 20)) {
+    return {
+      supported: false,
+      outcomeCode: "invalid-input",
+      errors: [{ field: "hit-roll", message: "The Hit Table roll must be from 1 through 20." }],
+      mss,
+    };
+  }
+
+  const tableResult = hitTableResult(input.hitRoll);
+  const upgraded = tableResult.score === "1B"
+    ? { score: "2B", label: "Critical double", batterBases: 2 }
+    : tableResult.score === "2B"
+      ? { score: "3B", label: "Critical triple", batterBases: 3 }
+      : { score: "HR", label: "Critical home run", batterBases: 4 };
+  const runnerAdvance = Math.min(4, tableResult.runnerAdvance + 1);
+  const movement = moveRunnersOnHit(bases, upgraded.batterBases, runnerAdvance);
+  const calculations = [
+    `Swing ${input.swingRoll} + Pitch Die ${input.pitchRoll} = MSS ${mss}`,
+    `MSS 2-5 -> critical hit`,
+    `Hit Table d20 ${input.hitRoll} -> ${tableResult.label}`,
+    `${tableResult.score} increases one level to ${upgraded.score}; existing runners take one extra base`,
+  ];
+  if (tableResult.defensive) {
+    calculations.push("Critical hit cannot be taken away by defense -> no DEF roll");
+  }
+
+  return {
+    supported: true,
+    outcomeCode: upgraded.score === "HR" ? "critical-home-run" : upgraded.score === "3B" ? "critical-triple" : "critical-double",
+    classification: "critical-hit",
+    mss,
+    hitRoll: input.hitRoll,
+    score: upgraded.score,
+    summary: `${upgraded.label}.`,
+    detail: movement.runnerMoves.join("; ") + ".",
+    calculations,
+    stateDelta: {
+      outsBefore: input.outs,
+      outsAfter: input.outs,
+      outsAdded: 0,
+      runsScored: movement.runsScored,
+      bases: movement.bases,
+      runnerMoves: movement.runnerMoves,
+    },
+    sourceRefs: ["Deadball 2E pp. 27-28"],
   };
 }
 
@@ -368,7 +431,7 @@ function resolveWalk({ bases, bt, input, mss }) {
     classification: "walk",
     mss,
     score: "BB",
-    summary: "Walk; batter advances to first.",
+    summary: "Walk.",
     detail: runnerMoves.join("; ") + ".",
     calculations: [
       `Swing ${input.swingRoll} + Pitch Die ${input.pitchRoll} = MSS ${mss}`,
@@ -415,12 +478,96 @@ function advanceAllOnError(bases) {
 function resolveSuccessfulOut({ bases, mss, outs, play }) {
   const nextBases = copyBases(bases);
   const runnerMoves = [];
-  let outsAdded = 1;
+  let requestedOuts = 1;
   let runsScored = 0;
-  let batterSafe = false;
+  let outcomeCode = play.kind;
+  let score = play.score;
 
-  if (play.kind === "popup") {
-    if (outs < 2 && mss < 70) {
+  if (outs === 2) {
+    const outsAfter = 3;
+    return {
+      outcomeCode,
+      score,
+      summary: `${play.kind === "strikeout" ? "Strikeout" : play.kind === "popup" ? `Pop-up to ${play.position}` : `Groundball to ${play.position}`} — third out.`,
+      stateDelta: {
+        outsBefore: outs,
+        outsAfter,
+        outsAdded: 1,
+        runsScored: 0,
+        bases: { first: false, second: false, third: false },
+        runnerMoves: [],
+      },
+    };
+  }
+
+  if (play.kind === "strikeout") {
+    if (Object.values(bases).some(Boolean)) runnerMoves.push("Runners hold");
+  } else if (play.kind === "popup") {
+    if (mss < 70) {
+      if (bases.third) {
+        nextBases.third = false;
+        runsScored += 1;
+        runnerMoves.push("Runner on third scores");
+      }
+      if (bases.second) {
+        nextBases.second = false;
+        nextBases.third = true;
+        runnerMoves.push("Runner on second to third");
+      }
+      if (bases.first) runnerMoves.push("Runner on first holds");
+    } else {
+      if (bases.first) runnerMoves.push("Runner on first holds");
+      if (bases.second) runnerMoves.push("Runner on second holds");
+      if (bases.third) runnerMoves.push("Runner on third holds");
+    }
+  } else {
+    const isRightSide = play.position === "1B" || play.position === "2B";
+
+    if (mss >= 100 && bases.first && bases.second && outs === 0) {
+      requestedOuts = 3;
+      outcomeCode = "triple-play";
+      score = "TP";
+      runnerMoves.push("Runners on first and second and batter out on triple play");
+    } else if (mss >= 70 && bases.first) {
+      requestedOuts = 2;
+      outcomeCode = "double-play";
+      score = "DP";
+      nextBases.first = false;
+      runnerMoves.push("Runner on first and batter out on double play");
+    } else if (mss >= 50 && bases.first) {
+      outcomeCode = "fielders-choice";
+      score = "FC";
+      nextBases.first = true;
+      runnerMoves.push("Runner on first out at second");
+      runnerMoves.push("Batter safe at first on fielder's choice");
+
+      if (isRightSide) {
+        if (bases.third) {
+          nextBases.third = false;
+          runsScored += 1;
+          runnerMoves.push("Runner on third scores");
+        }
+        if (bases.second) {
+          nextBases.second = false;
+          nextBases.third = true;
+          runnerMoves.push("Runner on second to third");
+        }
+      }
+    } else if (mss < 50 && bases.first) {
+      nextBases.first = false;
+      if (bases.third) {
+        nextBases.third = false;
+        runsScored += 1;
+        runnerMoves.push("Runner on third scores");
+      }
+      if (bases.second) {
+        nextBases.second = false;
+        nextBases.third = true;
+        runnerMoves.push("Runner on second to third");
+      }
+      nextBases.second = true;
+      runnerMoves.push("Runner on first to second");
+    } else if (isRightSide && mss < 70) {
       if (bases.third) {
         nextBases.third = false;
         runsScored += 1;
@@ -432,50 +579,33 @@ function resolveSuccessfulOut({ bases, mss, outs, play }) {
         runnerMoves.push("Runner on second to third");
       }
     }
-    if (bases.first) runnerMoves.push("Runner on first holds");
-  } else if (bases.first && mss < 50) {
-    nextBases.first = false;
-    nextBases.second = true;
-    runnerMoves.push("Runner on first to second");
-  } else if (bases.first && mss <= 69) {
-    nextBases.first = true;
-    batterSafe = true;
-    runnerMoves.push("Runner on first out at second");
-    runnerMoves.push("Batter safe at first on fielder's choice");
-  } else if (bases.first && mss >= 70) {
-    nextBases.first = false;
-    outsAdded = 2;
-    runnerMoves.push("Runner on first and batter out on double play");
   }
 
-  const isRightSide = play.position === "1B" || play.position === "2B";
-  if (play.kind === "groundball" && isRightSide && outs < 2 && mss < 70) {
-    if (bases.third) {
-      nextBases.third = false;
-      runsScored += 1;
-      runnerMoves.push("Runner on third scores");
-    }
-    if (bases.second) {
-      nextBases.second = false;
-      nextBases.third = true;
-      runnerMoves.push("Runner on second to third");
-    }
-  }
-
-  const outsAfter = Math.min(3, outs + outsAdded);
+  const outsAdded = Math.min(requestedOuts, 3 - outs);
+  const outsAfter = outs + outsAdded;
   if (outsAfter === 3) {
     nextBases.first = false;
     nextBases.second = false;
     nextBases.third = false;
   }
 
-  const playLabel = play.kind === "popup" ? `Pop-up to ${play.position}` : `Groundball to ${play.position}`;
-  const movementLabel = runnerMoves.length > 0 ? runnerMoves.join("; ") : "runners hold";
+  const playLabel = play.kind === "strikeout"
+    ? "Strikeout"
+    : play.kind === "popup"
+      ? `Pop-up to ${play.position}`
+      : `Groundball to ${play.position}`;
+  const rulingLabel = outcomeCode === "fielders-choice"
+    ? `Fielder's choice to ${play.position}`
+    : outcomeCode === "double-play"
+      ? `Double play to ${play.position}`
+      : outcomeCode === "triple-play"
+        ? `Triple play to ${play.position}`
+        : playLabel;
 
   return {
-    outcomeCode: batterSafe ? "fielders-choice" : play.kind,
-    score: batterSafe ? "FC" : play.score,
-    summary: `${playLabel}; ${movementLabel}.`,
+    outcomeCode,
+    score,
+    summary: `${rulingLabel}.`,
     stateDelta: {
       outsBefore: outs,
       outsAfter,
@@ -484,6 +614,42 @@ function resolveSuccessfulOut({ bases, mss, outs, play }) {
       bases: nextBases,
       runnerMoves,
     },
+  };
+}
+
+function resolveOut({ bases, classification, input, mss }) {
+  const lastDigit = Math.abs(mss) % 10;
+  const play = OUT_PLAYS[lastDigit];
+  const calculations = [
+    `Swing ${input.swingRoll} + Pitch Die ${input.pitchRoll} = MSS ${mss}`,
+    `MSS ${mss} -> ${classification === "productive-out" ? "productive-out band" : "out band"}`,
+    `Last digit ${lastDigit} -> ${play.kind === "strikeout" ? "strikeout" : play.kind === "popup" ? `pop-up to ${play.position}` : `groundball to ${play.position}`}`,
+  ];
+  const resolved = resolveSuccessfulOut({ bases, mss, outs: input.outs, play });
+
+  if (resolved.outcomeCode === "fielders-choice") {
+    calculations.push("MSS 50-69 with a runner on first -> fielder's choice");
+  } else if (resolved.outcomeCode === "double-play") {
+    calculations.push("MSS 70+ on the infield with a runner on first -> double play");
+  } else if (resolved.outcomeCode === "triple-play") {
+    calculations.push("MSS 100+ on the infield with runners on first and second and no outs -> triple play");
+  } else if (mss < 70 && resolved.stateDelta.runnerMoves.length > 0) {
+    calculations.push("MSS below 70 -> apply eligible productive-out advancement");
+  } else {
+    calculations.push("No eligible runner advancement");
+  }
+
+  return {
+    supported: true,
+    classification,
+    mss,
+    play,
+    ...resolved,
+    detail: resolved.stateDelta.runnerMoves.length > 0
+      ? resolved.stateDelta.runnerMoves.join("; ") + "."
+      : "No runners advance.",
+    calculations,
+    sourceRefs: ["Deadball 2E pp. 27, 29-30"],
   };
 }
 
@@ -501,8 +667,16 @@ export function resolveAtBat(input) {
     return resolveOrdinaryHit({ bases, input, mss });
   }
 
+  if (classification === "critical-hit") {
+    return resolveCriticalHit({ bases, input, mss });
+  }
+
   if (classification === "walk") {
     return resolveWalk({ bases, bt: input.bt, input, mss });
+  }
+
+  if (classification === "productive-out" || classification === "out") {
+    return resolveOut({ bases, classification, input, mss });
   }
 
   if (classification !== "possible-error") {
@@ -545,7 +719,7 @@ export function resolveAtBat(input) {
       play,
       modifiedDef,
       score: `E-${play.number}`,
-      summary: `Error by ${play.fielder}; batter safe at first.`,
+      summary: `Error by ${play.fielder}.`,
       detail: errorState.runnerMoves.join("; ") + ".",
       calculations,
       stateDelta: {

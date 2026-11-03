@@ -79,7 +79,7 @@ Date: 2026-11-02
 
 ## RD-005 — Defensive Hit Table checks
 
-Status: **Implemented; awaiting acceptance**
+Status: **Approved**
 Date: 2026-11-02
 
 ### Verified source rules
@@ -95,4 +95,45 @@ Date: 2026-11-02
 - Modified DEF 10-11 reduces a double to a standard single. A single remains a single, following the worked example; it is removed only at modified DEF 12+.
 - Modified DEF 12+ adds one out and holds existing runners. When it is the third out, the suggested next context clears the bases.
 - The result is displayed as **OUT** rather than inventing a detailed scorekeeping sequence that the Defense Table does not supply.
+
+## RD-006 — Productive outs and ordinary outs
+
+Status: **Approved**
+Date: 2026-11-02
+
+### Verified source rules
+
+- Page 27: The final MSS digit selects the Out Table result. MSS below 70 may allow advancement on a ball to the outfield or right side; MSS 50-69 can produce a fielder's choice; MSS 70+ can produce an infield double play; MSS 100+ can produce an infield triple play.
+- Page 29 Out Table: endings 0-2 are strikeouts, 3-6 are infield groundballs, and 7-9 are outfield pop-ups.
+- Page 30: With fewer than two outs and MSS below 70, runners on second or third may advance one base on a ball to the outfield or right side. With a runner on first, MSS below 50 advances that runner while the batter is out; 50-69 is a fielder's choice; 70+ is a double play.
+- Page 30: With runners on first and second, no outs, an infield MSS of 100+ is a triple play.
+
+### Implementation decisions
+
+- Strikeouts add one out and hold all runners.
+- Eligible outfield and right-side productive outs automatically suggest the source-rule advancement; the user can retain paper authority through the existing override flow.
+- On an MSS below 50 groundball with an occupied chain beginning at first, runners advance together as needed to maintain a legal base state. A loaded chain therefore scores the runner from third while the batter is retired.
+- A third-out result clears the suggested bases and suppresses runner advancement or runs.
+- Double- and triple-play outs are capped by the outs remaining in the inning.
+- When an outfield out does not permit advancement, the explanation names every occupied-base runner as holding rather than mentioning only the runner on first.
+- Result presentation uses a consistent hierarchy: the large heading names the play, while the smaller detail line lists batter and runner consequences.
+
+## RD-007 — Neutral-trait critical hits
+
+Status: **Implemented; awaiting acceptance**
+Date: 2026-11-02
+
+### Verified source rules
+
+- Page 27: MSS 2-5 is a critical hit. Roll on the Hit Table and increase the hit one level: single to double, double to triple, and triple to home run.
+- Page 28: Existing runners always take one extra base on a critical hit, and defense cannot take away the hit.
+- Page 28 worked example: Hit Table 6 normally gives a defensive single to shortstop; on a critical hit it becomes a double and no DEF roll is made.
+- Page 28: Bonus batting traits apply before the critical-hit upgrade.
+
+### Implementation decisions
+
+- This increment supports neutral batting traits only. P+, P++, S+, and other batting-trait transformations remain outside the slice because they must be applied before the critical upgrade.
+- A critical single becomes a double, a critical double becomes a triple, and a Hit Table home run remains a home run.
+- Existing runners receive the Hit Table entry's ordinary advancement plus one base, capped at scoring from any occupied base.
+- DEF-marked Hit Table entries retain their named underlying result in the explanation but never request or apply a DEF roll.
 
