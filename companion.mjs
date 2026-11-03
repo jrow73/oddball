@@ -60,7 +60,7 @@ function showErrors(errors) {
 
 function setManualDiceAvailability() {
   const manual = selectedDiceMode() === "manual";
-  for (const id of ["swing-roll", "pitch-roll", "hit-roll", "def-roll"]) {
+  for (const id of ["swing-roll", "pitch-roll", "hit-roll", "def-roll", "oddity-roll-one", "oddity-roll-two"]) {
     document.querySelector(`#${id}`).disabled = !manual;
   }
   document.querySelector("#dice-help").textContent = manual
@@ -88,6 +88,7 @@ function collectInput() {
       swingRoll + pitchRoll,
       numberValue("bt"),
       numberValue("obt"),
+      document.querySelector("#oddities-enabled").checked,
     );
     if (classification === "ordinary-hit" || classification === "critical-hit") {
       const hitRoll = rollDie(20);
@@ -98,6 +99,10 @@ function collectInput() {
     }
     if (classification === "possible-error") {
       document.querySelector("#def-roll").value = String(rollDie(12));
+    }
+    if (classification === "oddity") {
+      document.querySelector("#oddity-roll-one").value = String(rollDie(10));
+      document.querySelector("#oddity-roll-two").value = String(rollDie(10));
     }
   }
 
@@ -117,6 +122,9 @@ function collectInput() {
     hitterTrait: document.querySelector("#hitter-trait").value,
     defRoll: numberValue("def-roll"),
     defModifier: numberValue("def-modifier"),
+    odditiesEnabled: document.querySelector("#oddities-enabled").checked,
+    oddityRollOne: numberValue("oddity-roll-one"),
+    oddityRollTwo: numberValue("oddity-roll-two"),
   };
 }
 

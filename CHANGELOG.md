@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-11-03 — Play-state oddities increment
+
+### Added
+
+- Optional Oddities toggle and manual or automatic 2d10 rolls
+- Hit by pitch, wild pitch, passed ball, pitcher error, balk, and catcher interference resolution
+- Clear continuation guidance for oddities that do not finish the at-bat
+- Identification and manual-handling boundary for oddities requiring broader game state
+- Eight focused tests for the optional toggle, supported outcomes, unsupported outcomes, and validation
+- Rules decision RD-009 documenting the first Oddities Table boundary
+
+### Changed
+
+- Marked the Hit Table batting-trait increment as approved
+
 ## 2026-11-02 — Hit Table batting-trait increment
 
 ### Added

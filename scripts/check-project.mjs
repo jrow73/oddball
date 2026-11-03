@@ -52,10 +52,10 @@ for (const expected of [
 
 for (const expected of [
   "Next rule path active",
-  "Replay trait-modified hits",
-  "MSS 2",
-  "inside-the-park home run",
-  "adjusted 15",
+  "Replay a play-state oddity",
+  "MSS 99",
+  "wild pitch",
+  "pitcher error",
   'href="./prototype.css"',
   'src="./companion.mjs"',
 ]) {

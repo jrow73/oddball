@@ -16,7 +16,7 @@
         <span class="brand-mark" aria-hidden="true">O</span>
         <span>ODDBALL</span>
       </a>
-      <span class="build-label">Vertical slice 0.8</span>
+      <span class="build-label">Vertical slice 0.9</span>
     </header>
 
     <main id="prototype-main" class="prototype-shell">
@@ -26,8 +26,8 @@
           <h1 id="prototype-title">Resolve one play.</h1>
           <p>
             Common Modern-rules plate appearances now resolve through Hit Table batting
-            traits, critical and ordinary hits, walks, possible errors, productive outs,
-            and ordinary outs. Oddities remain outside this slice.
+            traits, hits, walks, possible errors, outs, and six play-state oddities.
+            Oddities needing broader game state are identified for manual handling.
           </p>
         </div>
         <div class="prototype-notice live" role="note">
@@ -167,6 +167,10 @@
                 </label>
               </div>
               <p id="dice-help" class="field-hint"></p>
+              <label class="optional-rule">
+                <input id="oddities-enabled" type="checkbox" checked />
+                <span><strong>Use optional Oddities</strong><small>MSS 1 or 99 rolls 2d10</small></span>
+              </label>
             </fieldset>
 
             <div class="dice-grid">
@@ -211,6 +215,16 @@
                   </select>
                 </label>
               </div>
+            </div>
+
+            <div class="oddity-rolls">
+              <div>
+                <p class="panel-kicker">When MSS is 1 or 99 and Oddities are enabled</p>
+                <strong>Oddities Table</strong>
+              </div>
+              <label class="compact-field">d10 <input id="oddity-roll-one" aria-label="First Oddities d10" type="number" value="6" min="1" max="10" /></label>
+              <span class="operator" aria-hidden="true">+</span>
+              <label class="compact-field">d10 <input id="oddity-roll-two" aria-label="Second Oddities d10" type="number" value="6" min="1" max="10" /></label>
             </div>
 
             <button class="resolve-button" type="submit">
@@ -274,13 +288,14 @@
 
       <section class="prototype-review" aria-labelledby="review-title">
         <p class="eyebrow">Acceptance fixtures</p>
-        <h2 id="review-title">Replay trait-modified hits</h2>
+        <h2 id="review-title">Replay a play-state oddity</h2>
         <p>
-          Select <strong>Enter my dice</strong>, choose d4, S+, and leave a runner on
-          first. Swing 1 plus Pitch Die 1 gives MSS 2. Hit Table 2 becomes an S+ triple
-          before the critical upgrade, producing an inside-the-park home run with no
-          DEF roll. For a power check, use an ordinary hit with P+ and Hit Table 14;
-          the adjusted 15 becomes a defensive double to left.
+          Keep <strong>Use optional Oddities</strong> selected and choose manual dice.
+          With the bases loaded, Swing 91 plus a d8 Pitch Die roll of 8 gives MSS 99.
+          Oddities rolls of 6 and 6 total 12: a wild pitch scores the runner from third,
+          advances the other runners one base, and leaves the at-bat in progress.
+          Rolls of 9 and 9 total 18 instead: a pitcher error advances every runner and
+          puts the batter on first.
         </p>
         <a class="button button-secondary" href="./index.html">Return to project foundation</a>
       </section>

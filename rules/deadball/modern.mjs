@@ -36,6 +36,28 @@ const OUT_PLAYS = Object.freeze({
   9: { position: "RF", fielder: "right fielder", kind: "popup", score: "F-9" },
 });
 
+const ODDITIES = Object.freeze({
+  2: "Fan interference",
+  3: "Animal on field",
+  4: "Rain delay",
+  5: "Fielder appears injured",
+  6: "Pitcher appears injured",
+  7: "TOOTBLAN",
+  8: "Pick-off",
+  9: "Call blown at first",
+  10: "Call blown at home plate",
+  11: "Hit by pitch",
+  12: "Wild pitch",
+  13: "Pitcher distracted",
+  14: "Dropped third strike",
+  15: "Passed ball",
+  16: "Current batter appears injured",
+  17: "Previous batter appears injured",
+  18: "Pitcher error",
+  19: "Balk",
+  20: "Catcher interference",
+});
+
 function isIntegerBetween(value, minimum, maximum) {
   return Number.isInteger(value) && value >= minimum && value <= maximum;
 }
@@ -86,9 +108,9 @@ function validateCoreInput(input) {
   return errors;
 }
 
-export function classifyMss(mss, bt, obt) {
-  if (mss === 1) return "oddity";
-  if (mss === 99) return "oddity";
+export function classifyMss(mss, bt, obt, odditiesEnabled = true) {
+  if (odditiesEnabled && mss === 1) return "oddity";
+  if (odditiesEnabled && mss === 99) return "oddity";
   if (mss <= 5) return "critical-hit";
   if (mss <= bt) return "ordinary-hit";
   if (mss <= obt) return "walk";
@@ -111,7 +133,7 @@ function describeUnsupported(classification, mss, bt, obt) {
     classification,
     supported: false,
     summary: `MSS ${mss} is ${labels[classification]}.`,
-    detail: "This build resolves Hit Table batting traits, critical and ordinary hits, walks, possible errors, productive outs, and ordinary outs. Oddities remain outside the slice.",
+    detail: "This build resolves six play-state oddities plus Hit Table batting traits, hits, walks, possible errors, and outs. Oddities requiring broader game state remain outside the slice.",
     calculations: [
       `Swing Score + Pitch Die = MSS ${mss}`,
       `BT ${bt}; OBT ${obt}; walk range ${bt + 1}-${obt}; possible-error range ${obt + 1}-${obt + 5}`,
@@ -551,6 +573,159 @@ function advanceAllOnError(bases) {
   };
 }
 
+function advanceExistingRunnersOneBase(bases) {
+  const runnerMoves = [];
+  let runsScored = 0;
+
+  if (bases.third) {
+    runnerMoves.push("Runner on third scores");
+    runsScored += 1;
+  }
+  if (bases.second) runnerMoves.push("Runner on second to third");
+  if (bases.first) runnerMoves.push("Runner on first to second");
+
+  return {
+    runsScored,
+    bases: {
+      first: false,
+      second: bases.first,
+      third: bases.second,
+    },
+    runnerMoves,
+  };
+}
+
+function awardBatterFirst(bases) {
+  const nextBases = {
+    first: true,
+    second: bases.first || bases.second,
+    third: (bases.first && bases.second) || bases.third,
+  };
+  const runnerMoves = ["Batter to first"];
+  let runsScored = 0;
+
+  if (bases.first) runnerMoves.push("Runner on first to second");
+  if (bases.first && bases.second) runnerMoves.push("Runner on second to third");
+  else if (bases.second) runnerMoves.push("Runner on second holds");
+  if (bases.first && bases.second && bases.third) {
+    runnerMoves.push("Runner on third scores");
+    runsScored = 1;
+  } else if (bases.third) {
+    runnerMoves.push("Runner on third holds");
+  }
+
+  return { bases: nextBases, runnerMoves, runsScored };
+}
+
+function resolveOddity({ bases, input, mss }) {
+  const errors = [];
+  if (!isIntegerBetween(input.oddityRollOne, 1, 10)) {
+    errors.push({ field: "oddity-roll-one", message: "The first Oddities die must be from 1 through 10." });
+  }
+  if (!isIntegerBetween(input.oddityRollTwo, 1, 10)) {
+    errors.push({ field: "oddity-roll-two", message: "The second Oddities die must be from 1 through 10." });
+  }
+  if (errors.length > 0) return { supported: false, outcomeCode: "invalid-input", errors, mss };
+
+  const oddityRoll = input.oddityRollOne + input.oddityRollTwo;
+  const oddity = ODDITIES[oddityRoll];
+  const calculations = [
+    `Swing ${input.swingRoll} + Pitch Die ${input.pitchRoll} = MSS ${mss}`,
+    `Oddities enabled and MSS ${mss} -> roll 2d10`,
+    `Oddities ${input.oddityRollOne} + ${input.oddityRollTwo} = ${oddityRoll} -> ${oddity}`,
+  ];
+
+  if (![11, 12, 15, 18, 19, 20].includes(oddityRoll)) {
+    return {
+      supported: false,
+      outcomeCode: "oddity-needs-game-state",
+      classification: "oddity",
+      mss,
+      oddityRoll,
+      score: "—",
+      summary: `${oddity}.`,
+      detail: "This oddity requires game, roster, injury, strategy, or era state beyond the current Dice Companion slice. Apply it manually from the rulebook.",
+      calculations,
+      sourceRefs: ["Deadball 2E pp. 42-44"],
+    };
+  }
+
+  if (oddityRoll === 11 || oddityRoll === 20) {
+    const movement = awardBatterFirst(bases);
+    const score = oddityRoll === 11 ? "HBP" : "CI";
+    calculations.push(`${oddity} -> batter takes first; forced runners advance`);
+    return {
+      supported: true,
+      outcomeCode: oddityRoll === 11 ? "hit-by-pitch" : "catcher-interference",
+      classification: "oddity",
+      mss,
+      oddityRoll,
+      score,
+      summary: `${oddity}.`,
+      detail: movement.runnerMoves.join("; ") + ".",
+      calculations,
+      stateDelta: {
+        outsBefore: input.outs,
+        outsAfter: input.outs,
+        outsAdded: 0,
+        runsScored: movement.runsScored,
+        bases: movement.bases,
+        runnerMoves: movement.runnerMoves,
+      },
+      sourceRefs: ["Deadball 2E pp. 42-43"],
+    };
+  }
+
+  if (oddityRoll === 18) {
+    const movement = advanceAllOnError(bases);
+    calculations.push("Pitcher error -> batter reaches first and all runners advance one base");
+    return {
+      supported: true,
+      outcomeCode: "pitcher-error",
+      classification: "oddity",
+      mss,
+      oddityRoll,
+      score: "E-1",
+      summary: "Pitcher error.",
+      detail: movement.runnerMoves.join("; ") + ".",
+      calculations,
+      stateDelta: {
+        outsBefore: input.outs,
+        outsAfter: input.outs,
+        outsAdded: 0,
+        runsScored: movement.runsScored,
+        bases: movement.bases,
+        runnerMoves: movement.runnerMoves,
+      },
+      sourceRefs: ["Deadball 2E pp. 42-43"],
+    };
+  }
+
+  const movement = advanceExistingRunnersOneBase(bases);
+  const score = oddityRoll === 12 ? "WP" : oddityRoll === 15 ? "PB" : "BK";
+  calculations.push(`${oddity} -> all existing runners advance one base; at-bat continues`);
+  return {
+    supported: true,
+    outcomeCode: oddityRoll === 12 ? "wild-pitch" : oddityRoll === 15 ? "passed-ball" : "balk",
+    classification: "oddity",
+    mss,
+    oddityRoll,
+    score,
+    summary: `${oddity}.`,
+    detail: `${movement.runnerMoves.length > 0 ? movement.runnerMoves.join("; ") + ". " : "No runners advance. "}At-bat continues; roll a new MSS.`,
+    calculations,
+    stateDelta: {
+      outsBefore: input.outs,
+      outsAfter: input.outs,
+      outsAdded: 0,
+      runsScored: movement.runsScored,
+      bases: movement.bases,
+      runnerMoves: movement.runnerMoves,
+    },
+    sourceRefs: ["Deadball 2E pp. 42-43"],
+  };
+}
+
 function resolveSuccessfulOut({ bases, mss, outs, play }) {
   const nextBases = copyBases(bases);
   const runnerMoves = [];
@@ -737,7 +912,11 @@ export function resolveAtBat(input) {
 
   const bases = copyBases(input.bases);
   const mss = input.swingRoll + input.pitchRoll;
-  const classification = classifyMss(mss, input.bt, input.obt);
+  const classification = classifyMss(mss, input.bt, input.obt, input.odditiesEnabled !== false);
+
+  if (classification === "oddity") {
+    return resolveOddity({ bases, input, mss });
+  }
 
   if (classification === "ordinary-hit") {
     return resolveOrdinaryHit({ bases, input, mss });

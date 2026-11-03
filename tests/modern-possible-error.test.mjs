@@ -474,6 +474,118 @@ test("rejects an unknown hitter trait on a hit path", () => {
   assert.match(result.errors[0].message, /supported hitter trait/);
 });
 
+test("treats MSS 99 as an ordinary out when optional oddities are disabled", () => {
+  const result = resolveAtBat({ ...example, swingRoll: 91, pitchRoll: 8, odditiesEnabled: false });
+
+  assert.equal(classifyMss(99, 31, 42, false), "out");
+  assert.equal(result.classification, "out");
+  assert.equal(result.score, "F-9");
+});
+
+test("resolves a wild-pitch oddity and keeps the at-bat in progress", () => {
+  const result = resolveAtBat({
+    ...example,
+    bases: { first: true, second: true, third: true },
+    swingRoll: 91,
+    pitchRoll: 8,
+    odditiesEnabled: true,
+    oddityRollOne: 6,
+    oddityRollTwo: 6,
+  });
+
+  assert.equal(result.score, "WP");
+  assert.equal(result.stateDelta.runsScored, 1);
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: true, third: true });
+  assert.match(result.detail, /At-bat continues; roll a new MSS/);
+});
+
+test("resolves passed-ball and balk oddities with one-base runner advancement", () => {
+  const passedBall = resolveAtBat({
+    ...example, swingRoll: 91, pitchRoll: 8, odditiesEnabled: true, oddityRollOne: 7, oddityRollTwo: 8,
+  });
+  const balk = resolveAtBat({
+    ...example, swingRoll: 91, pitchRoll: 8, odditiesEnabled: true, oddityRollOne: 9, oddityRollTwo: 10,
+  });
+
+  assert.equal(passedBall.score, "PB");
+  assert.equal(balk.score, "BK");
+  assert.deepEqual(passedBall.stateDelta.bases, { first: false, second: true, third: false });
+  assert.deepEqual(balk.stateDelta.bases, { first: false, second: true, third: false });
+});
+
+test("forces every runner forward on a bases-loaded hit by pitch", () => {
+  const result = resolveAtBat({
+    ...example,
+    bases: { first: true, second: true, third: true },
+    swingRoll: 91,
+    pitchRoll: 8,
+    odditiesEnabled: true,
+    oddityRollOne: 5,
+    oddityRollTwo: 6,
+  });
+
+  assert.equal(result.score, "HBP");
+  assert.equal(result.stateDelta.runsScored, 1);
+  assert.deepEqual(result.stateDelta.bases, { first: true, second: true, third: true });
+});
+
+test("awards first on catcher interference without moving unforced runners", () => {
+  const result = resolveAtBat({
+    ...example,
+    bases: { first: false, second: true, third: true },
+    swingRoll: 91,
+    pitchRoll: 8,
+    odditiesEnabled: true,
+    oddityRollOne: 10,
+    oddityRollTwo: 10,
+  });
+
+  assert.equal(result.score, "CI");
+  assert.equal(result.stateDelta.runsScored, 0);
+  assert.deepEqual(result.stateDelta.bases, { first: true, second: true, third: true });
+});
+
+test("resolves a pitcher error with the batter and every runner advancing", () => {
+  const result = resolveAtBat({
+    ...example,
+    bases: { first: true, second: true, third: true },
+    swingRoll: 91,
+    pitchRoll: 8,
+    odditiesEnabled: true,
+    oddityRollOne: 9,
+    oddityRollTwo: 9,
+  });
+
+  assert.equal(result.score, "E-1");
+  assert.equal(result.stateDelta.runsScored, 1);
+  assert.deepEqual(result.stateDelta.bases, { first: true, second: true, third: true });
+});
+
+test("identifies oddities that need broader game state without inventing a ruling", () => {
+  const result = resolveAtBat({
+    ...example, swingRoll: 91, pitchRoll: 8, odditiesEnabled: true, oddityRollOne: 1, oddityRollTwo: 1,
+  });
+
+  assert.equal(result.supported, false);
+  assert.equal(result.outcomeCode, "oddity-needs-game-state");
+  assert.equal(result.summary, "Fan interference.");
+  assert.match(result.detail, /Apply it manually/);
+});
+
+test("requires two valid d10 results on the oddity path", () => {
+  const result = resolveAtBat({
+    ...example,
+    swingRoll: 91,
+    pitchRoll: 8,
+    odditiesEnabled: true,
+    oddityRollOne: Number.NaN,
+    oddityRollTwo: 6,
+  });
+
+  assert.equal(result.outcomeCode, "invalid-input");
+  assert.match(result.errors[0].message, /first Oddities die/);
+});
+
 test("advances runners on a productive outfield out below MSS 70", () => {
   const result = resolveAtBat({
     ...example,

@@ -139,7 +139,7 @@ Date: 2026-11-02
 
 ## RD-008 — Hit Table batting traits
 
-Status: **Implemented; awaiting acceptance**
+Status: **Approved**
 Date: 2026-11-02
 
 ### Verified source rules
@@ -155,4 +155,25 @@ Date: 2026-11-02
 - Power and weak-hitter modifiers are allowed to produce effective values outside 1-20; the outer Hit Table bands continue naturally, so 21-22 remain home runs and -1-0 remain singles.
 - C+ and S+ special results replace the natural Hit Table entry before any critical upgrade and suppress DEF as directed.
 - An ordinary S+ triple advances every existing runner three bases, which follows the hit's base value because the trait table does not state a separate runner rule for that natural 2.
+
+## RD-009 — Optional oddities: first play-state subset
+
+Status: **Implemented; awaiting acceptance**
+Date: 2026-11-03
+
+### Verified source rules
+
+- Page 42: Oddities are optional. When enabled, MSS 1 or 99 rolls 2d10 on the Oddities Table. If an oddity resolves the at-bat, proceed to the next batter; otherwise roll a new MSS for the current batter.
+- Page 43: Result 11 is hit by pitch and the batter goes to first; 12 is a wild pitch and all runners advance one base; 15 is a passed ball and all runners advance one base.
+- Page 43: Result 18 is a pitcher error, with the batter reaching first and every runner advancing one base; 19 is a balk and all runners advance one base; 20 is catcher interference and the batter goes to first.
+- Pages 43-44: The other Oddities Table results require information or procedures involving game location, Pitch Die parity, recent outs, injuries, stealing, video replay, temporary ratings, or other state beyond the current play form.
+
+### Implementation decisions
+
+- Oddities are controlled by an explicit optional-rule checkbox. Disabling them makes MSS 99 an ordinary out and MSS 1 a critical hit.
+- Hit by pitch and catcher interference use ordinary forced-advancement behavior when the batter is awarded first; unforced runners hold.
+- Wild pitch, passed ball, and balk advance existing runners one base but leave the current at-bat in progress and instruct the user to roll a new MSS.
+- Pitcher error uses score notation E-1 and advances the batter and all existing runners one base.
+- Every other 2d10 total is named from the Oddities Table but deliberately pauses for manual handling rather than inventing missing game state.
+- MSS 1 cannot yet be entered through the current positive Pitch Die controls; support for negative Pitch Die values remains a separate future rules decision.
 
