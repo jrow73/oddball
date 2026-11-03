@@ -120,7 +120,7 @@ Date: 2026-11-02
 
 ## RD-007 — Neutral-trait critical hits
 
-Status: **Implemented; awaiting acceptance**
+Status: **Approved**
 Date: 2026-11-02
 
 ### Verified source rules
@@ -136,4 +136,23 @@ Date: 2026-11-02
 - A critical single becomes a double, a critical double becomes a triple, and a Hit Table home run remains a home run.
 - Existing runners receive the Hit Table entry's ordinary advancement plus one base, capped at scoring from any occupied base.
 - DEF-marked Hit Table entries retain their named underlying result in the explanation but never request or apply a DEF roll.
+
+## RD-008 — Hit Table batting traits
+
+Status: **Implemented; awaiting acceptance**
+Date: 2026-11-02
+
+### Verified source rules
+
+- Page 24: P+ adds 1 and P++ adds 2 to the Hit Table roll; P- subtracts 1 and P-- subtracts 2.
+- Page 24: C+ turns natural Hit Table rolls of 1-2 into doubles with runners advancing two bases and no DEF roll.
+- Page 24: S+ turns a natural 1 into a double with runners advancing two bases, and a natural 2 into a triple; neither result uses DEF.
+- Page 28: Batting traits apply before the critical-hit upgrade. The worked examples turn a critical P+ natural 14 into a triple and a critical S+ natural 2 into an inside-the-park home run.
+
+### Implementation decisions
+
+- The hitter-trait control contains only traits that directly modify the Hit Table. Other hitter traits remain for later rule-specific controls.
+- Power and weak-hitter modifiers are allowed to produce effective values outside 1-20; the outer Hit Table bands continue naturally, so 21-22 remain home runs and -1-0 remain singles.
+- C+ and S+ special results replace the natural Hit Table entry before any critical upgrade and suppress DEF as directed.
+- An ordinary S+ triple advances every existing runner three bases, which follows the hit's base value because the trait table does not state a separate runner rule for that natural 2.
 

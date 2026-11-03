@@ -1,4 +1,4 @@
-import { PITCH_DIE_SIDES, classifyMss, resolveAtBat } from "./rules/deadball/modern.mjs";
+import { PITCH_DIE_SIDES, classifyMss, requiresHitDefense, resolveAtBat } from "./rules/deadball/modern.mjs";
 
 const form = document.querySelector("#companion-form");
 const resultPanel = document.querySelector("#result-panel");
@@ -92,7 +92,7 @@ function collectInput() {
     if (classification === "ordinary-hit" || classification === "critical-hit") {
       const hitRoll = rollDie(20);
       document.querySelector("#hit-roll").value = String(hitRoll);
-      if (classification === "ordinary-hit" && [3, 4, 5, 6, 15, 16, 17].includes(hitRoll)) {
+      if (requiresHitDefense(hitRoll, document.querySelector("#hitter-trait").value, classification)) {
         document.querySelector("#def-roll").value = String(rollDie(12));
       }
     }
@@ -114,6 +114,7 @@ function collectInput() {
     swingRoll: numberValue("swing-roll"),
     pitchRoll: numberValue("pitch-roll"),
     hitRoll: numberValue("hit-roll"),
+    hitterTrait: document.querySelector("#hitter-trait").value,
     defRoll: numberValue("def-roll"),
     defModifier: numberValue("def-modifier"),
   };

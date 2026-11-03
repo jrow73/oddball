@@ -272,6 +272,10 @@ legend,
   gap: 0.6rem;
 }
 
+.trait-field {
+  margin-top: 0.7rem;
+}
+
 input[type="number"],
 input[type="text"],
 textarea,

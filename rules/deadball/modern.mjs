@@ -1,5 +1,15 @@
 export const PITCH_DIE_SIDES = Object.freeze([4, 6, 8, 10, 12, 20]);
 
+const HITTER_TRAITS = Object.freeze({
+  none: { label: "No Hit Table trait", modifier: 0 },
+  "p-plus": { label: "P+", modifier: 1 },
+  "p-plus-plus": { label: "P++", modifier: 2 },
+  "c-plus": { label: "C+", modifier: 0 },
+  "s-plus": { label: "S+", modifier: 0 },
+  "p-minus": { label: "P-", modifier: -1 },
+  "p-minus-minus": { label: "P--", modifier: -2 },
+});
+
 const POSSIBLE_ERROR_PLAYS = Object.freeze({
   0: { position: "SS", fielder: "shortstop", number: 6, kind: "groundball", score: "6-3" },
   1: { position: "SS", fielder: "shortstop", number: 6, kind: "groundball", score: "6-3" },
@@ -101,7 +111,7 @@ function describeUnsupported(classification, mss, bt, obt) {
     classification,
     supported: false,
     summary: `MSS ${mss} is ${labels[classification]}.`,
-    detail: "This build resolves neutral-trait critical hits, ordinary hits, walks, possible errors, productive outs, and ordinary outs. Oddities and batting bonus traits remain outside the slice.",
+    detail: "This build resolves Hit Table batting traits, critical and ordinary hits, walks, possible errors, productive outs, and ordinary outs. Oddities remain outside the slice.",
     calculations: [
       `Swing Score + Pitch Die = MSS ${mss}`,
       `BT ${bt}; OBT ${obt}; walk range ${bt + 1}-${obt}; possible-error range ${obt + 1}-${obt + 5}`,
@@ -185,6 +195,55 @@ function hitTableResult(hitRoll) {
   return { score: "HR", label: "Home run", batterBases: 4, runnerAdvance: 4 };
 }
 
+function traitAdjustedHitTableResult(hitRoll, hitterTrait = "none") {
+  const trait = HITTER_TRAITS[hitterTrait];
+  if (!trait) return null;
+
+  if (hitterTrait === "c-plus" && hitRoll <= 2) {
+    return {
+      tableResult: { score: "2B", label: "C+ double", batterBases: 2, runnerAdvance: 2 },
+      calculation: `Hit Table d20 ${hitRoll} with C+ -> double; runners advance 2; no DEF roll`,
+    };
+  }
+
+  if (hitterTrait === "s-plus" && hitRoll === 1) {
+    return {
+      tableResult: { score: "2B", label: "S+ double", batterBases: 2, runnerAdvance: 2 },
+      calculation: "Hit Table d20 1 with S+ -> double; runners advance 2; no DEF roll",
+    };
+  }
+
+  if (hitterTrait === "s-plus" && hitRoll === 2) {
+    return {
+      tableResult: { score: "3B", label: "S+ triple", batterBases: 3, runnerAdvance: 3 },
+      calculation: "Hit Table d20 2 with S+ -> triple; no DEF roll",
+    };
+  }
+
+  const adjustedRoll = hitRoll + trait.modifier;
+  const tableResult = hitTableResult(adjustedRoll);
+  const calculation = trait.modifier === 0
+    ? `Hit Table d20 ${hitRoll} -> ${tableResult.label}`
+    : `Hit Table d20 ${hitRoll} ${trait.modifier > 0 ? "+" : "-"} ${Math.abs(trait.modifier)} (${trait.label}) = ${adjustedRoll} -> ${tableResult.label}`;
+  return { tableResult, adjustedRoll, calculation };
+}
+
+function validateHitterTrait(input, mss) {
+  const hitterTrait = input.hitterTrait ?? "none";
+  if (HITTER_TRAITS[hitterTrait]) return null;
+  return {
+    supported: false,
+    outcomeCode: "invalid-input",
+    errors: [{ field: "hitter-trait", message: "Choose a supported hitter trait." }],
+    mss,
+  };
+}
+
+export function requiresHitDefense(hitRoll, hitterTrait = "none", classification = "ordinary-hit") {
+  if (classification !== "ordinary-hit" || !isIntegerBetween(hitRoll, 1, 20)) return false;
+  return Boolean(traitAdjustedHitTableResult(hitRoll, hitterTrait)?.tableResult.defensive);
+}
+
 function resolveDefensiveHit({ bases, calculations, input, mss, tableResult }) {
   const defenseErrors = [];
   if (!isIntegerBetween(input.defRoll, 1, 12)) {
@@ -225,7 +284,7 @@ function resolveDefensiveHit({ bases, calculations, input, mss, tableResult }) {
         bases: errorState.bases,
         runnerMoves: errorState.runnerMoves,
       },
-      sourceRefs: ["Deadball 2E pp. 26, 28"],
+      sourceRefs: ["Deadball 2E pp. 24, 26, 28"],
     };
   }
 
@@ -256,7 +315,7 @@ function resolveDefensiveHit({ bases, calculations, input, mss, tableResult }) {
         bases: nextBases,
         runnerMoves,
       },
-      sourceRefs: ["Deadball 2E pp. 26, 28"],
+      sourceRefs: ["Deadball 2E pp. 24, 26, 28"],
     };
   }
 
@@ -298,7 +357,7 @@ function resolveDefensiveHit({ bases, calculations, input, mss, tableResult }) {
       bases: movement.bases,
       runnerMoves: movement.runnerMoves,
     },
-    sourceRefs: ["Deadball 2E pp. 26, 28"],
+    sourceRefs: ["Deadball 2E pp. 24, 26, 28"],
   };
 }
 
@@ -312,11 +371,15 @@ function resolveOrdinaryHit({ bases, input, mss }) {
     };
   }
 
-  const tableResult = hitTableResult(input.hitRoll);
+  const traitError = validateHitterTrait(input, mss);
+  if (traitError) return traitError;
+
+  const adjusted = traitAdjustedHitTableResult(input.hitRoll, input.hitterTrait ?? "none");
+  const tableResult = adjusted.tableResult;
   const calculations = [
     `Swing ${input.swingRoll} + Pitch Die ${input.pitchRoll} = MSS ${mss}`,
     `MSS 6 through BT ${input.bt} -> ordinary hit`,
-    `Hit Table d20 ${input.hitRoll} -> ${tableResult.label}`,
+    adjusted.calculation,
   ];
 
   if (tableResult.defensive) {
@@ -335,7 +398,7 @@ function resolveOrdinaryHit({ bases, input, mss }) {
 
   return {
     supported: true,
-    outcomeCode: tableResult.score === "HR" ? "home-run" : tableResult.score === "2B" ? "double" : "single",
+    outcomeCode: tableResult.score === "HR" ? "home-run" : tableResult.score === "3B" ? "triple" : tableResult.score === "2B" ? "double" : "single",
     classification: "ordinary-hit",
     mss,
     hitRoll: input.hitRoll,
@@ -351,7 +414,7 @@ function resolveOrdinaryHit({ bases, input, mss }) {
       bases: movement.bases,
       runnerMoves: movement.runnerMoves,
     },
-    sourceRefs: ["Deadball 2E pp. 26-27"],
+    sourceRefs: ["Deadball 2E pp. 24, 26-28"],
   };
 }
 
@@ -365,20 +428,33 @@ function resolveCriticalHit({ bases, input, mss }) {
     };
   }
 
-  const tableResult = hitTableResult(input.hitRoll);
+  const traitError = validateHitterTrait(input, mss);
+  if (traitError) return traitError;
+
+  const hitterTrait = input.hitterTrait ?? "none";
+  const adjusted = traitAdjustedHitTableResult(input.hitRoll, hitterTrait);
+  const tableResult = adjusted.tableResult;
+  const isSpeedyInsideThePark = hitterTrait === "s-plus" && input.hitRoll === 2;
   const upgraded = tableResult.score === "1B"
     ? { score: "2B", label: "Critical double", batterBases: 2 }
     : tableResult.score === "2B"
       ? { score: "3B", label: "Critical triple", batterBases: 3 }
-      : { score: "HR", label: "Critical home run", batterBases: 4 };
+      : {
+          score: "HR",
+          label: isSpeedyInsideThePark ? "Inside-the-park home run" : "Critical home run",
+          batterBases: 4,
+        };
   const runnerAdvance = Math.min(4, tableResult.runnerAdvance + 1);
   const movement = moveRunnersOnHit(bases, upgraded.batterBases, runnerAdvance);
   const calculations = [
     `Swing ${input.swingRoll} + Pitch Die ${input.pitchRoll} = MSS ${mss}`,
     `MSS 2-5 -> critical hit`,
-    `Hit Table d20 ${input.hitRoll} -> ${tableResult.label}`,
+    adjusted.calculation,
     `${tableResult.score} increases one level to ${upgraded.score}; existing runners take one extra base`,
   ];
+  if (isSpeedyInsideThePark) {
+    calculations.push("S+ natural 2 on a critical hit -> inside-the-park home run");
+  }
   if (tableResult.defensive) {
     calculations.push("Critical hit cannot be taken away by defense -> no DEF roll");
   }
@@ -401,7 +477,7 @@ function resolveCriticalHit({ bases, input, mss }) {
       bases: movement.bases,
       runnerMoves: movement.runnerMoves,
     },
-    sourceRefs: ["Deadball 2E pp. 27-28"],
+    sourceRefs: ["Deadball 2E pp. 24, 27-28"],
   };
 }
 

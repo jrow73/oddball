@@ -36,7 +36,7 @@ Deliverables:
 
 ## Milestone 2 — Dice Companion vertical slice
 
-Status: **Hit, walk, possible-error, defensive-hit, and common-out increments accepted; neutral-trait critical-hit increment awaiting user acceptance**
+Status: **Hit, walk, possible-error, defensive-hit, common-out, and neutral critical-hit increments accepted; Hit Table batting-trait increment awaiting user acceptance**
 
 Goal: resolve a deliberately limited set of Modern-rule plate appearances end to end.
 
@@ -53,8 +53,9 @@ Implemented components:
 - Defensive Hit Table checks with D+/D- modifiers
 - Strikeouts, productive outs, fielder's choices, double plays, and triple plays
 - Neutral-trait critical hits with upgraded Hit Table results, extra runner advancement, and no DEF check
+- P+/P++, P-/P--, C+, and S+ Hit Table transformations, including critical-hit ordering
 
-Acceptance examples now cover the documented MSS 47 possible-error scenario, a bases-loaded walk, ordinary and defensive hits, a sacrifice-style productive out, a fielder's choice, double/triple plays, and a critical hit based on a DEF-marked Hit Table entry.
+Acceptance examples now cover the documented MSS 47 possible-error scenario, a bases-loaded walk, ordinary and defensive hits, a sacrifice-style productive out, a fielder's choice, double/triple plays, a critical hit based on a DEF-marked entry, and trait-modified critical and ordinary hits.
 
 ## Milestone 3 — Complete standalone Dice Companion
 

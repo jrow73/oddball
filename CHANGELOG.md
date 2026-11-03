@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-11-02 — Hit Table batting-trait increment
+
+### Added
+
+- Hitter-trait control for P+, P++, P-, P--, C+, and S+
+- Power and weak-hitter adjustment before Hit Table lookup
+- C+ doubles and S+ doubles/triples with their no-DEF behavior
+- Critical-trait ordering, including the S+ inside-the-park home run
+- Seven focused tests for ordinary, defensive, and critical trait paths
+- Rules decision RD-008 documenting source rules and boundary interpretations
+
+### Changed
+
+- Automatic mode now determines whether DEF is needed after applying the hitter trait
+- Marked the neutral-trait critical-hit increment as approved
+
 ## 2026-11-02 — Neutral-trait critical-hit increment
 
 ### Added

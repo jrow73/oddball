@@ -52,10 +52,10 @@ for (const expected of [
 
 for (const expected of [
   "Next rule path active",
-  "Replay a neutral-trait critical hit",
+  "Replay trait-modified hits",
   "MSS 2",
-  "upgrades it to a double",
-  "requires no DEF roll",
+  "inside-the-park home run",
+  "adjusted 15",
   'href="./prototype.css"',
   'src="./companion.mjs"',
 ]) {

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { classifyMss, resolveAtBat } from "../rules/deadball/modern.mjs";
+import { classifyMss, requiresHitDefense, resolveAtBat } from "../rules/deadball/modern.mjs";
 
 const example = {
   outs: 0,
@@ -368,6 +368,110 @@ test("requires a valid Hit Table roll for a critical hit", () => {
 
   assert.equal(result.outcomeCode, "invalid-input");
   assert.match(result.errors[0].message, /Hit Table roll/);
+});
+
+test("applies P+ before resolving an ordinary defensive hit", () => {
+  const result = resolveAtBat({
+    ...example,
+    bases: { first: false, second: false, third: false },
+    swingRoll: 20,
+    hitRoll: 14,
+    hitterTrait: "p-plus",
+    defRoll: 5,
+    defModifier: 0,
+  });
+
+  assert.equal(result.score, "2B");
+  assert.equal(result.play.position, "LF");
+  assert.match(result.calculations[2], /14 \+ 1 \(P\+\) = 15/);
+  assert.equal(requiresHitDefense(14, "p-plus"), true);
+});
+
+test("applies P- before looking up the Hit Table result", () => {
+  const result = resolveAtBat({
+    ...example,
+    swingRoll: 20,
+    hitRoll: 19,
+    hitterTrait: "p-minus",
+  });
+
+  assert.equal(result.score, "2B");
+  assert.equal(result.stateDelta.runsScored, 1);
+  assert.match(result.calculations[2], /19 - 1 \(P-\) = 18/);
+});
+
+test("turns a natural 1 or 2 into a C+ double without DEF", () => {
+  const result = resolveAtBat({
+    ...example,
+    swingRoll: 20,
+    hitRoll: 1,
+    hitterTrait: "c-plus",
+    defRoll: Number.NaN,
+  });
+
+  assert.equal(result.score, "2B");
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: true, third: true });
+  assert.equal(requiresHitDefense(1, "c-plus"), false);
+});
+
+test("turns a natural 2 into an S+ triple without DEF", () => {
+  const result = resolveAtBat({
+    ...example,
+    swingRoll: 20,
+    hitRoll: 2,
+    hitterTrait: "s-plus",
+    defRoll: Number.NaN,
+  });
+
+  assert.equal(result.score, "3B");
+  assert.equal(result.outcomeCode, "triple");
+  assert.equal(result.stateDelta.runsScored, 1);
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: false, third: true });
+});
+
+test("applies P+ before upgrading a critical hit", () => {
+  const result = resolveAtBat({
+    ...example,
+    pitchDieSides: 4,
+    swingRoll: 1,
+    pitchRoll: 1,
+    hitRoll: 14,
+    hitterTrait: "p-plus",
+    defRoll: Number.NaN,
+  });
+
+  assert.equal(result.score, "3B");
+  assert.match(result.calculations[2], /14 \+ 1 \(P\+\) = 15/);
+  assert.match(result.calculations.at(-1), /no DEF roll/);
+});
+
+test("resolves an S+ natural 2 critical hit as an inside-the-park home run", () => {
+  const result = resolveAtBat({
+    ...example,
+    bases: { first: true, second: true, third: true },
+    pitchDieSides: 4,
+    swingRoll: 1,
+    pitchRoll: 1,
+    hitRoll: 2,
+    hitterTrait: "s-plus",
+    defRoll: Number.NaN,
+  });
+
+  assert.equal(result.score, "HR");
+  assert.equal(result.summary, "Inside-the-park home run.");
+  assert.equal(result.stateDelta.runsScored, 4);
+  assert.match(result.calculations[4], /inside-the-park home run/);
+});
+
+test("rejects an unknown hitter trait on a hit path", () => {
+  const result = resolveAtBat({
+    ...example,
+    swingRoll: 20,
+    hitterTrait: "unknown",
+  });
+
+  assert.equal(result.outcomeCode, "invalid-input");
+  assert.match(result.errors[0].message, /supported hitter trait/);
 });
 
 test("advances runners on a productive outfield out below MSS 70", () => {
