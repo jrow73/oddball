@@ -16,7 +16,7 @@
         <span class="brand-mark" aria-hidden="true">O</span>
         <span>ODDBALL</span>
       </a>
-      <span class="build-label">Vertical slice 0.14.1</span>
+      <span class="build-label">Vertical slice 0.15</span>
     </header>
 
     <main id="prototype-main" class="prototype-shell">
@@ -89,6 +89,21 @@
               </div>
             </div>
 
+            <fieldset class="dice-mode play-type">
+              <legend>What are you resolving?</legend>
+              <div class="mode-options">
+                <label>
+                  <input type="radio" name="play-type" value="at-bat" checked />
+                  <span><strong>Plate appearance</strong><small>Resolve the current batter</small></span>
+                </label>
+                <label>
+                  <input type="radio" name="play-type" value="steal" />
+                  <span><strong>Stolen base</strong><small>Attempt second or third</small></span>
+                </label>
+              </div>
+            </fieldset>
+
+            <div id="at-bat-participants">
             <div class="participant-grid">
               <section class="participant-card" aria-labelledby="batter-title">
                 <div class="participant-heading">
@@ -208,6 +223,7 @@
                 <p class="field-hint">Stamina and fatigue effects remain outside this slice.</p>
               </section>
             </div>
+            </div>
 
             <fieldset class="dice-mode">
               <legend>How are you rolling?</legend>
@@ -222,12 +238,50 @@
                 </label>
               </div>
               <p id="dice-help" class="field-hint"></p>
-              <label class="optional-rule">
+              <label id="oddities-option" class="optional-rule">
                 <input id="oddities-enabled" type="checkbox" checked />
                 <span><strong>Use optional Oddities</strong><small>MSS 1 or 99 rolls 2d10</small></span>
               </label>
             </fieldset>
 
+            <section id="steal-controls" class="steal-controls" aria-labelledby="steal-title" hidden>
+              <div class="steal-heading">
+                <p class="panel-kicker">Between pitches</p>
+                <h3 id="steal-title">Stolen-base attempt</h3>
+                <p>Use the occupied bases in Play context. This increment supports one runner stealing second or third.</p>
+              </div>
+              <div class="steal-options">
+                <label class="field-label">
+                  Target
+                  <select id="steal-target">
+                    <option value="second" selected>Second base</option>
+                    <option value="third">Third base</option>
+                  </select>
+                </label>
+                <label class="field-label">
+                  Runner trait
+                  <select id="steal-runner-trait">
+                    <option value="none" selected>None</option>
+                    <option value="s-plus">S+ Speedy</option>
+                    <option value="s-minus">S− Slow</option>
+                  </select>
+                </label>
+                <label class="field-label">
+                  Catcher trait
+                  <select id="catcher-steal-modifier">
+                    <option value="0" selected>None</option>
+                    <option value="-1">D+ Great Defender</option>
+                    <option value="1">D− Poor Defender</option>
+                  </select>
+                </label>
+              </div>
+              <label class="steal-roll-card">
+                <span><span class="panel-kicker">Base Stealing</span><strong>d8 roll</strong></span>
+                <input id="steal-roll" aria-label="Stolen-base d8" type="number" value="4" min="1" max="8" />
+              </label>
+            </section>
+
+            <div id="at-bat-rolls">
             <div class="dice-grid">
               <label class="die-input">
                 <span>Swing</span>
@@ -281,9 +335,10 @@
               <span class="operator" aria-hidden="true">+</span>
               <label class="compact-field">d10 <input id="oddity-roll-two" aria-label="Second Oddities d10" type="number" value="6" min="1" max="10" /></label>
             </div>
+            </div>
 
             <button class="resolve-button" type="submit">
-              Resolve play <span>Common at-bat slice</span>
+              Resolve play <span id="resolve-mode-label">Common at-bat slice</span>
             </button>
           </section>
 
@@ -343,18 +398,17 @@
 
       <section class="prototype-review" aria-labelledby="review-title">
         <p class="eyebrow">Acceptance fixtures</p>
-        <h2 id="review-title">Replay the same-handed matchup fixture</h2>
+        <h2 id="review-title">Replay the stolen-base fixture</h2>
         <p>
-          Choose manual dice and clear the bases. Set the batter and pitcher to
-          right-handed, keep the pitcher as a starter, and select a base Pitch Die of
-          −d4. The same-handed matchup raises the current-play die to d4. Enter Swing
-          35 and a Pitch Die face of 4 to produce MSS 39: a walk with the batter taking
-          first.
+          Select Stolen base and manual dice, with a runner on first and second base
+          empty. Target second base, give the runner S+, and give the catcher D+.
+          Enter a d8 roll of 4. The runner's +1 and catcher's −1 cancel for a modified
+          roll of 4: the runner safely steals second.
         </p>
       </section>
     </main>
 
-    <script type="module" src="./companion.mjs?v=0.14.1"></script>
+    <script type="module" src="./companion.mjs?v=0.15"></script>
   </body>
 </html>
 

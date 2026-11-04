@@ -205,6 +205,93 @@ export function calculateEffectiveTargets(input) {
   return { bt: input.bt + btModifier, obt: input.obt + obtModifier, calculations };
 }
 
+export function resolveStealAttempt(input) {
+  const errors = [];
+  const bases = copyBases(input.bases);
+  const target = input.stealTarget;
+  const runnerTrait = input.stealRunnerTrait ?? "none";
+  const catcherModifier = input.catcherStealModifier ?? 0;
+
+  if (!isIntegerBetween(input.outs, 0, 2)) {
+    errors.push({ field: "outs", message: "Choose 0, 1, or 2 outs." });
+  }
+  if (!["second", "third"].includes(target)) {
+    errors.push({ field: "steal-target", message: "Choose a steal of second or third." });
+  }
+  if (!["none", "s-plus", "s-minus"].includes(runnerTrait)) {
+    errors.push({ field: "steal-runner-trait", message: "Choose no running trait, S+, or S-." });
+  }
+  if (![-1, 0, 1].includes(catcherModifier)) {
+    errors.push({ field: "catcher-steal-modifier", message: "Choose D+, no catcher trait, or D-." });
+  }
+  if (!isIntegerBetween(input.stealRoll, 1, 8)) {
+    errors.push({ field: "steal-roll", message: "The stolen-base d8 must be from 1 through 8." });
+  }
+
+  const origin = target === "third" ? "second" : "first";
+  if (["second", "third"].includes(target) && !bases[origin]) {
+    errors.push({ field: `runner-${origin}`, message: `A runner must occupy ${origin} base to steal ${target}.` });
+  }
+  if (["second", "third"].includes(target) && bases[target]) {
+    errors.push({ field: `runner-${target}`, message: `${target[0].toUpperCase()}${target.slice(1)} base must be empty for this steal attempt.` });
+  }
+  if (errors.length > 0) return { supported: false, outcomeCode: "invalid-input", errors };
+
+  const targetModifier = target === "third" ? -1 : 0;
+  const runnerModifier = runnerTrait === "s-plus" ? 1 : runnerTrait === "s-minus" ? -2 : 0;
+  const modifiedRoll = input.stealRoll + targetModifier + runnerModifier + catcherModifier;
+  const calculations = [`Base Stealing d8 ${input.stealRoll}`];
+  if (targetModifier) calculations.push("Attempting third -> steal roll -1");
+  if (runnerModifier) calculations.push(`${runnerTrait === "s-plus" ? "S+ Speedy Runner" : "S- Slow Runner"} -> steal roll ${runnerModifier > 0 ? "+1" : "-2"}`);
+  if (catcherModifier) calculations.push(`${catcherModifier < 0 ? "D+" : "D-"} catcher -> opposing steal roll ${catcherModifier > 0 ? "+1" : "-1"}`);
+  calculations.push(`Modified steal roll = ${modifiedRoll}`);
+
+  const safe = modifiedRoll >= 4;
+  const nextBases = copyBases(bases);
+  nextBases[origin] = false;
+  let outsAfter = input.outs;
+  let detail;
+  let runnerMoves;
+
+  if (safe) {
+    nextBases[target] = true;
+    detail = `Runner on ${origin} reaches ${target}.`;
+    runnerMoves = [`Runner on ${origin} to ${target}`];
+    calculations.push("Modified roll 4 or higher -> runner safe");
+  } else {
+    outsAfter += 1;
+    detail = `Runner on ${origin} is out attempting to steal ${target}.`;
+    runnerMoves = [`Runner on ${origin} out attempting to steal ${target}`];
+    calculations.push("Modified roll 3 or lower -> runner caught stealing");
+    if (outsAfter === 3) {
+      nextBases.first = false;
+      nextBases.second = false;
+      nextBases.third = false;
+      detail += " Inning over; bases clear.";
+    }
+  }
+
+  return {
+    supported: true,
+    outcomeCode: safe ? "stolen-base" : "caught-stealing",
+    classification: "steal-attempt",
+    score: safe ? "SB" : "CS",
+    summary: safe ? `Stolen base: ${target}.` : `Caught stealing ${target}.`,
+    detail,
+    modifiedStealRoll: modifiedRoll,
+    calculations,
+    stateDelta: {
+      outsBefore: input.outs,
+      outsAfter,
+      outsAdded: safe ? 0 : 1,
+      runsScored: 0,
+      bases: nextBases,
+      runnerMoves,
+    },
+    sourceRefs: ["Deadball 2E pp. 24, 31"],
+  };
+}
+
 export function classifyMss(mss, bt, obt, odditiesEnabled = true) {
   if (odditiesEnabled && mss === 1) return "oddity";
   if (odditiesEnabled && mss === 99) return "oddity";

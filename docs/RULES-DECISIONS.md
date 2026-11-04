@@ -269,7 +269,7 @@ Date: 2026-11-03
 
 ## RD-014 — Righty and lefty matchup adjustment
 
-Status: **Implemented; awaiting acceptance**
+Status: **Approved**
 Date: 2026-11-03
 
 ### Verified source rules
@@ -286,4 +286,24 @@ Date: 2026-11-03
 - The handedness adjustment is calculated before GB+. Both effects are independent one-level increases and may stack; the starter's d12 limit applies only to the handedness advantage, while GB+ retains its own d20 maximum.
 - The selected Pitch Die remains the base rating. The current-play indicator and calculation trail show the effective die without rewriting that rating.
 - Broader handedness strategy, lineup platooning, pitcher fatigue, rest, and automatic substitutions remain outside this increment.
+
+## RD-015 — Ordinary stolen-base attempts
+
+Status: **Implemented; awaiting acceptance**
+Date: 2026-11-04
+
+### Verified source rules
+
+- Page 31: roll d8 to steal second and d8-1 to steal third. Modified results 1-3 retire the runner; 4-8 are safe.
+- Page 24: S+ adds 1 to a steal roll and S- subtracts 2.
+- Page 24: a D+ catcher subtracts 1 from every opposing stolen-base roll, while a D- catcher adds 1.
+
+### Implementation decisions
+
+- Stolen base is a separate play type from a plate appearance. The app uses the existing outs and occupied-base context while hiding unrelated batter, pitcher, MSS, Hit Table, DEF, and Oddities controls.
+- This increment supports one runner attempting second or third. The origin base must be occupied and the target base empty.
+- Runner and catcher modifiers combine with the steal-third penalty before applying the safe/out threshold. Modified values may fall below 1 or rise above 8; the outer result bands continue naturally.
+- A successful attempt moves only the stealing runner. A caught runner is removed and adds one out. A third-out caught stealing clears the suggested bases for the next inning.
+- Both app-generated and manual d8 rolls are supported, with the full arithmetic shown in the explanation trail.
+- Double steals and stealing home remain deferred. They use distinct procedures and will receive their own rule interpretation and acceptance checks.
 

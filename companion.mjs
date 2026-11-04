@@ -1,4 +1,4 @@
-import { PITCH_DIE_SIDES, calculateEffectivePitchDie, calculateEffectiveTargets, classifyMss, formatPitchDie, requiresHitDefense, resolveAtBat } from "./rules/deadball/modern.mjs?v=0.14.1";
+import { PITCH_DIE_SIDES, calculateEffectivePitchDie, calculateEffectiveTargets, classifyMss, formatPitchDie, requiresHitDefense, resolveAtBat, resolveStealAttempt } from "./rules/deadball/modern.mjs?v=0.15";
 
 const form = document.querySelector("#companion-form");
 const resultPanel = document.querySelector("#result-panel");
@@ -35,6 +35,10 @@ function selectedDiceMode() {
   return form.elements.namedItem("dice-mode").value;
 }
 
+function selectedPlayType() {
+  return form.elements.namedItem("play-type").value;
+}
+
 function selectedHitTableTraits() {
   return {
     powerTrait: document.querySelector("#hitter-power-trait").value,
@@ -68,12 +72,26 @@ function showErrors(errors) {
 
 function setManualDiceAvailability() {
   const manual = selectedDiceMode() === "manual";
+  const stealing = selectedPlayType() === "steal";
   for (const id of ["swing-roll", "pitch-roll", "hit-roll", "def-roll", "oddity-roll-one", "oddity-roll-two"]) {
-    document.querySelector(`#${id}`).disabled = !manual;
+    document.querySelector(`#${id}`).disabled = !manual || stealing;
   }
+  document.querySelector("#steal-roll").disabled = !manual || !stealing;
   document.querySelector("#dice-help").textContent = manual
     ? "Enter physical or known rolls."
-    : "ODDBALL will roll the dice required by the resulting rule path.";
+    : `ODDBALL will roll the ${stealing ? "stolen-base d8" : "dice required by the resulting rule path"}.`;
+}
+
+function updatePlayType() {
+  const stealing = selectedPlayType() === "steal";
+  document.querySelector("#at-bat-participants").hidden = stealing;
+  document.querySelector("#at-bat-rolls").hidden = stealing;
+  document.querySelector("#oddities-option").hidden = stealing;
+  document.querySelector("#steal-controls").hidden = !stealing;
+  document.querySelector("#resolve-mode-label").textContent = stealing
+    ? "Stolen-base attempt"
+    : "Common at-bat slice";
+  setManualDiceAvailability();
 }
 
 function updateContextDiamond() {
@@ -105,6 +123,27 @@ function updateEffectivePitchDie() {
 }
 
 function collectInput() {
+  if (selectedPlayType() === "steal") {
+    if (selectedDiceMode() === "automatic") {
+      document.querySelector("#steal-roll").value = String(rollDie(8));
+    }
+    return {
+      playType: "steal",
+      input: {
+        outs: Number(form.elements.namedItem("outs").value),
+        bases: {
+          first: form.elements.namedItem("runner-first").checked,
+          second: form.elements.namedItem("runner-second").checked,
+          third: form.elements.namedItem("runner-third").checked,
+        },
+        stealTarget: document.querySelector("#steal-target").value,
+        stealRunnerTrait: document.querySelector("#steal-runner-trait").value,
+        catcherStealModifier: numberValue("catcher-steal-modifier"),
+        stealRoll: numberValue("steal-roll"),
+      },
+    };
+  }
+
   const pitchDieSides = numberValue("pitch-die");
   const automatic = selectedDiceMode() === "automatic";
   const bases = {
@@ -155,6 +194,8 @@ function collectInput() {
   }
 
   return {
+    playType: "at-bat",
+    input: {
     outs: Number(form.elements.namedItem("outs").value),
     bases,
     bt: targetInput.bt,
@@ -178,6 +219,7 @@ function collectInput() {
     odditiesEnabled: document.querySelector("#oddities-enabled").checked,
     oddityRollOne: numberValue("oddity-roll-one"),
     oddityRollTwo: numberValue("oddity-roll-two"),
+    },
   };
 }
 
@@ -262,10 +304,14 @@ function applySuggestedContext() {
 form.addEventListener("submit", (event) => {
   event.preventDefault();
   clearFieldErrors();
-  renderResult(resolveAtBat(collectInput()));
+  const collected = collectInput();
+  renderResult(collected.playType === "steal"
+    ? resolveStealAttempt(collected.input)
+    : resolveAtBat(collected.input));
 });
 
 form.addEventListener("change", (event) => {
+  if (event.target.name === "play-type") updatePlayType();
   if (event.target.name === "dice-mode") setManualDiceAvailability();
   if (event.target.name?.startsWith("runner-")) {
     updateContextDiamond();
@@ -304,6 +350,7 @@ for (const sides of PITCH_DIE_SIDES) {
 }
 
 setManualDiceAvailability();
+updatePlayType();
 updateContextDiamond();
 updateEffectivePitchDie();
 

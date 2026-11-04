@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { PITCH_DIE_SIDES, calculateEffectivePitchDie, calculateEffectiveTargets, classifyMss, requiresHitDefense, resolveAtBat } from "../rules/deadball/modern.mjs";
+import { PITCH_DIE_SIDES, calculateEffectivePitchDie, calculateEffectiveTargets, classifyMss, requiresHitDefense, resolveAtBat, resolveStealAttempt } from "../rules/deadball/modern.mjs";
 
 const example = {
   outs: 0,
@@ -959,6 +959,141 @@ test("rejects unknown handedness and pitcher roles", () => {
 
   assert.equal(result.outcomeCode, "invalid-input");
   assert.deepEqual(result.errors.map((error) => error.field), ["batter-hand", "pitcher-hand", "pitcher-role"]);
+});
+
+test("resolves ordinary steals of second at the 3-4 boundary", () => {
+  const safe = resolveStealAttempt({
+    outs: 0,
+    bases: { first: true, second: false, third: false },
+    stealTarget: "second",
+    stealRunnerTrait: "none",
+    catcherStealModifier: 0,
+    stealRoll: 4,
+  });
+  const out = resolveStealAttempt({
+    outs: 0,
+    bases: { first: true, second: false, third: false },
+    stealTarget: "second",
+    stealRunnerTrait: "none",
+    catcherStealModifier: 0,
+    stealRoll: 3,
+  });
+
+  assert.equal(safe.score, "SB");
+  assert.deepEqual(safe.stateDelta.bases, { first: false, second: true, third: false });
+  assert.equal(out.score, "CS");
+  assert.equal(out.stateDelta.outsAfter, 1);
+  assert.deepEqual(out.stateDelta.bases, { first: false, second: false, third: false });
+});
+
+test("applies the steal-third penalty", () => {
+  const result = resolveStealAttempt({
+    outs: 0,
+    bases: { first: false, second: true, third: false },
+    stealTarget: "third",
+    stealRunnerTrait: "none",
+    catcherStealModifier: 0,
+    stealRoll: 4,
+  });
+
+  assert.equal(result.modifiedStealRoll, 3);
+  assert.equal(result.score, "CS");
+  assert.match(result.calculations[1], /third.*-1/);
+});
+
+test("applies S+ and S- modifiers to ordinary steal attempts", () => {
+  const speedy = resolveStealAttempt({
+    outs: 0,
+    bases: { first: true, second: false, third: false },
+    stealTarget: "second",
+    stealRunnerTrait: "s-plus",
+    catcherStealModifier: 0,
+    stealRoll: 3,
+  });
+  const slow = resolveStealAttempt({
+    outs: 0,
+    bases: { first: true, second: false, third: false },
+    stealTarget: "second",
+    stealRunnerTrait: "s-minus",
+    catcherStealModifier: 0,
+    stealRoll: 5,
+  });
+
+  assert.equal(speedy.modifiedStealRoll, 4);
+  assert.equal(speedy.score, "SB");
+  assert.equal(slow.modifiedStealRoll, 3);
+  assert.equal(slow.score, "CS");
+});
+
+test("catcher traits modify opposing steal attempts", () => {
+  const greatCatcher = resolveStealAttempt({
+    outs: 0,
+    bases: { first: true, second: false, third: false },
+    stealTarget: "second",
+    stealRunnerTrait: "none",
+    catcherStealModifier: -1,
+    stealRoll: 4,
+  });
+  const poorCatcher = resolveStealAttempt({
+    outs: 0,
+    bases: { first: true, second: false, third: false },
+    stealTarget: "second",
+    stealRunnerTrait: "none",
+    catcherStealModifier: 1,
+    stealRoll: 3,
+  });
+
+  assert.equal(greatCatcher.score, "CS");
+  assert.equal(poorCatcher.score, "SB");
+});
+
+test("steal acceptance fixture cancels S+ with a D+ catcher", () => {
+  const result = resolveStealAttempt({
+    outs: 0,
+    bases: { first: true, second: false, third: false },
+    stealTarget: "second",
+    stealRunnerTrait: "s-plus",
+    catcherStealModifier: -1,
+    stealRoll: 4,
+  });
+
+  assert.equal(result.modifiedStealRoll, 4);
+  assert.equal(result.score, "SB");
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: true, third: false });
+  assert.match(result.calculations[1], /S\+ Speedy Runner/);
+  assert.match(result.calculations[2], /D\+ catcher/);
+});
+
+test("caught stealing for the third out clears the suggested bases", () => {
+  const result = resolveStealAttempt({
+    outs: 2,
+    bases: { first: true, second: false, third: true },
+    stealTarget: "second",
+    stealRunnerTrait: "none",
+    catcherStealModifier: 0,
+    stealRoll: 1,
+  });
+
+  assert.equal(result.stateDelta.outsAfter, 3);
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: false, third: false });
+  assert.match(result.detail, /Inning over/);
+});
+
+test("rejects impossible or incomplete steal attempts", () => {
+  const result = resolveStealAttempt({
+    outs: 0,
+    bases: { first: false, second: true, third: true },
+    stealTarget: "third",
+    stealRunnerTrait: "unknown",
+    catcherStealModifier: 2,
+    stealRoll: 9,
+  });
+
+  assert.equal(result.outcomeCode, "invalid-input");
+  assert.ok(result.errors.some((error) => error.field === "steal-runner-trait"));
+  assert.ok(result.errors.some((error) => error.field === "catcher-steal-modifier"));
+  assert.ok(result.errors.some((error) => error.field === "steal-roll"));
+  assert.ok(result.errors.some((error) => error.field === "runner-third"));
 });
 
 test("GB+ loaded-bases fixture uses d12 and makes an automatic double play", () => {

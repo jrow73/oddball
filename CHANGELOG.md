@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-11-04 — Ordinary stolen-base increment
+
+### Added
+
+- Play-type choice between a plate appearance and stolen-base attempt
+- Single-runner steals of second and third
+- S+, S-, catcher D+, catcher D-, and steal-third roll modifiers
+- Automatic and manual stolen-base d8 rolling
+- Safe, caught-stealing, and inning-ending suggested state changes
+- Seven focused tests for thresholds, modifiers, validation, and third-out cleanup
+- Rules decision RD-015 documenting the supported boundary and deferred double/home steals
+
+### Changed
+
+- Marked the handedness matchup increment as approved
+- Replaced the acceptance fixture with a stolen-base modifier example
+
 ## 2026-11-03 — Handedness matchup increment
 
 ### Added

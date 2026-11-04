@@ -52,20 +52,25 @@ for (const expected of [
 
 for (const expected of [
   "Next rule path active",
-  "Replay the same-handed matchup fixture",
-  "same-handed matchup raises the current-play die to d4",
+  "Replay the stolen-base fixture",
+  "runner safely steals second",
   '<option value="-20">−d20</option>',
   'id="pitch-operator"',
   'id="batter-hand"',
   'id="pitcher-hand"',
   'id="pitcher-role"',
+  'id="steal-controls"',
+  'id="steal-target"',
+  'id="steal-runner-trait"',
+  'id="catcher-steal-modifier"',
+  'id="steal-roll"',
   'id="hitter-power-trait"',
   'id="hitter-contact-plus"',
   'id="hitter-speed-plus"',
   'id="pitcher-groundball-plus"',
   'id="effective-pitch-die"',
   'href="./prototype.css"',
-  'src="./companion.mjs?v=0.14.1"',
+  'src="./companion.mjs?v=0.15"',
 ]) {
   if (!prototype.includes(expected)) {
     failures.push(`prototype.html is missing: ${expected}`);
