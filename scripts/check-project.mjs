@@ -52,10 +52,14 @@ for (const expected of [
 
 for (const expected of [
   "Next rule path active",
-  "Replay a play-state oddity",
-  "MSS 99",
-  "wild pitch",
-  "pitcher error",
+  "Replay effective target modifiers",
+  "effective targets 27/37",
+  "adjusted possible-error band",
+  "strikeout rather than a groundball",
+  'id="hitter-power-trait"',
+  'id="hitter-contact-plus"',
+  'id="hitter-speed-plus"',
+  "P+ first changes the value to 2",
   'href="./prototype.css"',
   'src="./companion.mjs"',
 ]) {

@@ -145,20 +145,22 @@ Date: 2026-11-02
 ### Verified source rules
 
 - Page 24: P+ adds 1 and P++ adds 2 to the Hit Table roll; P- subtracts 1 and P-- subtracts 2.
-- Page 24: C+ turns natural Hit Table rolls of 1-2 into doubles with runners advancing two bases and no DEF roll.
-- Page 24: S+ turns a natural 1 into a double with runners advancing two bases, and a natural 2 into a triple; neither result uses DEF.
+- Page 24: C+ turns Hit Table rolls of 1-2 into doubles with runners advancing two bases and no DEF roll.
+- Page 24: S+ turns a Hit Table roll of 1 into a double with runners advancing two bases, and a roll of 2 into a triple; neither result uses DEF.
 - Page 28: Batting traits apply before the critical-hit upgrade. The worked examples turn a critical P+ natural 14 into a triple and a critical S+ natural 2 into an inside-the-park home run.
 
 ### Implementation decisions
 
-- The hitter-trait control contains only traits that directly modify the Hit Table. Other hitter traits remain for later rule-specific controls.
+- Power is a tiered single-choice trait, while C+ and S+ are independent traits that may coexist with it and with each other.
 - Power and weak-hitter modifiers are allowed to produce effective values outside 1-20; the outer Hit Table bands continue naturally, so 21-22 remain home runs and -1-0 remain singles.
-- C+ and S+ special results replace the natural Hit Table entry before any critical upgrade and suppress DEF as directed.
-- An ordinary S+ triple advances every existing runner three bases, which follows the hit's base value because the trait table does not state a separate runner rule for that natural 2.
+- Apply the P+/P++/P-/P-- modifier first. C+ and S+ then evaluate the modified Hit Table value, per the user-selected interaction rule recorded on 2026-11-03.
+- C+ and S+ special results replace the modified Hit Table entry before any critical upgrade and suppress DEF as directed.
+- If C+ and S+ both match a modified value of 2, S+ supplies the stronger triple result; at modified value 1, both specify the same double result.
+- An ordinary S+ triple advances every existing runner three bases, which follows the hit's base value because the trait table does not state a separate runner rule for that result.
 
 ## RD-009 — Optional oddities: first play-state subset
 
-Status: **Implemented; awaiting acceptance**
+Status: **Approved**
 Date: 2026-11-03
 
 ### Verified source rules
@@ -176,4 +178,46 @@ Date: 2026-11-03
 - Pitcher error uses score notation E-1 and advances the batter and all existing runners one base.
 - Every other 2d10 total is named from the Oddities Table but deliberately pauses for manual handling rather than inventing missing game state.
 - MSS 1 cannot yet be entered through the current positive Pitch Die controls; support for negative Pitch Die values remains a separate future rules decision.
+
+## RD-010 — Effective BT/OBT trait modifiers
+
+Status: **Approved**
+Date: 2026-11-03
+
+### Verified source rules
+
+- Page 24: C- reduces both BT and OBT by 3 when the batter has a runner on second or third.
+- Page 24: K+ reduces the opposing batter's BT by 1 without changing OBT. It also records a strikeout on Out Table result 3.
+- Page 24: CN+ reduces the opposing batter's OBT by 2 without changing BT; CN- increases OBT by 3.
+
+### Implementation decisions
+
+- The form retains the player's base BT and OBT. Situational and pitcher modifiers produce effective targets for the current play without rewriting the displayed ratings.
+- C- is a separate checkbox from the existing Hit Table trait selector because it can coexist with a power, contact, or speed trait and operates before Hit Table resolution.
+- K+ and CN traits may be selected together. Their changes combine with an active C- modifier, and the full arithmetic appears in the calculation trail.
+- C- is inactive when only first base is occupied. It activates when either second or third is occupied.
+- Modified targets may cross. Classification continues in rule order: critical/ordinary hit first, then walk, possible error, and outs.
+- GB+, stamina, fatigue, bunt, Hit & Run, and stolen-base trait effects remain outside this increment.
+
+## RD-011 — Compatible hitter traits and Hit Table ordering
+
+Status: **Implemented; awaiting acceptance**
+Date: 2026-11-03
+
+### Verified source rules
+
+- Page 57: a fictional top prospect who earns a trait rolls again for a possible second trait.
+- Page 58: aging can remove one positive trait or all positive traits, confirming that a player may possess multiple traits.
+- Page 61: real-player power, contact, speed, defense, and toughness traits use independent qualification guidelines.
+
+### User-selected interaction rule
+
+- Calculate the P Hit Table modifier first to determine the modified Hit Table value.
+- Evaluate C+ and S+ against that modified value, not the unmodified d20 roll.
+
+### Implementation decisions
+
+- The prototype separates the mutually exclusive P tier into a dropdown and represents C+ and S+ as independent checkboxes.
+- P+ and C+, P+ and S+, or all three may coexist. The calculation trail shows the P adjustment before any C+ or S+ transformation.
+- When C+ and S+ both apply to modified value 2, the S+ triple takes precedence over the C+ double. At modified value 1, both lead to the same double.
 

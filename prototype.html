@@ -16,7 +16,7 @@
         <span class="brand-mark" aria-hidden="true">O</span>
         <span>ODDBALL</span>
       </a>
-      <span class="build-label">Vertical slice 0.9</span>
+      <span class="build-label">Vertical slice 0.11</span>
     </header>
 
     <main id="prototype-main" class="prototype-shell">
@@ -26,8 +26,8 @@
           <h1 id="prototype-title">Resolve one play.</h1>
           <p>
             Common Modern-rules plate appearances now resolve through Hit Table batting
-            traits, hits, walks, possible errors, outs, and six play-state oddities.
-            Oddities needing broader game state are identified for manual handling.
+            traits, target-modifying traits, hits, walks, possible errors, outs, and
+            six play-state oddities. Effective BT and OBT remain visible in every ruling.
           </p>
         </div>
         <div class="prototype-notice live" role="note">
@@ -113,18 +113,28 @@
                   </label>
                 </div>
                 <label class="field-label trait-field">
-                  Hitter trait
-                  <select id="hitter-trait">
+                  Power trait
+                  <select id="hitter-power-trait">
                     <option value="none" selected>None</option>
                     <option value="p-plus">P+</option>
                     <option value="p-plus-plus">P++</option>
-                    <option value="c-plus">C+</option>
-                    <option value="s-plus">S+</option>
                     <option value="p-minus">P−</option>
                     <option value="p-minus-minus">P−−</option>
                   </select>
                 </label>
-                <p class="field-hint">BT and OBT define the result bands; the selected trait modifies Hit Table results.</p>
+                <label class="trait-toggle">
+                  <input id="hitter-contact-plus" type="checkbox" />
+                  <span><strong>C+ Contact Hitter</strong><small>Uses the P-modified Hit Table value</small></span>
+                </label>
+                <label class="trait-toggle">
+                  <input id="hitter-speed-plus" type="checkbox" />
+                  <span><strong>S+ Speedy Runner</strong><small>Uses the P-modified Hit Table value</small></span>
+                </label>
+                <label class="trait-toggle">
+                  <input id="hitter-free-swinger" type="checkbox" />
+                  <span><strong>C− Free Swinger</strong><small>BT/OBT −3 with a runner on 2nd or 3rd</small></span>
+                </label>
+                <p class="field-hint">Compatible traits may coexist. P modifies the Hit Table value before C+ or S+ is evaluated.</p>
               </section>
 
               <section class="participant-card" aria-labelledby="pitcher-title">
@@ -150,7 +160,19 @@
                     <option value="20">d20</option>
                   </select>
                 </label>
-                <p class="field-hint">Only ratings relevant to this slice are required.</p>
+                <label class="field-label trait-field">
+                  Control trait
+                  <select id="pitcher-control-trait">
+                    <option value="none" selected>None</option>
+                    <option value="cn-plus">CN+</option>
+                    <option value="cn-minus">CN−</option>
+                  </select>
+                </label>
+                <label class="trait-toggle">
+                  <input id="pitcher-k-plus" type="checkbox" />
+                  <span><strong>K+ Strikeout Artist</strong><small>Opposing BT −1; Out Table 3 becomes K</small></span>
+                </label>
+                <p class="field-hint">GB+ and stamina effects remain outside this slice.</p>
               </section>
             </div>
 
@@ -288,14 +310,19 @@
 
       <section class="prototype-review" aria-labelledby="review-title">
         <p class="eyebrow">Acceptance fixtures</p>
-        <h2 id="review-title">Replay a play-state oddity</h2>
+        <h2 id="review-title">Replay effective target modifiers</h2>
         <p>
-          Keep <strong>Use optional Oddities</strong> selected and choose manual dice.
-          With the bases loaded, Swing 91 plus a d8 Pitch Die roll of 8 gives MSS 99.
-          Oddities rolls of 6 and 6 total 12: a wild pitch scores the runner from third,
-          advances the other runners one base, and leaves the at-bat in progress.
-          Rolls of 9 and 9 total 18 instead: a pitcher error advances every runner and
-          puts the batter on first.
+          Choose manual dice, occupy second base, and select C−, K+, and CN+. Base
+          targets 31/42 become effective targets 27/37. Swing 30 plus a d8 roll of 8
+          gives MSS 38, the first value in the adjusted possible-error band. DEF 3
+          completes the F-8 and advances the runner from second to third. For the K+
+          Out Table effect, use Swing 65 plus Pitch Die 8 for MSS 73: result 3 is a
+          strikeout rather than a groundball.
+        </p>
+        <p>
+          To verify combined hitter traits, choose P+, C+, and a Hit Table roll of 1.
+          P+ first changes the value to 2; C+ then resolves that modified value as a
+          double without a DEF roll.
         </p>
         <a class="button button-secondary" href="./index.html">Return to project foundation</a>
       </section>

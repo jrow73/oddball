@@ -1,4 +1,4 @@
-import { PITCH_DIE_SIDES, classifyMss, requiresHitDefense, resolveAtBat } from "./rules/deadball/modern.mjs";
+import { PITCH_DIE_SIDES, calculateEffectiveTargets, classifyMss, requiresHitDefense, resolveAtBat } from "./rules/deadball/modern.mjs";
 
 const form = document.querySelector("#companion-form");
 const resultPanel = document.querySelector("#result-panel");
@@ -33,6 +33,14 @@ function numberValue(id) {
 
 function selectedDiceMode() {
   return form.elements.namedItem("dice-mode").value;
+}
+
+function selectedHitTableTraits() {
+  return {
+    powerTrait: document.querySelector("#hitter-power-trait").value,
+    contactPlus: document.querySelector("#hitter-contact-plus").checked,
+    speedPlus: document.querySelector("#hitter-speed-plus").checked,
+  };
 }
 
 function clearFieldErrors() {
@@ -78,22 +86,36 @@ function updateContextDiamond() {
 function collectInput() {
   const pitchDieSides = numberValue("pitch-die");
   const automatic = selectedDiceMode() === "automatic";
+  const bases = {
+    first: form.elements.namedItem("runner-first").checked,
+    second: form.elements.namedItem("runner-second").checked,
+    third: form.elements.namedItem("runner-third").checked,
+  };
+  const targetInput = {
+    bt: numberValue("bt"),
+    obt: numberValue("obt"),
+    bases,
+    hitterFreeSwinger: document.querySelector("#hitter-free-swinger").checked,
+    pitcherKPlus: document.querySelector("#pitcher-k-plus").checked,
+    pitcherControlTrait: document.querySelector("#pitcher-control-trait").value,
+  };
 
   if (automatic) {
     const swingRoll = rollDie(100);
     const pitchRoll = rollDie(pitchDieSides);
     document.querySelector("#swing-roll").value = String(swingRoll);
     document.querySelector("#pitch-roll").value = String(pitchRoll);
+    const targets = calculateEffectiveTargets(targetInput);
     const classification = classifyMss(
       swingRoll + pitchRoll,
-      numberValue("bt"),
-      numberValue("obt"),
+      targets.bt,
+      targets.obt,
       document.querySelector("#oddities-enabled").checked,
     );
     if (classification === "ordinary-hit" || classification === "critical-hit") {
       const hitRoll = rollDie(20);
       document.querySelector("#hit-roll").value = String(hitRoll);
-      if (requiresHitDefense(hitRoll, document.querySelector("#hitter-trait").value, classification)) {
+      if (requiresHitDefense(hitRoll, selectedHitTableTraits(), classification)) {
         document.querySelector("#def-roll").value = String(rollDie(12));
       }
     }
@@ -108,18 +130,19 @@ function collectInput() {
 
   return {
     outs: Number(form.elements.namedItem("outs").value),
-    bases: {
-      first: form.elements.namedItem("runner-first").checked,
-      second: form.elements.namedItem("runner-second").checked,
-      third: form.elements.namedItem("runner-third").checked,
-    },
-    bt: numberValue("bt"),
-    obt: numberValue("obt"),
+    bases,
+    bt: targetInput.bt,
+    obt: targetInput.obt,
     pitchDieSides,
     swingRoll: numberValue("swing-roll"),
     pitchRoll: numberValue("pitch-roll"),
     hitRoll: numberValue("hit-roll"),
-    hitterTrait: document.querySelector("#hitter-trait").value,
+    hitterPowerTrait: document.querySelector("#hitter-power-trait").value,
+    hitterContactPlus: document.querySelector("#hitter-contact-plus").checked,
+    hitterSpeedPlus: document.querySelector("#hitter-speed-plus").checked,
+    hitterFreeSwinger: targetInput.hitterFreeSwinger,
+    pitcherKPlus: targetInput.pitcherKPlus,
+    pitcherControlTrait: targetInput.pitcherControlTrait,
     defRoll: numberValue("def-roll"),
     defModifier: numberValue("def-modifier"),
     odditiesEnabled: document.querySelector("#oddities-enabled").checked,

@@ -36,7 +36,7 @@ Deliverables:
 
 ## Milestone 2 — Dice Companion vertical slice
 
-Status: **Core hit, walk, error, out, critical-hit, and Hit Table trait increments accepted; first play-state oddities increment awaiting user acceptance**
+Status: **Core at-bat, Hit Table trait, first oddities, and effective-target trait increments accepted; compatible hitter-trait ordering awaiting user acceptance**
 
 Goal: resolve a deliberately limited set of Modern-rule plate appearances end to end.
 
@@ -53,8 +53,10 @@ Implemented components:
 - Defensive Hit Table checks with D+/D- modifiers
 - Strikeouts, productive outs, fielder's choices, double plays, and triple plays
 - Neutral-trait critical hits with upgraded Hit Table results, extra runner advancement, and no DEF check
-- P+/P++, P-/P--, C+, and S+ Hit Table transformations, including critical-hit ordering
+- Compatible P, C+, and S+ Hit Table transformations, with P modifiers applied before C+/S+ and before critical-hit upgrades
 - Optional Oddities toggle and six state-resolvable outcomes; broader oddities identified for manual handling
+- C-, K+, CN+, and CN- effective BT/OBT modifiers with visible arithmetic
+- K+ Out Table result 3 strikeout conversion
 
 Acceptance examples now cover the documented MSS 47 possible-error scenario, walks, hits, outs, critical and trait-modified results, plus wild-pitch and pitcher-error oddities.
 

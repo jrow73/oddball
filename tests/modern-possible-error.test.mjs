@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { classifyMss, requiresHitDefense, resolveAtBat } from "../rules/deadball/modern.mjs";
+import { calculateEffectiveTargets, classifyMss, requiresHitDefense, resolveAtBat } from "../rules/deadball/modern.mjs";
 
 const example = {
   outs: 0,
@@ -376,15 +376,15 @@ test("applies P+ before resolving an ordinary defensive hit", () => {
     bases: { first: false, second: false, third: false },
     swingRoll: 20,
     hitRoll: 14,
-    hitterTrait: "p-plus",
+    hitterPowerTrait: "p-plus",
     defRoll: 5,
     defModifier: 0,
   });
 
   assert.equal(result.score, "2B");
   assert.equal(result.play.position, "LF");
-  assert.match(result.calculations[2], /14 \+ 1 \(P\+\) = 15/);
-  assert.equal(requiresHitDefense(14, "p-plus"), true);
+  assert.match(result.calculations[2], /14 \+ 1 \(P\+\) = modified Hit Table 15/);
+  assert.equal(requiresHitDefense(14, { powerTrait: "p-plus" }), true);
 });
 
 test("applies P- before looking up the Hit Table result", () => {
@@ -392,34 +392,34 @@ test("applies P- before looking up the Hit Table result", () => {
     ...example,
     swingRoll: 20,
     hitRoll: 19,
-    hitterTrait: "p-minus",
+    hitterPowerTrait: "p-minus",
   });
 
   assert.equal(result.score, "2B");
   assert.equal(result.stateDelta.runsScored, 1);
-  assert.match(result.calculations[2], /19 - 1 \(P-\) = 18/);
+  assert.match(result.calculations[2], /19 - 1 \(P-\) = modified Hit Table 18/);
 });
 
-test("turns a natural 1 or 2 into a C+ double without DEF", () => {
+test("turns a modified Hit Table value of 1 or 2 into a C+ double without DEF", () => {
   const result = resolveAtBat({
     ...example,
     swingRoll: 20,
     hitRoll: 1,
-    hitterTrait: "c-plus",
+    hitterContactPlus: true,
     defRoll: Number.NaN,
   });
 
   assert.equal(result.score, "2B");
   assert.deepEqual(result.stateDelta.bases, { first: false, second: true, third: true });
-  assert.equal(requiresHitDefense(1, "c-plus"), false);
+  assert.equal(requiresHitDefense(1, { contactPlus: true }), false);
 });
 
-test("turns a natural 2 into an S+ triple without DEF", () => {
+test("turns a modified Hit Table value of 2 into an S+ triple without DEF", () => {
   const result = resolveAtBat({
     ...example,
     swingRoll: 20,
     hitRoll: 2,
-    hitterTrait: "s-plus",
+    hitterSpeedPlus: true,
     defRoll: Number.NaN,
   });
 
@@ -429,6 +429,51 @@ test("turns a natural 2 into an S+ triple without DEF", () => {
   assert.deepEqual(result.stateDelta.bases, { first: false, second: false, third: true });
 });
 
+test("applies P+ before evaluating C+ against the modified Hit Table value", () => {
+  const result = resolveAtBat({
+    ...example,
+    swingRoll: 20,
+    hitRoll: 1,
+    hitterPowerTrait: "p-plus",
+    hitterContactPlus: true,
+    defRoll: Number.NaN,
+  });
+
+  assert.equal(result.score, "2B");
+  assert.match(result.calculations[2], /1 \+ 1 \(P\+\) = modified Hit Table 2/);
+  assert.match(result.calculations[3], /Modified Hit Table 2 with C\+ -> double/);
+  assert.equal(requiresHitDefense(1, { powerTrait: "p-plus", contactPlus: true }), false);
+});
+
+test("applies P- before evaluating S+ against the modified Hit Table value", () => {
+  const result = resolveAtBat({
+    ...example,
+    swingRoll: 20,
+    hitRoll: 3,
+    hitterPowerTrait: "p-minus",
+    hitterSpeedPlus: true,
+    defRoll: Number.NaN,
+  });
+
+  assert.equal(result.score, "3B");
+  assert.match(result.calculations[2], /3 - 1 \(P-\) = modified Hit Table 2/);
+  assert.match(result.calculations[3], /Modified Hit Table 2 with S\+ -> triple/);
+});
+
+test("uses the stronger S+ result when C+ and S+ both match modified Hit Table 2", () => {
+  const result = resolveAtBat({
+    ...example,
+    swingRoll: 20,
+    hitRoll: 2,
+    hitterContactPlus: true,
+    hitterSpeedPlus: true,
+    defRoll: Number.NaN,
+  });
+
+  assert.equal(result.score, "3B");
+  assert.match(result.calculations[2], /with S\+ -> triple/);
+});
+
 test("applies P+ before upgrading a critical hit", () => {
   const result = resolveAtBat({
     ...example,
@@ -436,16 +481,16 @@ test("applies P+ before upgrading a critical hit", () => {
     swingRoll: 1,
     pitchRoll: 1,
     hitRoll: 14,
-    hitterTrait: "p-plus",
+    hitterPowerTrait: "p-plus",
     defRoll: Number.NaN,
   });
 
   assert.equal(result.score, "3B");
-  assert.match(result.calculations[2], /14 \+ 1 \(P\+\) = 15/);
+  assert.match(result.calculations[2], /14 \+ 1 \(P\+\) = modified Hit Table 15/);
   assert.match(result.calculations.at(-1), /no DEF roll/);
 });
 
-test("resolves an S+ natural 2 critical hit as an inside-the-park home run", () => {
+test("resolves an S+ modified value of 2 critical hit as an inside-the-park home run", () => {
   const result = resolveAtBat({
     ...example,
     bases: { first: true, second: true, third: true },
@@ -453,7 +498,7 @@ test("resolves an S+ natural 2 critical hit as an inside-the-park home run", () 
     swingRoll: 1,
     pitchRoll: 1,
     hitRoll: 2,
-    hitterTrait: "s-plus",
+    hitterSpeedPlus: true,
     defRoll: Number.NaN,
   });
 
@@ -463,15 +508,15 @@ test("resolves an S+ natural 2 critical hit as an inside-the-park home run", () 
   assert.match(result.calculations[4], /inside-the-park home run/);
 });
 
-test("rejects an unknown hitter trait on a hit path", () => {
+test("rejects an unknown power trait on a hit path", () => {
   const result = resolveAtBat({
     ...example,
     swingRoll: 20,
-    hitterTrait: "unknown",
+    hitterPowerTrait: "unknown",
   });
 
   assert.equal(result.outcomeCode, "invalid-input");
-  assert.match(result.errors[0].message, /supported hitter trait/);
+  assert.match(result.errors[0].message, /supported P trait/);
 });
 
 test("treats MSS 99 as an ordinary out when optional oddities are disabled", () => {
@@ -584,6 +629,107 @@ test("requires two valid d10 results on the oddity path", () => {
 
   assert.equal(result.outcomeCode, "invalid-input");
   assert.match(result.errors[0].message, /first Oddities die/);
+});
+
+test("combines C-, K+, and CN+ into visible effective targets", () => {
+  const targets = calculateEffectiveTargets({
+    ...example,
+    bases: { first: false, second: true, third: false },
+    hitterFreeSwinger: true,
+    pitcherKPlus: true,
+    pitcherControlTrait: "cn-plus",
+  });
+
+  assert.equal(targets.bt, 27);
+  assert.equal(targets.obt, 37);
+  assert.match(targets.calculations.at(-1), /BT 31 - 4 = 27; OBT 42 - 5 = 37/);
+});
+
+test("does not activate C- with only a runner on first", () => {
+  const targets = calculateEffectiveTargets({
+    ...example,
+    hitterFreeSwinger: true,
+  });
+
+  assert.equal(targets.bt, 31);
+  assert.equal(targets.obt, 42);
+  assert.deepEqual(targets.calculations, []);
+});
+
+test("uses combined effective targets to classify a possible error", () => {
+  const result = resolveAtBat({
+    ...example,
+    bases: { first: false, second: true, third: false },
+    swingRoll: 30,
+    pitchRoll: 8,
+    hitterFreeSwinger: true,
+    pitcherKPlus: true,
+    pitcherControlTrait: "cn-plus",
+    defRoll: 3,
+    defModifier: 0,
+  });
+
+  assert.equal(result.classification, "possible-error");
+  assert.equal(result.score, "F-8");
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: false, third: true });
+  assert.ok(result.calculations.some((line) => /possible-error range 38-42/.test(line)));
+});
+
+test("K+ can move an MSS from the hit band into the walk band", () => {
+  const result = resolveAtBat({
+    ...example,
+    swingRoll: 23,
+    pitchRoll: 8,
+    pitcherKPlus: true,
+  });
+
+  assert.equal(result.score, "BB");
+  assert.match(result.calculations.at(1), /K\+/);
+  assert.match(result.calculations.at(2), /BT 31 - 1 = 30/);
+});
+
+test("CN- widens the walk band while CN+ narrows it", () => {
+  const wildPitcher = resolveAtBat({
+    ...example,
+    swingRoll: 36,
+    pitchRoll: 8,
+    pitcherControlTrait: "cn-minus",
+  });
+  const controlPitcher = resolveAtBat({
+    ...example,
+    swingRoll: 33,
+    pitchRoll: 8,
+    pitcherControlTrait: "cn-plus",
+    defRoll: 3,
+    defModifier: 0,
+  });
+
+  assert.equal(wildPitcher.score, "BB");
+  assert.equal(controlPitcher.classification, "possible-error");
+  assert.match(wildPitcher.calculations.at(1), /CN-/);
+  assert.match(controlPitcher.calculations.at(1), /CN\+/);
+});
+
+test("K+ changes Out Table result 3 into a strikeout", () => {
+  const result = resolveAtBat({
+    ...example,
+    bases: { first: true, second: true, third: true },
+    swingRoll: 65,
+    pitchRoll: 8,
+    pitcherKPlus: true,
+  });
+
+  assert.equal(result.score, "K");
+  assert.equal(result.stateDelta.outsAfter, 1);
+  assert.deepEqual(result.stateDelta.bases, { first: true, second: true, third: true });
+  assert.match(result.calculations.at(-2), /K\+ changes Out Table result 3/);
+});
+
+test("rejects an unknown pitcher control trait", () => {
+  const result = resolveAtBat({ ...example, pitcherControlTrait: "unknown" });
+
+  assert.equal(result.outcomeCode, "invalid-input");
+  assert.match(result.errors[0].message, /CN\+/);
 });
 
 test("advances runners on a productive outfield out below MSS 70", () => {

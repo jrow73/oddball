@@ -1,14 +1,14 @@
 export const PITCH_DIE_SIDES = Object.freeze([4, 6, 8, 10, 12, 20]);
 
-const HITTER_TRAITS = Object.freeze({
-  none: { label: "No Hit Table trait", modifier: 0 },
+const POWER_TRAITS = Object.freeze({
+  none: { label: "No power trait", modifier: 0 },
   "p-plus": { label: "P+", modifier: 1 },
   "p-plus-plus": { label: "P++", modifier: 2 },
-  "c-plus": { label: "C+", modifier: 0 },
-  "s-plus": { label: "S+", modifier: 0 },
   "p-minus": { label: "P-", modifier: -1 },
   "p-minus-minus": { label: "P--", modifier: -2 },
 });
+
+const CONTROL_TRAITS = Object.freeze(["none", "cn-plus", "cn-minus"]);
 
 const POSSIBLE_ERROR_PLAYS = Object.freeze({
   0: { position: "SS", fielder: "shortstop", number: 6, kind: "groundball", score: "6-3" },
@@ -105,7 +105,30 @@ function validateCoreInput(input) {
     });
   }
 
+  if (!CONTROL_TRAITS.includes(input.pitcherControlTrait ?? "none")) {
+    errors.push({ field: "pitcher-control-trait", message: "Choose no control trait, CN+, or CN-." });
+  }
+
   return errors;
+}
+
+export function calculateEffectiveTargets(input) {
+  const bases = copyBases(input.bases);
+  const freeSwingerActive = Boolean(input.hitterFreeSwinger) && (bases.second || bases.third);
+  const btModifier = (freeSwingerActive ? -3 : 0) + (input.pitcherKPlus ? -1 : 0);
+  const controlTrait = input.pitcherControlTrait ?? "none";
+  const obtModifier = (freeSwingerActive ? -3 : 0) + (controlTrait === "cn-plus" ? -2 : controlTrait === "cn-minus" ? 3 : 0);
+  const calculations = [];
+
+  if (freeSwingerActive) calculations.push("C- active with a runner on second or third -> BT -3 and OBT -3");
+  if (input.pitcherKPlus) calculations.push("K+ -> opposing batter BT -1; OBT unchanged");
+  if (controlTrait === "cn-plus") calculations.push("CN+ -> opposing batter OBT -2; BT unchanged");
+  if (controlTrait === "cn-minus") calculations.push("CN- -> opposing batter OBT +3; BT unchanged");
+  if (calculations.length > 0) {
+    calculations.push(`Effective targets: BT ${input.bt} ${btModifier >= 0 ? "+" : "-"} ${Math.abs(btModifier)} = ${input.bt + btModifier}; OBT ${input.obt} ${obtModifier >= 0 ? "+" : "-"} ${Math.abs(obtModifier)} = ${input.obt + obtModifier}`);
+  }
+
+  return { bt: input.bt + btModifier, obt: input.obt + obtModifier, calculations };
 }
 
 export function classifyMss(mss, bt, obt, odditiesEnabled = true) {
@@ -217,53 +240,77 @@ function hitTableResult(hitRoll) {
   return { score: "HR", label: "Home run", batterBases: 4, runnerAdvance: 4 };
 }
 
-function traitAdjustedHitTableResult(hitRoll, hitterTrait = "none") {
-  const trait = HITTER_TRAITS[hitterTrait];
-  if (!trait) return null;
+function traitAdjustedHitTableResult(hitRoll, traits = {}) {
+  const powerTrait = POWER_TRAITS[traits.powerTrait ?? "none"];
+  if (!powerTrait) return null;
 
-  if (hitterTrait === "c-plus" && hitRoll <= 2) {
-    return {
-      tableResult: { score: "2B", label: "C+ double", batterBases: 2, runnerAdvance: 2 },
-      calculation: `Hit Table d20 ${hitRoll} with C+ -> double; runners advance 2; no DEF roll`,
-    };
+  const adjustedRoll = hitRoll + powerTrait.modifier;
+  const calculations = [];
+  if (powerTrait.modifier !== 0) {
+    calculations.push(
+      `Hit Table d20 ${hitRoll} ${powerTrait.modifier > 0 ? "+" : "-"} ${Math.abs(powerTrait.modifier)} (${powerTrait.label}) = modified Hit Table ${adjustedRoll}`,
+    );
   }
 
-  if (hitterTrait === "s-plus" && hitRoll === 1) {
-    return {
-      tableResult: { score: "2B", label: "S+ double", batterBases: 2, runnerAdvance: 2 },
-      calculation: "Hit Table d20 1 with S+ -> double; runners advance 2; no DEF roll",
-    };
-  }
-
-  if (hitterTrait === "s-plus" && hitRoll === 2) {
+  if (traits.speedPlus && adjustedRoll === 2) {
+    calculations.push(
+      `${powerTrait.modifier === 0 ? `Hit Table d20 ${adjustedRoll}` : `Modified Hit Table ${adjustedRoll}`} with S+ -> triple; no DEF roll`,
+    );
     return {
       tableResult: { score: "3B", label: "S+ triple", batterBases: 3, runnerAdvance: 3 },
-      calculation: "Hit Table d20 2 with S+ -> triple; no DEF roll",
+      adjustedRoll,
+      calculations,
+      specialTrait: "s-plus",
     };
   }
 
-  const adjustedRoll = hitRoll + trait.modifier;
+  if ((traits.contactPlus || traits.speedPlus) && adjustedRoll === 1) {
+    const labels = [traits.contactPlus ? "C+" : null, traits.speedPlus ? "S+" : null].filter(Boolean).join("/ ").replace("/ ", "/");
+    calculations.push(
+      `${powerTrait.modifier === 0 ? `Hit Table d20 ${adjustedRoll}` : `Modified Hit Table ${adjustedRoll}`} with ${labels} -> double; runners advance 2; no DEF roll`,
+    );
+    return {
+      tableResult: { score: "2B", label: `${labels} double`, batterBases: 2, runnerAdvance: 2 },
+      adjustedRoll,
+      calculations,
+      specialTrait: traits.speedPlus ? "s-plus" : "c-plus",
+    };
+  }
+
+  if (traits.contactPlus && adjustedRoll === 2) {
+    calculations.push(
+      `${powerTrait.modifier === 0 ? `Hit Table d20 ${adjustedRoll}` : `Modified Hit Table ${adjustedRoll}`} with C+ -> double; runners advance 2; no DEF roll`,
+    );
+    return {
+      tableResult: { score: "2B", label: "C+ double", batterBases: 2, runnerAdvance: 2 },
+      adjustedRoll,
+      calculations,
+      specialTrait: "c-plus",
+    };
+  }
+
   const tableResult = hitTableResult(adjustedRoll);
-  const calculation = trait.modifier === 0
+  const calculation = powerTrait.modifier === 0
     ? `Hit Table d20 ${hitRoll} -> ${tableResult.label}`
-    : `Hit Table d20 ${hitRoll} ${trait.modifier > 0 ? "+" : "-"} ${Math.abs(trait.modifier)} (${trait.label}) = ${adjustedRoll} -> ${tableResult.label}`;
-  return { tableResult, adjustedRoll, calculation };
+    : `Modified Hit Table ${adjustedRoll} -> ${tableResult.label}`;
+  calculations.push(calculation);
+  return { tableResult, adjustedRoll, calculations };
 }
 
-function validateHitterTrait(input, mss) {
-  const hitterTrait = input.hitterTrait ?? "none";
-  if (HITTER_TRAITS[hitterTrait]) return null;
+function validateHitterTraits(input, mss) {
+  const powerTrait = input.hitterPowerTrait ?? "none";
+  if (POWER_TRAITS[powerTrait]) return null;
   return {
     supported: false,
     outcomeCode: "invalid-input",
-    errors: [{ field: "hitter-trait", message: "Choose a supported hitter trait." }],
+    errors: [{ field: "hitter-power-trait", message: "Choose a supported P trait." }],
     mss,
   };
 }
 
-export function requiresHitDefense(hitRoll, hitterTrait = "none", classification = "ordinary-hit") {
+export function requiresHitDefense(hitRoll, traits = {}, classification = "ordinary-hit") {
   if (classification !== "ordinary-hit" || !isIntegerBetween(hitRoll, 1, 20)) return false;
-  return Boolean(traitAdjustedHitTableResult(hitRoll, hitterTrait)?.tableResult.defensive);
+  return Boolean(traitAdjustedHitTableResult(hitRoll, traits)?.tableResult.defensive);
 }
 
 function resolveDefensiveHit({ bases, calculations, input, mss, tableResult }) {
@@ -393,15 +440,20 @@ function resolveOrdinaryHit({ bases, input, mss }) {
     };
   }
 
-  const traitError = validateHitterTrait(input, mss);
+  const traitError = validateHitterTraits(input, mss);
   if (traitError) return traitError;
 
-  const adjusted = traitAdjustedHitTableResult(input.hitRoll, input.hitterTrait ?? "none");
+  const adjusted = traitAdjustedHitTableResult(input.hitRoll, {
+    powerTrait: input.hitterPowerTrait,
+    contactPlus: input.hitterContactPlus,
+    speedPlus: input.hitterSpeedPlus,
+  });
   const tableResult = adjusted.tableResult;
   const calculations = [
     `Swing ${input.swingRoll} + Pitch Die ${input.pitchRoll} = MSS ${mss}`,
+    ...(input.targetCalculations ?? []),
     `MSS 6 through BT ${input.bt} -> ordinary hit`,
-    adjusted.calculation,
+    ...adjusted.calculations,
   ];
 
   if (tableResult.defensive) {
@@ -450,13 +502,16 @@ function resolveCriticalHit({ bases, input, mss }) {
     };
   }
 
-  const traitError = validateHitterTrait(input, mss);
+  const traitError = validateHitterTraits(input, mss);
   if (traitError) return traitError;
 
-  const hitterTrait = input.hitterTrait ?? "none";
-  const adjusted = traitAdjustedHitTableResult(input.hitRoll, hitterTrait);
+  const adjusted = traitAdjustedHitTableResult(input.hitRoll, {
+    powerTrait: input.hitterPowerTrait,
+    contactPlus: input.hitterContactPlus,
+    speedPlus: input.hitterSpeedPlus,
+  });
   const tableResult = adjusted.tableResult;
-  const isSpeedyInsideThePark = hitterTrait === "s-plus" && input.hitRoll === 2;
+  const isSpeedyInsideThePark = adjusted.specialTrait === "s-plus" && adjusted.adjustedRoll === 2;
   const upgraded = tableResult.score === "1B"
     ? { score: "2B", label: "Critical double", batterBases: 2 }
     : tableResult.score === "2B"
@@ -471,11 +526,11 @@ function resolveCriticalHit({ bases, input, mss }) {
   const calculations = [
     `Swing ${input.swingRoll} + Pitch Die ${input.pitchRoll} = MSS ${mss}`,
     `MSS 2-5 -> critical hit`,
-    adjusted.calculation,
+    ...adjusted.calculations,
     `${tableResult.score} increases one level to ${upgraded.score}; existing runners take one extra base`,
   ];
   if (isSpeedyInsideThePark) {
-    calculations.push("S+ natural 2 on a critical hit -> inside-the-park home run");
+    calculations.push("S+ modified Hit Table 2 on a critical hit -> inside-the-park home run");
   }
   if (tableResult.defensive) {
     calculations.push("Critical hit cannot be taken away by defense -> no DEF roll");
@@ -533,6 +588,7 @@ function resolveWalk({ bases, bt, input, mss }) {
     detail: runnerMoves.join("; ") + ".",
     calculations: [
       `Swing ${input.swingRoll} + Pitch Die ${input.pitchRoll} = MSS ${mss}`,
+      ...(input.targetCalculations ?? []),
       `BT ${bt} + 1 through OBT ${input.obt} -> walk`,
       runsScored > 0
         ? "Bases loaded -> every runner is forced forward; runner on third scores"
@@ -546,7 +602,7 @@ function resolveWalk({ bases, bt, input, mss }) {
       bases: nextBases,
       runnerMoves,
     },
-    sourceRefs: ["Deadball 2E pp. 26-27"],
+    sourceRefs: ["Deadball 2E pp. 24, 26-27"],
   };
 }
 
@@ -870,12 +926,18 @@ function resolveSuccessfulOut({ bases, mss, outs, play }) {
 
 function resolveOut({ bases, classification, input, mss }) {
   const lastDigit = Math.abs(mss) % 10;
-  const play = OUT_PLAYS[lastDigit];
+  const play = input.pitcherKPlus && lastDigit === 3
+    ? { position: "K", fielder: "pitcher", kind: "strikeout", score: "K" }
+    : OUT_PLAYS[lastDigit];
   const calculations = [
     `Swing ${input.swingRoll} + Pitch Die ${input.pitchRoll} = MSS ${mss}`,
+    ...(input.targetCalculations ?? []),
     `MSS ${mss} -> ${classification === "productive-out" ? "productive-out band" : "out band"}`,
     `Last digit ${lastDigit} -> ${play.kind === "strikeout" ? "strikeout" : play.kind === "popup" ? `pop-up to ${play.position}` : `groundball to ${play.position}`}`,
   ];
+  if (input.pitcherKPlus && lastDigit === 3) {
+    calculations.push("K+ changes Out Table result 3 from a groundball to a strikeout");
+  }
   const resolved = resolveSuccessfulOut({ bases, mss, outs: input.outs, play });
 
   if (resolved.outcomeCode === "fielders-choice") {
@@ -900,7 +962,7 @@ function resolveOut({ bases, classification, input, mss }) {
       ? resolved.stateDelta.runnerMoves.join("; ") + "."
       : "No runners advance.",
     calculations,
-    sourceRefs: ["Deadball 2E pp. 27, 29-30"],
+    sourceRefs: ["Deadball 2E pp. 24, 27, 29-30"],
   };
 }
 
@@ -910,33 +972,40 @@ export function resolveAtBat(input) {
     return { supported: false, outcomeCode: "invalid-input", errors };
   }
 
+  const targets = calculateEffectiveTargets(input);
+  const effectiveInput = {
+    ...input,
+    bt: targets.bt,
+    obt: targets.obt,
+    targetCalculations: targets.calculations,
+  };
   const bases = copyBases(input.bases);
   const mss = input.swingRoll + input.pitchRoll;
-  const classification = classifyMss(mss, input.bt, input.obt, input.odditiesEnabled !== false);
+  const classification = classifyMss(mss, targets.bt, targets.obt, input.odditiesEnabled !== false);
 
   if (classification === "oddity") {
-    return resolveOddity({ bases, input, mss });
+    return resolveOddity({ bases, input: effectiveInput, mss });
   }
 
   if (classification === "ordinary-hit") {
-    return resolveOrdinaryHit({ bases, input, mss });
+    return resolveOrdinaryHit({ bases, input: effectiveInput, mss });
   }
 
   if (classification === "critical-hit") {
-    return resolveCriticalHit({ bases, input, mss });
+    return resolveCriticalHit({ bases, input: effectiveInput, mss });
   }
 
   if (classification === "walk") {
-    return resolveWalk({ bases, bt: input.bt, input, mss });
+    return resolveWalk({ bases, bt: targets.bt, input: effectiveInput, mss });
   }
 
   if (classification === "productive-out" || classification === "out") {
-    return resolveOut({ bases, classification, input, mss });
+    return resolveOut({ bases, classification, input: effectiveInput, mss });
   }
 
   if (classification !== "possible-error") {
     return {
-      ...describeUnsupported(classification, mss, input.bt, input.obt),
+      ...describeUnsupported(classification, mss, targets.bt, targets.obt),
       mss,
     };
   }
@@ -957,7 +1026,8 @@ export function resolveAtBat(input) {
   const modifiedDef = input.defRoll + input.defModifier;
   const calculations = [
     `Swing ${input.swingRoll} + Pitch Die ${input.pitchRoll} = MSS ${mss}`,
-    `OBT ${input.obt} -> possible-error range ${input.obt + 1}-${input.obt + 5}`,
+    ...(effectiveInput.targetCalculations ?? []),
+    `OBT ${effectiveInput.obt} -> possible-error range ${effectiveInput.obt + 1}-${effectiveInput.obt + 5}`,
     `Last digit ${lastDigit} -> ${play.kind === "popup" ? "pop-up" : "groundball"} to ${play.position}`,
     `DEF ${input.defRoll} ${input.defModifier >= 0 ? "+" : "-"} ${Math.abs(input.defModifier)} = modified DEF ${modifiedDef}`,
   ];
@@ -985,7 +1055,7 @@ export function resolveAtBat(input) {
         bases: errorState.bases,
         runnerMoves: errorState.runnerMoves,
       },
-      sourceRefs: ["Deadball 2E pp. 27-29"],
+      sourceRefs: ["Deadball 2E pp. 24, 27-29"],
     };
   }
 
@@ -1000,7 +1070,7 @@ export function resolveAtBat(input) {
     ...successfulOut,
     detail: successfulOut.stateDelta.runnerMoves.join("; ") || "No runners advance.",
     calculations,
-    sourceRefs: ["Deadball 2E pp. 27-30"],
+    sourceRefs: ["Deadball 2E pp. 24, 27-30"],
   };
 }
 

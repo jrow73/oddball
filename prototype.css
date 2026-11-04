@@ -276,6 +276,32 @@ legend,
   margin-top: 0.7rem;
 }
 
+.trait-toggle {
+  display: flex;
+  gap: 0.55rem;
+  align-items: flex-start;
+  margin-top: 0.7rem;
+  color: var(--ink);
+  font-size: 0.72rem;
+}
+
+.trait-toggle input {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+  margin-top: 0.1rem;
+  accent-color: var(--navy);
+}
+
+.trait-toggle span {
+  display: flex;
+  flex-direction: column;
+}
+
+.trait-toggle small {
+  color: var(--ink-soft);
+}
+
 input[type="number"],
 input[type="text"],
 textarea,

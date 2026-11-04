@@ -1,5 +1,34 @@
 # Changelog
 
+## 2026-11-03 — Compatible hitter-trait ordering
+
+### Added
+
+- Independent C+ and S+ controls that can coexist with a P trait
+- Explicit P-modifier-first calculation before C+ or S+ evaluates the modified Hit Table value
+- Combined-trait tests, including P+/C+, P-/S+, and simultaneous C+/S+
+- Rules decision RD-011 documenting multiple-trait support and ordering
+
+### Changed
+
+- Replaced the single all-purpose Hit Table trait dropdown with a P-tier dropdown and independent C+ and S+ checkboxes
+- Marked the effective-target trait increment as approved
+
+## 2026-11-03 — Effective-target trait increment
+
+### Added
+
+- C- situational BT/OBT reduction with runners on second or third
+- K+ opposing-BT reduction and Out Table result 3 strikeout conversion
+- CN+ and CN- opposing-OBT adjustments
+- Effective target arithmetic in every affected result explanation
+- Seven focused tests for activation, combined modifiers, classification changes, and K+ outs
+- Rules decision RD-010 documenting modifier ordering and boundaries
+
+### Changed
+
+- Marked the first play-state oddities increment as approved
+
 ## 2026-11-03 — Play-state oddities increment
 
 ### Added
