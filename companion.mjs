@@ -1,4 +1,4 @@
-import { PITCH_DIE_SIDES, calculateEffectivePitchDie, calculateEffectiveTargets, classifyMss, formatPitchDie, requiresHitDefense, resolveAtBat } from "./rules/deadball/modern.mjs?v=0.13.1";
+import { PITCH_DIE_SIDES, calculateEffectivePitchDie, calculateEffectiveTargets, classifyMss, formatPitchDie, requiresHitDefense, resolveAtBat } from "./rules/deadball/modern.mjs?v=0.14.1";
 
 const form = document.querySelector("#companion-form");
 const resultPanel = document.querySelector("#result-panel");
@@ -87,6 +87,9 @@ function updateEffectivePitchDie() {
   const baseSides = numberValue("pitch-die");
   const pitchDie = calculateEffectivePitchDie({
     pitchDieSides: baseSides,
+    batterHand: document.querySelector("#batter-hand").value,
+    pitcherHand: document.querySelector("#pitcher-hand").value,
+    pitcherRole: document.querySelector("#pitcher-role").value,
     pitcherGroundballPlus: document.querySelector("#pitcher-groundball-plus").checked,
     bases: {
       first: form.elements.namedItem("runner-first").checked,
@@ -96,7 +99,7 @@ function updateEffectivePitchDie() {
   });
   document.querySelector("#effective-pitch-die").textContent = pitchDie.sides === baseSides
     ? `Current play: ${formatPitchDie(baseSides)}`
-    : `Bases loaded: ${formatPitchDie(baseSides)} → ${formatPitchDie(pitchDie.sides)}`;
+    : `Current play: ${formatPitchDie(baseSides)} → ${formatPitchDie(pitchDie.sides)}`;
   document.querySelector("#pitch-operator").textContent = pitchDie.sides < 0 ? "−" : "+";
   document.querySelector("#pitch-roll").max = String(Math.abs(pitchDie.sides));
 }
@@ -113,7 +116,10 @@ function collectInput() {
     bt: numberValue("bt"),
     obt: numberValue("obt"),
     bases,
+    batterHand: document.querySelector("#batter-hand").value,
     hitterFreeSwinger: document.querySelector("#hitter-free-swinger").checked,
+    pitcherHand: document.querySelector("#pitcher-hand").value,
+    pitcherRole: document.querySelector("#pitcher-role").value,
     pitcherKPlus: document.querySelector("#pitcher-k-plus").checked,
     pitcherGroundballPlus: document.querySelector("#pitcher-groundball-plus").checked,
     pitcherControlTrait: document.querySelector("#pitcher-control-trait").value,
@@ -161,6 +167,9 @@ function collectInput() {
     hitterContactPlus: document.querySelector("#hitter-contact-plus").checked,
     hitterSpeedPlus: document.querySelector("#hitter-speed-plus").checked,
     hitterFreeSwinger: targetInput.hitterFreeSwinger,
+    batterHand: targetInput.batterHand,
+    pitcherHand: targetInput.pitcherHand,
+    pitcherRole: targetInput.pitcherRole,
     pitcherKPlus: targetInput.pitcherKPlus,
     pitcherGroundballPlus: targetInput.pitcherGroundballPlus,
     pitcherControlTrait: targetInput.pitcherControlTrait,
@@ -262,7 +271,7 @@ form.addEventListener("change", (event) => {
     updateContextDiamond();
     updateEffectivePitchDie();
   }
-  if (event.target.id === "pitch-die" || event.target.id === "pitcher-groundball-plus") {
+  if (["pitch-die", "batter-hand", "pitcher-hand", "pitcher-role", "pitcher-groundball-plus"].includes(event.target.id)) {
     updateEffectivePitchDie();
   }
 });

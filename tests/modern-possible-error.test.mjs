@@ -850,6 +850,117 @@ test("negative Pitch Die validates the physical face against its absolute size",
   assert.match(result.errors[0].message, /-d4 must be from 1 through 4/);
 });
 
+test("same-handed righty and lefty matchups raise the Pitch Die one level", () => {
+  const righty = calculateEffectivePitchDie({
+    ...example,
+    pitchDieSides: -4,
+    batterHand: "right",
+    pitcherHand: "right",
+    pitcherRole: "starter",
+  });
+  const lefty = calculateEffectivePitchDie({
+    ...example,
+    pitchDieSides: 8,
+    batterHand: "left",
+    pitcherHand: "left",
+    pitcherRole: "starter",
+  });
+
+  assert.equal(righty.sides, 4);
+  assert.match(righty.calculations[0], /R\/R starter/);
+  assert.equal(lefty.sides, 12);
+  assert.match(lefty.calculations[0], /L\/L starter/);
+});
+
+test("opposite-handed and switch-hitter matchups do not change the Pitch Die", () => {
+  const opposite = calculateEffectivePitchDie({
+    ...example,
+    batterHand: "left",
+    pitcherHand: "right",
+    pitcherRole: "starter",
+  });
+  const switchHitter = calculateEffectivePitchDie({
+    ...example,
+    batterHand: "switch",
+    pitcherHand: "right",
+    pitcherRole: "starter",
+  });
+
+  assert.equal(opposite.sides, 8);
+  assert.deepEqual(opposite.calculations, []);
+  assert.equal(switchHitter.sides, 8);
+  assert.deepEqual(switchHitter.calculations, []);
+});
+
+test("starter matchup bonus stops at d12 while reliever bonus reaches d20", () => {
+  const starter = calculateEffectivePitchDie({
+    ...example,
+    pitchDieSides: 12,
+    batterHand: "right",
+    pitcherHand: "right",
+    pitcherRole: "starter",
+  });
+  const reliever = calculateEffectivePitchDie({
+    ...example,
+    pitchDieSides: 12,
+    batterHand: "right",
+    pitcherHand: "right",
+    pitcherRole: "reliever",
+  });
+
+  assert.equal(starter.sides, 12);
+  assert.match(starter.calculations[0], /d12 matchup maximum/);
+  assert.equal(reliever.sides, 20);
+});
+
+test("same-handed matchup and GB+ stack as separate Pitch Die increases", () => {
+  const pitchDie = calculateEffectivePitchDie({
+    ...example,
+    bases: { first: true, second: true, third: true },
+    pitchDieSides: -8,
+    batterHand: "left",
+    pitcherHand: "left",
+    pitcherRole: "starter",
+    pitcherGroundballPlus: true,
+  });
+
+  assert.equal(pitchDie.sides, 4);
+  assert.match(pitchDie.calculations[0], /-d8 increases one level to -d4/);
+  assert.match(pitchDie.calculations[1], /-d4 increases one level to d4/);
+});
+
+test("same-handed acceptance fixture crosses from -d4 to d4 and produces a walk", () => {
+  const result = resolveAtBat({
+    ...example,
+    bases: { first: false, second: false, third: false },
+    pitchDieSides: -4,
+    batterHand: "right",
+    pitcherHand: "right",
+    pitcherRole: "starter",
+    swingRoll: 35,
+    pitchRoll: 4,
+  });
+
+  assert.equal(result.mss, 39);
+  assert.equal(result.score, "BB");
+  assert.deepEqual(result.stateDelta.bases, { first: true, second: false, third: false });
+  assert.match(result.calculations[0], /Swing 35 \+ Pitch Die 4 = MSS 39/);
+  assert.match(result.calculations[1], /-d4 increases one level to d4/);
+  assert.ok(result.sourceRefs.includes("Deadball 2E p. 34"));
+});
+
+test("rejects unknown handedness and pitcher roles", () => {
+  const result = resolveAtBat({
+    ...example,
+    batterHand: "both",
+    pitcherHand: "underhand",
+    pitcherRole: "opener",
+  });
+
+  assert.equal(result.outcomeCode, "invalid-input");
+  assert.deepEqual(result.errors.map((error) => error.field), ["batter-hand", "pitcher-hand", "pitcher-role"]);
+});
+
 test("GB+ loaded-bases fixture uses d12 and makes an automatic double play", () => {
   const result = resolveAtBat({
     ...example,

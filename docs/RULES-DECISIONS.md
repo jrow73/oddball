@@ -246,7 +246,7 @@ Date: 2026-11-03
 
 ## RD-013 — Negative Modern Pitch Dice
 
-Status: **Implemented; awaiting acceptance**
+Status: **Approved**
 Date: 2026-11-03
 
 ### Verified source rules
@@ -265,5 +265,25 @@ Date: 2026-11-03
 - Automatic rolling also rolls the positive face range and then applies the negative rating. For example, a -d8 face of 6 contributes -6 to MSS.
 - GB+ moves negative ratings up the same ladder: -d8 becomes -d4, and -d4 becomes d4.
 - Exact MSS 1 triggers Oddities when enabled. MSS values of 0 or less use the glossary’s “5 or less” definition and resolve as critical hits rather than being left unsupported.
-- Handedness, fatigue, in-game Pitch Die gains and losses, and pitcher-rest effects remain outside this increment.
+- Handedness is implemented separately in RD-014. Fatigue, in-game performance changes, and pitcher-rest effects remain outside this increment.
+
+## RD-014 — Righty and lefty matchup adjustment
+
+Status: **Implemented; awaiting acceptance**
+Date: 2026-11-03
+
+### Verified source rules
+
+- Page 34: a right-handed pitcher facing a right-handed batter, or a left-handed pitcher facing a left-handed batter, increases the Pitch Die one level.
+- Page 34: the same-handed matchup advantage cannot raise a starter above d12, while a reliever may reach d20.
+- Page 34: the Pitch Die ladder crosses directly from -d4 to d4; the source uses that exact increase as an example.
+
+### Implementation decisions
+
+- Batter handedness offers right, left, switch, or not set. Pitcher handedness offers right, left, or not set. Leaving either unset preserves the base Pitch Die.
+- Switch hitters do not trigger the same-handed bonus because they can bat from the opposite side of the pitcher.
+- Pitcher role is limited to starter or reliever for this increment and determines the matchup cap.
+- The handedness adjustment is calculated before GB+. Both effects are independent one-level increases and may stack; the starter's d12 limit applies only to the handedness advantage, while GB+ retains its own d20 maximum.
+- The selected Pitch Die remains the base rating. The current-play indicator and calculation trail show the effective die without rewriting that rating.
+- Broader handedness strategy, lineup platooning, pitcher fatigue, rest, and automatic substitutions remain outside this increment.
 

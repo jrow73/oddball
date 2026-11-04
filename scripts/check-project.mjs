@@ -52,17 +52,20 @@ for (const expected of [
 
 for (const expected of [
   "Next rule path active",
-  "Replay the negative Pitch Die fixture",
-  "ODDBALL subtracts the pitch result",
+  "Replay the same-handed matchup fixture",
+  "same-handed matchup raises the current-play die to d4",
   '<option value="-20">−d20</option>',
   'id="pitch-operator"',
+  'id="batter-hand"',
+  'id="pitcher-hand"',
+  'id="pitcher-role"',
   'id="hitter-power-trait"',
   'id="hitter-contact-plus"',
   'id="hitter-speed-plus"',
   'id="pitcher-groundball-plus"',
   'id="effective-pitch-die"',
   'href="./prototype.css"',
-  'src="./companion.mjs?v=0.13.1"',
+  'src="./companion.mjs?v=0.14.1"',
 ]) {
   if (!prototype.includes(expected)) {
     failures.push(`prototype.html is missing: ${expected}`);

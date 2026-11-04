@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-11-03 — Handedness matchup increment
+
+### Added
+
+- Batter batting-hand and pitcher throwing-hand controls
+- Starter and reliever role selection for the matchup maximum
+- Same-handed R/R and L/L Pitch Die increases
+- d12 starter cap and d20 reliever cap
+- Stacking between the handedness adjustment and GB+
+- Six focused tests for activation, exclusions, caps, stacking, validation, and the acceptance fixture
+- Rules decision RD-014 documenting matchup behavior and remaining boundaries
+
+### Changed
+
+- Marked the negative Pitch Die increment as approved
+- Replaced the acceptance fixture with a same-handed -d4 to d4 matchup
+
 ## 2026-11-03 — Negative Pitch Die increment
 
 ### Added

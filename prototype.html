@@ -16,7 +16,7 @@
         <span class="brand-mark" aria-hidden="true">O</span>
         <span>ODDBALL</span>
       </a>
-      <span class="build-label">Vertical slice 0.13.1</span>
+      <span class="build-label">Vertical slice 0.14.1</span>
     </header>
 
     <main id="prototype-main" class="prototype-shell">
@@ -102,6 +102,15 @@
                   <span>Name <small>optional</small></span>
                   <input type="text" id="batter-name" placeholder="Example batter" />
                 </label>
+                <label class="field-label">
+                  Bats
+                  <select id="batter-hand">
+                    <option value="none" selected>Not set</option>
+                    <option value="right">Right</option>
+                    <option value="left">Left</option>
+                    <option value="switch">Switch</option>
+                  </select>
+                </label>
                 <div class="rating-pair">
                   <label class="field-label">
                     BT
@@ -149,6 +158,23 @@
                   <span>Name <small>optional</small></span>
                   <input type="text" id="pitcher-name" placeholder="Example pitcher" />
                 </label>
+                <div class="rating-pair">
+                  <label class="field-label">
+                    Throws
+                    <select id="pitcher-hand">
+                      <option value="none" selected>Not set</option>
+                      <option value="right">Right</option>
+                      <option value="left">Left</option>
+                    </select>
+                  </label>
+                  <label class="field-label">
+                    Role
+                    <select id="pitcher-role">
+                      <option value="starter" selected>Starter</option>
+                      <option value="reliever">Reliever</option>
+                    </select>
+                  </label>
+                </div>
                 <label class="field-label">
                   Pitch Die
                   <select id="pitch-die" aria-label="Pitch Die size">
@@ -317,17 +343,18 @@
 
       <section class="prototype-review" aria-labelledby="review-title">
         <p class="eyebrow">Acceptance fixtures</p>
-        <h2 id="review-title">Replay the negative Pitch Die fixture</h2>
+        <h2 id="review-title">Replay the same-handed matchup fixture</h2>
         <p>
-          Choose manual dice, put a runner on first, and select −d4. Enter Swing 5 and
-          a Pitch Die face of 4; ODDBALL subtracts the pitch result to produce MSS 1.
-          With Oddities enabled, enter 6 and 6 for a total of 12: wild pitch. The runner
-          advances to second and the current at-bat continues.
+          Choose manual dice and clear the bases. Set the batter and pitcher to
+          right-handed, keep the pitcher as a starter, and select a base Pitch Die of
+          −d4. The same-handed matchup raises the current-play die to d4. Enter Swing
+          35 and a Pitch Die face of 4 to produce MSS 39: a walk with the batter taking
+          first.
         </p>
       </section>
     </main>
 
-    <script type="module" src="./companion.mjs?v=0.13.1"></script>
+    <script type="module" src="./companion.mjs?v=0.14.1"></script>
   </body>
 </html>
 

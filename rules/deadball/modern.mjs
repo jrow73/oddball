@@ -27,6 +27,9 @@ const POWER_TRAITS = Object.freeze({
 });
 
 const CONTROL_TRAITS = Object.freeze(["none", "cn-plus", "cn-minus"]);
+const BATTER_HANDS = Object.freeze(["none", "right", "left", "switch"]);
+const PITCHER_HANDS = Object.freeze(["none", "right", "left"]);
+const PITCHER_ROLES = Object.freeze(["starter", "reliever"]);
 
 const POSSIBLE_ERROR_PLAYS = Object.freeze({
   0: { position: "SS", fielder: "shortstop", number: 6, kind: "groundball", score: "6-3" },
@@ -129,6 +132,18 @@ function validateCoreInput(input) {
     errors.push({ field: "pitcher-control-trait", message: "Choose no control trait, CN+, or CN-." });
   }
 
+  if (!BATTER_HANDS.includes(input.batterHand ?? "none")) {
+    errors.push({ field: "batter-hand", message: "Choose right, left, switch, or not set for the batter." });
+  }
+
+  if (!PITCHER_HANDS.includes(input.pitcherHand ?? "none")) {
+    errors.push({ field: "pitcher-hand", message: "Choose right, left, or not set for the pitcher." });
+  }
+
+  if (!PITCHER_ROLES.includes(input.pitcherRole ?? "starter")) {
+    errors.push({ field: "pitcher-role", message: "Choose starter or reliever." });
+  }
+
   return errors;
 }
 
@@ -136,16 +151,39 @@ export function calculateEffectivePitchDie(input) {
   const baseSides = input.pitchDieSides;
   const bases = copyBases(input.bases);
   const basesLoaded = bases.first && bases.second && bases.third;
-  if (!PITCH_DIE_SIDES.includes(baseSides) || !input.pitcherGroundballPlus || !basesLoaded) {
-    return { sides: baseSides, calculations: [] };
+  if (!PITCH_DIE_SIDES.includes(baseSides)) return { sides: baseSides, calculations: [] };
+
+  const calculations = [];
+  let sides = baseSides;
+  const batterHand = input.batterHand ?? "none";
+  const pitcherHand = input.pitcherHand ?? "none";
+  const pitcherRole = input.pitcherRole ?? "starter";
+  const sameHanded = (batterHand === "right" && pitcherHand === "right")
+    || (batterHand === "left" && pitcherHand === "left");
+
+  if (sameHanded) {
+    const matchupMaximum = pitcherRole === "reliever" ? 20 : 12;
+    const currentIndex = PITCH_DIE_SIDES.indexOf(sides);
+    const maximumIndex = PITCH_DIE_SIDES.indexOf(matchupMaximum);
+    const adjustedIndex = currentIndex < maximumIndex ? currentIndex + 1 : currentIndex;
+    const adjustedSides = PITCH_DIE_SIDES[adjustedIndex];
+    const matchup = `${batterHand === "right" ? "R/R" : "L/L"} ${pitcherRole}`;
+    calculations.push(adjustedSides === sides
+      ? `Same-handed matchup (${matchup}) -> Pitch Die remains ${formatPitchDie(sides)} (${formatPitchDie(matchupMaximum)} matchup maximum)`
+      : `Same-handed matchup (${matchup}) -> Pitch Die ${formatPitchDie(sides)} increases one level to ${formatPitchDie(adjustedSides)}`);
+    sides = adjustedSides;
   }
 
-  const currentIndex = PITCH_DIE_SIDES.indexOf(baseSides);
-  const sides = PITCH_DIE_SIDES[Math.min(currentIndex + 1, PITCH_DIE_SIDES.length - 1)];
-  const calculation = sides === baseSides
-    ? `GB+ with bases loaded -> Pitch Die remains ${formatPitchDie(baseSides)} (d20 maximum)`
-    : `GB+ with bases loaded -> Pitch Die ${formatPitchDie(baseSides)} increases one level to ${formatPitchDie(sides)}`;
-  return { sides, calculations: [calculation] };
+  if (input.pitcherGroundballPlus && basesLoaded) {
+    const currentIndex = PITCH_DIE_SIDES.indexOf(sides);
+    const adjustedSides = PITCH_DIE_SIDES[Math.min(currentIndex + 1, PITCH_DIE_SIDES.length - 1)];
+    calculations.push(adjustedSides === sides
+      ? `GB+ with bases loaded -> Pitch Die remains ${formatPitchDie(sides)} (d20 maximum)`
+      : `GB+ with bases loaded -> Pitch Die ${formatPitchDie(sides)} increases one level to ${formatPitchDie(adjustedSides)}`);
+    sides = adjustedSides;
+  }
+
+  return { sides, calculations };
 }
 
 export function calculateEffectiveTargets(input) {
@@ -1057,32 +1095,39 @@ export function resolveAtBat(input) {
   const bases = copyBases(input.bases);
   const mss = input.swingRoll + signedPitchResult(pitchDie.sides, input.pitchRoll);
   const classification = classifyMss(mss, targets.bt, targets.obt, input.odditiesEnabled !== false);
+  const finalizeResult = (result) => {
+    if (!pitchDie.calculations.some((calculation) => calculation.startsWith("Same-handed matchup"))) return result;
+    return {
+      ...result,
+      sourceRefs: [...(result.sourceRefs ?? []), "Deadball 2E p. 34"],
+    };
+  };
 
   if (classification === "oddity") {
-    return resolveOddity({ bases, input: effectiveInput, mss });
+    return finalizeResult(resolveOddity({ bases, input: effectiveInput, mss }));
   }
 
   if (classification === "ordinary-hit") {
-    return resolveOrdinaryHit({ bases, input: effectiveInput, mss });
+    return finalizeResult(resolveOrdinaryHit({ bases, input: effectiveInput, mss }));
   }
 
   if (classification === "critical-hit") {
-    return resolveCriticalHit({ bases, input: effectiveInput, mss });
+    return finalizeResult(resolveCriticalHit({ bases, input: effectiveInput, mss }));
   }
 
   if (classification === "walk") {
-    return resolveWalk({ bases, bt: targets.bt, input: effectiveInput, mss });
+    return finalizeResult(resolveWalk({ bases, bt: targets.bt, input: effectiveInput, mss }));
   }
 
   if (classification === "productive-out" || classification === "out") {
-    return resolveOut({ bases, classification, input: effectiveInput, mss });
+    return finalizeResult(resolveOut({ bases, classification, input: effectiveInput, mss }));
   }
 
   if (classification !== "possible-error") {
-    return {
+    return finalizeResult({
       ...describeUnsupported(classification, mss, targets.bt, targets.obt),
       mss,
-    };
+    });
   }
 
   const defenseErrors = [];
@@ -1111,7 +1156,7 @@ export function resolveAtBat(input) {
     const errorState = advanceAllOnError(bases);
     const outsAfter = input.outs;
     calculations.push("Modified DEF 2 or less -> error; batter safe and all runners advance one base");
-    return {
+    return finalizeResult({
       supported: true,
       outcomeCode: "error",
       classification,
@@ -1131,12 +1176,12 @@ export function resolveAtBat(input) {
         runnerMoves: errorState.runnerMoves,
       },
       sourceRefs: ["Deadball 2E pp. 24, 27-29"],
-    };
+    });
   }
 
   const successfulOut = resolveSuccessfulOut({ bases, mss, outs: input.outs, play });
   calculations.push("Modified DEF 3 or higher -> make the out normally");
-  return {
+  return finalizeResult({
     supported: true,
     classification,
     mss,
@@ -1146,7 +1191,7 @@ export function resolveAtBat(input) {
     detail: successfulOut.stateDelta.runnerMoves.join("; ") || "No runners advance.",
     calculations,
     sourceRefs: ["Deadball 2E pp. 24, 27-30"],
-  };
+  });
 }
 
 export const resolvePossibleError = resolveAtBat;
