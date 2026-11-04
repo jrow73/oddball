@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-11-03 — Negative Pitch Die increment
+
+### Added
+
+- Complete Modern Pitch Die ladder from -d20 through d20
+- Negative-die subtraction for both manual and automatic rolling
+- Dynamic plus/minus presentation and die-face validation
+- GB+ movement across negative levels, including -d4 to d4
+- Five focused tests for the ladder, subtraction, oddities, low critical hits, and validation
+- Rules decision RD-013 documenting the negative-die behavior and remaining pitching boundaries
+
+### Changed
+
+- Marked the GB+ increment as approved
+- Replaced the acceptance fixture with an MSS 1 example produced by a -d4 pitcher
+- Corrected defensive-double errors so the batter reaches third and existing runners receive the extra error base
+
 ## 2026-11-03 — GB+ Groundball Machine increment
 
 ### Added

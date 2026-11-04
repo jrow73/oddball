@@ -1,4 +1,4 @@
-import { PITCH_DIE_SIDES, calculateEffectivePitchDie, calculateEffectiveTargets, classifyMss, requiresHitDefense, resolveAtBat } from "./rules/deadball/modern.mjs";
+import { PITCH_DIE_SIDES, calculateEffectivePitchDie, calculateEffectiveTargets, classifyMss, formatPitchDie, requiresHitDefense, resolveAtBat } from "./rules/deadball/modern.mjs?v=0.13.1";
 
 const form = document.querySelector("#companion-form");
 const resultPanel = document.querySelector("#result-panel");
@@ -95,8 +95,10 @@ function updateEffectivePitchDie() {
     },
   });
   document.querySelector("#effective-pitch-die").textContent = pitchDie.sides === baseSides
-    ? `Current play: d${baseSides}`
-    : `Bases loaded: d${baseSides} → d${pitchDie.sides}`;
+    ? `Current play: ${formatPitchDie(baseSides)}`
+    : `Bases loaded: ${formatPitchDie(baseSides)} → ${formatPitchDie(pitchDie.sides)}`;
+  document.querySelector("#pitch-operator").textContent = pitchDie.sides < 0 ? "−" : "+";
+  document.querySelector("#pitch-roll").max = String(Math.abs(pitchDie.sides));
 }
 
 function collectInput() {
@@ -120,12 +122,12 @@ function collectInput() {
   if (automatic) {
     const swingRoll = rollDie(100);
     const effectivePitchDie = calculateEffectivePitchDie({ ...targetInput, pitchDieSides });
-    const pitchRoll = rollDie(effectivePitchDie.sides);
+    const pitchRoll = rollDie(Math.abs(effectivePitchDie.sides));
     document.querySelector("#swing-roll").value = String(swingRoll);
     document.querySelector("#pitch-roll").value = String(pitchRoll);
     const targets = calculateEffectiveTargets(targetInput);
     const classification = classifyMss(
-      swingRoll + pitchRoll,
+      swingRoll + (effectivePitchDie.sides < 0 ? -pitchRoll : pitchRoll),
       targets.bt,
       targets.obt,
       document.querySelector("#oddities-enabled").checked,
@@ -288,7 +290,7 @@ applyContextButton.addEventListener("click", applySuggestedContext);
 
 for (const sides of PITCH_DIE_SIDES) {
   if (!document.querySelector(`#pitch-die option[value='${sides}']`)) {
-    console.warn(`Missing Pitch Die option: d${sides}`);
+    console.warn(`Missing Pitch Die option: ${formatPitchDie(sides)}`);
   }
 }
 

@@ -52,16 +52,17 @@ for (const expected of [
 
 for (const expected of [
   "Next rule path active",
-  "Replay the GB+ loaded-bases fixture",
-  "current-play indicator increases it to d12",
-  "forced runner on third scores",
+  "Replay the negative Pitch Die fixture",
+  "ODDBALL subtracts the pitch result",
+  '<option value="-20">−d20</option>',
+  'id="pitch-operator"',
   'id="hitter-power-trait"',
   'id="hitter-contact-plus"',
   'id="hitter-speed-plus"',
   'id="pitcher-groundball-plus"',
   'id="effective-pitch-die"',
   'href="./prototype.css"',
-  'src="./companion.mjs"',
+  'src="./companion.mjs?v=0.13.1"',
 ]) {
   if (!prototype.includes(expected)) {
     failures.push(`prototype.html is missing: ${expected}`);

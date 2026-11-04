@@ -1,4 +1,22 @@
-export const PITCH_DIE_SIDES = Object.freeze([4, 8, 12, 20]);
+export const PITCH_DIE_SIDES = Object.freeze([-20, -12, -8, -4, 4, 8, 12, 20]);
+
+export function formatPitchDie(pitchDie) {
+  return pitchDie < 0 ? `-d${Math.abs(pitchDie)}` : `d${pitchDie}`;
+}
+
+function pitchDieMaximum(pitchDie) {
+  return Math.abs(pitchDie);
+}
+
+function signedPitchResult(pitchDie, roll) {
+  return pitchDie < 0 ? -roll : roll;
+}
+
+function describeMssCalculation(input, mss) {
+  const pitchDie = input.effectivePitchDieSides ?? input.pitchDieSides;
+  const operator = pitchDie < 0 ? "-" : "+";
+  return `Swing ${input.swingRoll} ${operator} Pitch Die ${input.pitchRoll} = MSS ${mss}`;
+}
 
 const POWER_TRAITS = Object.freeze({
   none: { label: "No power trait", modifier: 0 },
@@ -98,11 +116,12 @@ function validateCoreInput(input) {
 
   if (
     PITCH_DIE_SIDES.includes(input.pitchDieSides) &&
-    !isIntegerBetween(input.pitchRoll, 1, effectivePitchDie.sides)
+    !isIntegerBetween(input.pitchRoll, 1, pitchDieMaximum(effectivePitchDie.sides))
   ) {
+    const die = formatPitchDie(effectivePitchDie.sides);
     errors.push({
       field: "pitch-roll",
-      message: `The Pitch Die result must be from 1 through ${effectivePitchDie.sides}.`,
+      message: `The Pitch Die result for ${die} must be from 1 through ${pitchDieMaximum(effectivePitchDie.sides)}.`,
     });
   }
 
@@ -124,8 +143,8 @@ export function calculateEffectivePitchDie(input) {
   const currentIndex = PITCH_DIE_SIDES.indexOf(baseSides);
   const sides = PITCH_DIE_SIDES[Math.min(currentIndex + 1, PITCH_DIE_SIDES.length - 1)];
   const calculation = sides === baseSides
-    ? `GB+ with bases loaded -> Pitch Die remains d${baseSides} (d20 maximum)`
-    : `GB+ with bases loaded -> Pitch Die d${baseSides} increases one level to d${sides}`;
+    ? `GB+ with bases loaded -> Pitch Die remains ${formatPitchDie(baseSides)} (d20 maximum)`
+    : `GB+ with bases loaded -> Pitch Die ${formatPitchDie(baseSides)} increases one level to ${formatPitchDie(sides)}`;
   return { sides, calculations: [calculation] };
 }
 
@@ -348,18 +367,25 @@ function resolveDefensiveHit({ bases, calculations, input, mss, tableResult }) {
   );
 
   if (modifiedDef <= 2) {
-    const errorState = advanceAllOnError(bases);
-    calculations.push("Modified DEF 0-2 -> error; batter safe and runners advance one base");
+    const doubleWithError = tableResult.score === "2B";
+    const errorState = doubleWithError
+      ? moveRunnersOnHit(bases, tableResult.batterBases + 1, tableResult.runnerAdvance + 1)
+      : advanceAllOnError(bases);
+    calculations.push(doubleWithError
+      ? "Modified DEF 0-2 -> error after double; batter reaches third and runners take one extra base"
+      : "Modified DEF 0-2 -> error; batter safe and runners advance one base");
     return {
       supported: true,
-      outcomeCode: "error",
+      outcomeCode: doubleWithError ? "double-with-error" : "error",
       classification: "ordinary-hit",
       mss,
       hitRoll: input.hitRoll,
       modifiedDef,
       play: tableResult.play,
-      score: `E-${tableResult.play.number}`,
-      summary: `Error by ${tableResult.play.fielder}.`,
+      score: `${doubleWithError ? "2B + " : ""}E-${tableResult.play.number}`,
+      summary: doubleWithError
+        ? `Double; error by ${tableResult.play.fielder}.`
+        : `Error by ${tableResult.play.fielder}.`,
       detail: errorState.runnerMoves.join("; ") + ".",
       calculations,
       stateDelta: {
@@ -467,7 +493,7 @@ function resolveOrdinaryHit({ bases, input, mss }) {
   });
   const tableResult = adjusted.tableResult;
   const calculations = [
-    `Swing ${input.swingRoll} + Pitch Die ${input.pitchRoll} = MSS ${mss}`,
+    describeMssCalculation(input, mss),
     ...(input.targetCalculations ?? []),
     `MSS 6 through BT ${input.bt} -> ordinary hit`,
     ...adjusted.calculations,
@@ -541,8 +567,8 @@ function resolveCriticalHit({ bases, input, mss }) {
   const runnerAdvance = Math.min(4, tableResult.runnerAdvance + 1);
   const movement = moveRunnersOnHit(bases, upgraded.batterBases, runnerAdvance);
   const calculations = [
-    `Swing ${input.swingRoll} + Pitch Die ${input.pitchRoll} = MSS ${mss}`,
-    `MSS 2-5 -> critical hit`,
+    describeMssCalculation(input, mss),
+    `MSS ${mss} (5 or less, except oddity 1) -> critical hit`,
     ...adjusted.calculations,
     `${tableResult.score} increases one level to ${upgraded.score}; existing runners take one extra base`,
   ];
@@ -604,7 +630,7 @@ function resolveWalk({ bases, bt, input, mss }) {
     summary: "Walk.",
     detail: runnerMoves.join("; ") + ".",
     calculations: [
-      `Swing ${input.swingRoll} + Pitch Die ${input.pitchRoll} = MSS ${mss}`,
+      describeMssCalculation(input, mss),
       ...(input.targetCalculations ?? []),
       `BT ${bt} + 1 through OBT ${input.obt} -> walk`,
       runsScored > 0
@@ -703,7 +729,7 @@ function resolveOddity({ bases, input, mss }) {
   const oddityRoll = input.oddityRollOne + input.oddityRollTwo;
   const oddity = ODDITIES[oddityRoll];
   const calculations = [
-    `Swing ${input.swingRoll} + Pitch Die ${input.pitchRoll} = MSS ${mss}`,
+    describeMssCalculation(input, mss),
     `Oddities enabled and MSS ${mss} -> roll 2d10`,
     `Oddities ${input.oddityRollOne} + ${input.oddityRollTwo} = ${oddityRoll} -> ${oddity}`,
   ];
@@ -972,7 +998,7 @@ function resolveOut({ bases, classification, input, mss }) {
       ? { position: "SS", fielder: "shortstop", kind: "groundball", score: "6-3", automaticDoublePlay: true }
       : OUT_PLAYS[lastDigit];
   const calculations = [
-    `Swing ${input.swingRoll} + Pitch Die ${input.pitchRoll} = MSS ${mss}`,
+    describeMssCalculation(input, mss),
     ...(input.targetCalculations ?? []),
     `MSS ${mss} -> ${classification === "productive-out" ? "productive-out band" : "out band"}`,
     `Last digit ${lastDigit} -> ${play.kind === "strikeout" ? "strikeout" : play.kind === "popup" ? `pop-up to ${play.position}` : `groundball to ${play.position}`}`,
@@ -1029,7 +1055,7 @@ export function resolveAtBat(input) {
     targetCalculations: [...pitchDie.calculations, ...targets.calculations],
   };
   const bases = copyBases(input.bases);
-  const mss = input.swingRoll + input.pitchRoll;
+  const mss = input.swingRoll + signedPitchResult(pitchDie.sides, input.pitchRoll);
   const classification = classifyMss(mss, targets.bt, targets.obt, input.odditiesEnabled !== false);
 
   if (classification === "oddity") {
@@ -1074,7 +1100,7 @@ export function resolveAtBat(input) {
   const play = POSSIBLE_ERROR_PLAYS[lastDigit];
   const modifiedDef = input.defRoll + input.defModifier;
   const calculations = [
-    `Swing ${input.swingRoll} + Pitch Die ${input.pitchRoll} = MSS ${mss}`,
+    describeMssCalculation(effectiveInput, mss),
     ...(effectiveInput.targetCalculations ?? []),
     `OBT ${effectiveInput.obt} -> possible-error range ${effectiveInput.obt + 1}-${effectiveInput.obt + 5}`,
     `Last digit ${lastDigit} -> ${play.kind === "popup" ? "pop-up" : "groundball"} to ${play.position}`,

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { calculateEffectivePitchDie, calculateEffectiveTargets, classifyMss, requiresHitDefense, resolveAtBat } from "../rules/deadball/modern.mjs";
+import { PITCH_DIE_SIDES, calculateEffectivePitchDie, calculateEffectiveTargets, classifyMss, requiresHitDefense, resolveAtBat } from "../rules/deadball/modern.mjs";
 
 const example = {
   outs: 0,
@@ -203,6 +203,27 @@ test("resolves a defensive single error with one-base advancement", () => {
   assert.equal(result.score, "E-3");
   assert.equal(result.stateDelta.runsScored, 1);
   assert.deepEqual(result.stateDelta.bases, { first: true, second: true, third: true });
+});
+
+test("adds an error base after a defensive double", () => {
+  const result = resolveAtBat({
+    ...example,
+    bases: { first: true, second: false, third: false },
+    pitchDieSides: -8,
+    swingRoll: 31,
+    pitchRoll: 2,
+    hitRoll: 15,
+    defRoll: 2,
+    defModifier: -1,
+  });
+
+  assert.equal(result.mss, 29);
+  assert.equal(result.score, "2B + E-7");
+  assert.equal(result.outcomeCode, "double-with-error");
+  assert.equal(result.stateDelta.runsScored, 1);
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: false, third: true });
+  assert.match(result.detail, /Runner on first scores; Batter to third/);
+  assert.match(result.calculations.at(-1), /error after double/);
 });
 
 test("leaves a defensive single unchanged on modified DEF 3-9", () => {
@@ -757,6 +778,76 @@ test("GB+ respects the d20 maximum with the bases loaded", () => {
 
   assert.equal(pitchDie.sides, 20);
   assert.match(pitchDie.calculations[0], /remains d20/);
+});
+
+test("Modern Pitch Dice include every negative and positive ladder level", () => {
+  assert.deepEqual(PITCH_DIE_SIDES, [-20, -12, -8, -4, 4, 8, 12, 20]);
+});
+
+test("GB+ raises negative Pitch Dice one level across the zero boundary", () => {
+  const loaded = { first: true, second: true, third: true };
+  const negativeEight = calculateEffectivePitchDie({
+    ...example,
+    bases: loaded,
+    pitchDieSides: -8,
+    pitcherGroundballPlus: true,
+  });
+  const negativeFour = calculateEffectivePitchDie({
+    ...example,
+    bases: loaded,
+    pitchDieSides: -4,
+    pitcherGroundballPlus: true,
+  });
+
+  assert.equal(negativeEight.sides, -4);
+  assert.match(negativeEight.calculations[0], /-d8 increases one level to -d4/);
+  assert.equal(negativeFour.sides, 4);
+  assert.match(negativeFour.calculations[0], /-d4 increases one level to d4/);
+});
+
+test("negative Pitch Die subtracts its face and can produce MSS 1 oddity", () => {
+  const result = resolveAtBat({
+    ...example,
+    pitchDieSides: -4,
+    swingRoll: 5,
+    pitchRoll: 4,
+    odditiesEnabled: true,
+    oddityRollOne: 6,
+    oddityRollTwo: 6,
+  });
+
+  assert.equal(result.mss, 1);
+  assert.equal(result.score, "WP");
+  assert.match(result.detail, /At-bat continues/);
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: true, third: false });
+  assert.match(result.calculations[0], /Swing 5 - Pitch Die 4 = MSS 1/);
+});
+
+test("MSS below 1 remains a critical hit", () => {
+  const result = resolveAtBat({
+    ...example,
+    bases: { first: false, second: false, third: false },
+    pitchDieSides: -4,
+    swingRoll: 4,
+    pitchRoll: 4,
+    hitRoll: 7,
+  });
+
+  assert.equal(result.mss, 0);
+  assert.equal(result.classification, "critical-hit");
+  assert.equal(result.score, "2B");
+  assert.match(result.calculations[1], /5 or less/);
+});
+
+test("negative Pitch Die validates the physical face against its absolute size", () => {
+  const result = resolveAtBat({
+    ...example,
+    pitchDieSides: -4,
+    pitchRoll: 5,
+  });
+
+  assert.equal(result.outcomeCode, "invalid-input");
+  assert.match(result.errors[0].message, /-d4 must be from 1 through 4/);
 });
 
 test("GB+ loaded-bases fixture uses d12 and makes an automatic double play", () => {

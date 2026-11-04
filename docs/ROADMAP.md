@@ -36,7 +36,7 @@ Deliverables:
 
 ## Milestone 2 — Dice Companion vertical slice
 
-Status: **Core at-bat, Hit Table, oddities, effective-target, and compatible-trait increments accepted; GB+ awaiting user acceptance**
+Status: **Core at-bat, Hit Table, oddities, effective-target, compatible-trait, and GB+ increments accepted; negative Pitch Dice awaiting user acceptance**
 
 Goal: resolve a deliberately limited set of Modern-rule plate appearances end to end.
 
@@ -58,6 +58,7 @@ Implemented components:
 - C-, K+, CN+, and CN- effective BT/OBT modifiers with visible arithmetic
 - K+ Out Table result 3 strikeout conversion
 - GB+ bases-loaded Pitch Die increase, Out Table result 2 conversion, and automatic double play
+- Full Modern Pitch Die ladder from -d20 through d20, including negative-roll subtraction
 
 Acceptance examples now cover the documented MSS 47 possible-error scenario, walks, hits, outs, critical and trait-modified results, plus wild-pitch and pitcher-error oddities.
 

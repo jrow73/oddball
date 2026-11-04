@@ -90,7 +90,8 @@ Date: 2026-11-02
 
 ### Implementation decisions
 
-- Defensive errors use the named fielder's scorekeeping number, put the batter on first, and advance every existing runner one base.
+- A defensive single error uses the named fielder's scorekeeping number, puts the batter on first, and advances every existing runner one base.
+- A defensive double remains a double before the error is applied. The batter takes the additional error base to third, and existing runners take one extra base beyond the double's normal advancement. This preserves the established Hit Table result rather than making an error less favorable than an unchanged DEF result.
 - Modified DEF 3-9 preserves the original single or double and its ordinary advancement.
 - Modified DEF 10-11 reduces a double to a standard single. A single remains a single, following the worked example; it is removed only at modified DEF 12+.
 - Modified DEF 12+ adds one out and holds existing runners. When it is the third out, the suggested next context clears the bases.
@@ -223,7 +224,7 @@ Date: 2026-11-03
 
 ## RD-012 — GB+ Groundball Machine
 
-Status: **Implemented; awaiting acceptance**
+Status: **Approved**
 Date: 2026-11-03
 
 ### Verified source rules
@@ -241,5 +242,28 @@ Date: 2026-11-03
 - User clarification: when a groundball begins with a force chain, every forced runner is running. On a loaded-base double play with no outs, the runner on third scores, the runner on second advances to third, and the runner on first and batter are retired.
 - The same forced-runner advancement applies to ordinary infield double plays and fielder's choices, not only the GB+ conversion.
 - If the double play makes the third out, the forced run does not score and the bases clear for the next inning.
-- The current UI supports positive Pitch Dice only. GB+ level changes involving no die or negative dice remain deferred until negative Pitch Dice are implemented.
+- GB+ uses the complete Modern Pitch Die ladder, including negative dice, as recorded in RD-013.
+
+## RD-013 — Negative Modern Pitch Dice
+
+Status: **Implemented; awaiting acceptance**
+Date: 2026-11-03
+
+### Verified source rules
+
+- Page 23: a Pitch Die can range from d20 to -d20.
+- Page 26: the Pitch Die result combines with the Swing Score to produce MSS; a negative Pitch Die therefore reduces the Swing Score.
+- Page 34: the Modern Pitch Die ladder is d20, d12, d8, d4, -d4, -d8, -d12, and -d20. The handedness example explicitly increases -d4 one level to d4.
+- Page 35: Pitch Die gains and losses move along that ladder; the fatigue example drops d4 one level to -d4.
+- Page 60: the Modern real-player table assigns all four negative levels according to ERA.
+- Page 27 lists critical hits at MSS 2-5, while the glossary on page 111 describes a critical hit as MSS 5 or less. MSS 1 remains the explicit Oddities trigger when that optional rule is enabled.
+
+### Implementation decisions
+
+- The Pitch Die selector includes every Modern level. Modern rules have no neutral “No Dice” level between -d4 and d4.
+- A user with a negative die enters the ordinary physical face shown on the die. ODDBALL subtracts that face from the Swing Score and displays the subtraction in the calculation trail.
+- Automatic rolling also rolls the positive face range and then applies the negative rating. For example, a -d8 face of 6 contributes -6 to MSS.
+- GB+ moves negative ratings up the same ladder: -d8 becomes -d4, and -d4 becomes d4.
+- Exact MSS 1 triggers Oddities when enabled. MSS values of 0 or less use the glossary’s “5 or less” definition and resolve as critical hits rather than being left unsupported.
+- Handedness, fatigue, in-game Pitch Die gains and losses, and pitcher-rest effects remain outside this increment.
 
