@@ -1,4 +1,4 @@
-export const PITCH_DIE_SIDES = Object.freeze([4, 6, 8, 10, 12, 20]);
+export const PITCH_DIE_SIDES = Object.freeze([4, 8, 12, 20]);
 
 const POWER_TRAITS = Object.freeze({
   none: { label: "No power trait", modifier: 0 },
@@ -72,6 +72,7 @@ function copyBases(bases = {}) {
 
 function validateCoreInput(input) {
   const errors = [];
+  const effectivePitchDie = calculateEffectivePitchDie(input);
 
   if (!isIntegerBetween(input.outs, 0, 2)) {
     errors.push({ field: "outs", message: "Choose 0, 1, or 2 outs." });
@@ -97,11 +98,11 @@ function validateCoreInput(input) {
 
   if (
     PITCH_DIE_SIDES.includes(input.pitchDieSides) &&
-    !isIntegerBetween(input.pitchRoll, 1, input.pitchDieSides)
+    !isIntegerBetween(input.pitchRoll, 1, effectivePitchDie.sides)
   ) {
     errors.push({
       field: "pitch-roll",
-      message: `The Pitch Die result must be from 1 through ${input.pitchDieSides}.`,
+      message: `The Pitch Die result must be from 1 through ${effectivePitchDie.sides}.`,
     });
   }
 
@@ -110,6 +111,22 @@ function validateCoreInput(input) {
   }
 
   return errors;
+}
+
+export function calculateEffectivePitchDie(input) {
+  const baseSides = input.pitchDieSides;
+  const bases = copyBases(input.bases);
+  const basesLoaded = bases.first && bases.second && bases.third;
+  if (!PITCH_DIE_SIDES.includes(baseSides) || !input.pitcherGroundballPlus || !basesLoaded) {
+    return { sides: baseSides, calculations: [] };
+  }
+
+  const currentIndex = PITCH_DIE_SIDES.indexOf(baseSides);
+  const sides = PITCH_DIE_SIDES[Math.min(currentIndex + 1, PITCH_DIE_SIDES.length - 1)];
+  const calculation = sides === baseSides
+    ? `GB+ with bases loaded -> Pitch Die remains d${baseSides} (d20 maximum)`
+    : `GB+ with bases loaded -> Pitch Die d${baseSides} increases one level to d${sides}`;
+  return { sides, calculations: [calculation] };
 }
 
 export function calculateEffectiveTargets(input) {
@@ -782,6 +799,21 @@ function resolveOddity({ bases, input, mss }) {
   };
 }
 
+function advanceForcedRunnersOnGroundball(bases, nextBases, runnerMoves) {
+  if (!bases.first || !bases.second) return 0;
+
+  let runsScored = 0;
+  if (bases.third) {
+    nextBases.third = false;
+    runsScored = 1;
+    runnerMoves.push("Runner on third scores on the force");
+  }
+  nextBases.second = false;
+  nextBases.third = true;
+  runnerMoves.push("Runner on second to third on the force");
+  return runsScored;
+}
+
 function resolveSuccessfulOut({ bases, mss, outs, play }) {
   const nextBases = copyBases(bases);
   const runnerMoves = [];
@@ -830,7 +862,14 @@ function resolveSuccessfulOut({ bases, mss, outs, play }) {
   } else {
     const isRightSide = play.position === "1B" || play.position === "2B";
 
-    if (mss >= 100 && bases.first && bases.second && outs === 0) {
+    if (play.automaticDoublePlay && bases.first) {
+      requestedOuts = 2;
+      outcomeCode = "double-play";
+      score = "DP";
+      runsScored += advanceForcedRunnersOnGroundball(bases, nextBases, runnerMoves);
+      nextBases.first = false;
+      runnerMoves.push("Runner on first and batter out on automatic double play");
+    } else if (mss >= 100 && bases.first && bases.second && outs === 0) {
       requestedOuts = 3;
       outcomeCode = "triple-play";
       score = "TP";
@@ -839,6 +878,7 @@ function resolveSuccessfulOut({ bases, mss, outs, play }) {
       requestedOuts = 2;
       outcomeCode = "double-play";
       score = "DP";
+      runsScored += advanceForcedRunnersOnGroundball(bases, nextBases, runnerMoves);
       nextBases.first = false;
       runnerMoves.push("Runner on first and batter out on double play");
     } else if (mss >= 50 && bases.first) {
@@ -848,29 +888,22 @@ function resolveSuccessfulOut({ bases, mss, outs, play }) {
       runnerMoves.push("Runner on first out at second");
       runnerMoves.push("Batter safe at first on fielder's choice");
 
+      runsScored += advanceForcedRunnersOnGroundball(bases, nextBases, runnerMoves);
+
       if (isRightSide) {
-        if (bases.third) {
+        if (bases.third && !bases.second) {
           nextBases.third = false;
           runsScored += 1;
           runnerMoves.push("Runner on third scores");
         }
-        if (bases.second) {
-          nextBases.second = false;
-          nextBases.third = true;
-          runnerMoves.push("Runner on second to third");
-        }
       }
     } else if (mss < 50 && bases.first) {
+      runsScored += advanceForcedRunnersOnGroundball(bases, nextBases, runnerMoves);
       nextBases.first = false;
-      if (bases.third) {
+      if (isRightSide && bases.third && !bases.second) {
         nextBases.third = false;
         runsScored += 1;
         runnerMoves.push("Runner on third scores");
-      }
-      if (bases.second) {
-        nextBases.second = false;
-        nextBases.third = true;
-        runnerMoves.push("Runner on second to third");
       }
       nextBases.second = true;
       runnerMoves.push("Runner on first to second");
@@ -891,6 +924,13 @@ function resolveSuccessfulOut({ bases, mss, outs, play }) {
   const outsAdded = Math.min(requestedOuts, 3 - outs);
   const outsAfter = outs + outsAdded;
   if (outsAfter === 3) {
+    if (runsScored > 0) {
+      runsScored = 0;
+      const scoringMove = runnerMoves.indexOf("Runner on third scores on the force");
+      if (scoringMove >= 0) runnerMoves[scoringMove] = "Runner on third does not score; the inning ends on the double play";
+      const advancingMove = runnerMoves.indexOf("Runner on second to third on the force");
+      if (advancingMove >= 0) runnerMoves[advancingMove] = "Runner on second was advancing when the inning ended";
+    }
     nextBases.first = false;
     nextBases.second = false;
     nextBases.third = false;
@@ -928,7 +968,9 @@ function resolveOut({ bases, classification, input, mss }) {
   const lastDigit = Math.abs(mss) % 10;
   const play = input.pitcherKPlus && lastDigit === 3
     ? { position: "K", fielder: "pitcher", kind: "strikeout", score: "K" }
-    : OUT_PLAYS[lastDigit];
+    : input.pitcherGroundballPlus && lastDigit === 2
+      ? { position: "SS", fielder: "shortstop", kind: "groundball", score: "6-3", automaticDoublePlay: true }
+      : OUT_PLAYS[lastDigit];
   const calculations = [
     `Swing ${input.swingRoll} + Pitch Die ${input.pitchRoll} = MSS ${mss}`,
     ...(input.targetCalculations ?? []),
@@ -938,9 +980,14 @@ function resolveOut({ bases, classification, input, mss }) {
   if (input.pitcherKPlus && lastDigit === 3) {
     calculations.push("K+ changes Out Table result 3 from a groundball to a strikeout");
   }
+  if (input.pitcherGroundballPlus && lastDigit === 2) {
+    calculations.push("GB+ changes Out Table result 2 from a strikeout to a 6-3 groundball");
+  }
   const resolved = resolveSuccessfulOut({ bases, mss, outs: input.outs, play });
 
-  if (resolved.outcomeCode === "fielders-choice") {
+  if (play.automaticDoublePlay && bases.first && resolved.outcomeCode === "double-play") {
+    calculations.push("GB+ result 2 with a runner on first -> automatic double play");
+  } else if (resolved.outcomeCode === "fielders-choice") {
     calculations.push("MSS 50-69 with a runner on first -> fielder's choice");
   } else if (resolved.outcomeCode === "double-play") {
     calculations.push("MSS 70+ on the infield with a runner on first -> double play");
@@ -973,11 +1020,13 @@ export function resolveAtBat(input) {
   }
 
   const targets = calculateEffectiveTargets(input);
+  const pitchDie = calculateEffectivePitchDie(input);
   const effectiveInput = {
     ...input,
     bt: targets.bt,
     obt: targets.obt,
-    targetCalculations: targets.calculations,
+    effectivePitchDieSides: pitchDie.sides,
+    targetCalculations: [...pitchDie.calculations, ...targets.calculations],
   };
   const bases = copyBases(input.bases);
   const mss = input.swingRoll + input.pitchRoll;

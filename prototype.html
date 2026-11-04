@@ -16,7 +16,7 @@
         <span class="brand-mark" aria-hidden="true">O</span>
         <span>ODDBALL</span>
       </a>
-      <span class="build-label">Vertical slice 0.11</span>
+      <span class="build-label">Vertical slice 0.12</span>
     </header>
 
     <main id="prototype-main" class="prototype-shell">
@@ -153,13 +153,12 @@
                   Pitch Die
                   <select id="pitch-die" aria-label="Pitch Die size">
                     <option value="4">d4</option>
-                    <option value="6">d6</option>
                     <option value="8" selected>d8</option>
-                    <option value="10">d10</option>
                     <option value="12">d12</option>
                     <option value="20">d20</option>
                   </select>
                 </label>
+                <span id="effective-pitch-die" class="field-hint" aria-live="polite">Current play: d8</span>
                 <label class="field-label trait-field">
                   Control trait
                   <select id="pitcher-control-trait">
@@ -172,7 +171,11 @@
                   <input id="pitcher-k-plus" type="checkbox" />
                   <span><strong>K+ Strikeout Artist</strong><small>Opposing BT −1; Out Table 3 becomes K</small></span>
                 </label>
-                <p class="field-hint">GB+ and stamina effects remain outside this slice.</p>
+                <label class="trait-toggle">
+                  <input id="pitcher-groundball-plus" type="checkbox" />
+                  <span><strong>GB+ Groundball Machine</strong><small>Out Table 2 becomes 6-3; Pitch Die +1 level with bases loaded</small></span>
+                </label>
+                <p class="field-hint">Stamina and fatigue effects remain outside this slice.</p>
               </section>
             </div>
 
@@ -310,21 +313,15 @@
 
       <section class="prototype-review" aria-labelledby="review-title">
         <p class="eyebrow">Acceptance fixtures</p>
-        <h2 id="review-title">Replay effective target modifiers</h2>
+        <h2 id="review-title">Replay the GB+ loaded-bases fixture</h2>
         <p>
-          Choose manual dice, occupy second base, and select C−, K+, and CN+. Base
-          targets 31/42 become effective targets 27/37. Swing 30 plus a d8 roll of 8
-          gives MSS 38, the first value in the adjusted possible-error band. DEF 3
-          completes the F-8 and advances the runner from second to third. For the K+
-          Out Table effect, use Swing 65 plus Pitch Die 8 for MSS 73: result 3 is a
-          strikeout rather than a groundball.
+          Choose manual dice, load the bases, select GB+, and keep the pitcher’s base
+          die at d8. The current-play indicator increases it to d12. Swing 60 plus a
+          Pitch Die roll of 12 gives MSS 72: Out Table result 2 becomes a 6-3
+          groundball, and the runner on first and batter are retired on an automatic
+          double play. With no outs, the forced runner on third scores and the forced
+          runner on second advances to third.
         </p>
-        <p>
-          To verify combined hitter traits, choose P+, C+, and a Hit Table roll of 1.
-          P+ first changes the value to 2; C+ then resolves that modified value as a
-          double without a DEF roll.
-        </p>
-        <a class="button button-secondary" href="./index.html">Return to project foundation</a>
       </section>
     </main>
 

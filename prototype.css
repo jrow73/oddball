@@ -329,6 +329,7 @@ input:disabled {
 }
 
 .field-hint {
+  display: block;
   margin: 0.65rem 0 0;
   color: var(--ink-soft);
   font-size: 0.72rem;

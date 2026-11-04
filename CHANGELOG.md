@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-11-03 — GB+ Groundball Machine increment
+
+### Added
+
+- Bases-loaded Pitch Die increase by one level, capped at d20
+- Visible current-play Pitch Die indicator for manual rolling
+- GB+ conversion of Out Table result 2 to a 6-3 groundball
+- Automatic double play when GB+ result 2 occurs with a runner on first
+- Six focused tests for activation, the d20 cap, validation, groundballs, and automatic double plays
+- Rules decision RD-012 documenting GB+ behavior and current positive-die boundary
+
+### Changed
+
+- Marked compatible hitter-trait ordering as approved
+- Corrected the Modern Pitch Die sequence to d4, d8, d12, and d20; GB+ now raises d8 directly to d12
+- Corrected loaded groundballs so every forced lead runner advances; inning-ending double plays suppress the run
+
 ## 2026-11-03 — Compatible hitter-trait ordering
 
 ### Added

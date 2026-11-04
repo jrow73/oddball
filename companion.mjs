@@ -1,4 +1,4 @@
-import { PITCH_DIE_SIDES, calculateEffectiveTargets, classifyMss, requiresHitDefense, resolveAtBat } from "./rules/deadball/modern.mjs";
+import { PITCH_DIE_SIDES, calculateEffectivePitchDie, calculateEffectiveTargets, classifyMss, requiresHitDefense, resolveAtBat } from "./rules/deadball/modern.mjs";
 
 const form = document.querySelector("#companion-form");
 const resultPanel = document.querySelector("#result-panel");
@@ -83,6 +83,22 @@ function updateContextDiamond() {
   }
 }
 
+function updateEffectivePitchDie() {
+  const baseSides = numberValue("pitch-die");
+  const pitchDie = calculateEffectivePitchDie({
+    pitchDieSides: baseSides,
+    pitcherGroundballPlus: document.querySelector("#pitcher-groundball-plus").checked,
+    bases: {
+      first: form.elements.namedItem("runner-first").checked,
+      second: form.elements.namedItem("runner-second").checked,
+      third: form.elements.namedItem("runner-third").checked,
+    },
+  });
+  document.querySelector("#effective-pitch-die").textContent = pitchDie.sides === baseSides
+    ? `Current play: d${baseSides}`
+    : `Bases loaded: d${baseSides} → d${pitchDie.sides}`;
+}
+
 function collectInput() {
   const pitchDieSides = numberValue("pitch-die");
   const automatic = selectedDiceMode() === "automatic";
@@ -97,12 +113,14 @@ function collectInput() {
     bases,
     hitterFreeSwinger: document.querySelector("#hitter-free-swinger").checked,
     pitcherKPlus: document.querySelector("#pitcher-k-plus").checked,
+    pitcherGroundballPlus: document.querySelector("#pitcher-groundball-plus").checked,
     pitcherControlTrait: document.querySelector("#pitcher-control-trait").value,
   };
 
   if (automatic) {
     const swingRoll = rollDie(100);
-    const pitchRoll = rollDie(pitchDieSides);
+    const effectivePitchDie = calculateEffectivePitchDie({ ...targetInput, pitchDieSides });
+    const pitchRoll = rollDie(effectivePitchDie.sides);
     document.querySelector("#swing-roll").value = String(swingRoll);
     document.querySelector("#pitch-roll").value = String(pitchRoll);
     const targets = calculateEffectiveTargets(targetInput);
@@ -142,6 +160,7 @@ function collectInput() {
     hitterSpeedPlus: document.querySelector("#hitter-speed-plus").checked,
     hitterFreeSwinger: targetInput.hitterFreeSwinger,
     pitcherKPlus: targetInput.pitcherKPlus,
+    pitcherGroundballPlus: targetInput.pitcherGroundballPlus,
     pitcherControlTrait: targetInput.pitcherControlTrait,
     defRoll: numberValue("def-roll"),
     defModifier: numberValue("def-modifier"),
@@ -220,6 +239,8 @@ function applySuggestedContext() {
   form.elements.namedItem("runner-first").checked = bases.first;
   form.elements.namedItem("runner-second").checked = bases.second;
   form.elements.namedItem("runner-third").checked = bases.third;
+  updateContextDiamond();
+  updateEffectivePitchDie();
   confirmMessage.textContent = outsAfter === 3
     ? "Inning-ending context confirmed; bases cleared."
     : "Suggested outs and baserunners confirmed.";
@@ -235,7 +256,13 @@ form.addEventListener("submit", (event) => {
 
 form.addEventListener("change", (event) => {
   if (event.target.name === "dice-mode") setManualDiceAvailability();
-  if (event.target.name?.startsWith("runner-")) updateContextDiamond();
+  if (event.target.name?.startsWith("runner-")) {
+    updateContextDiamond();
+    updateEffectivePitchDie();
+  }
+  if (event.target.id === "pitch-die" || event.target.id === "pitcher-groundball-plus") {
+    updateEffectivePitchDie();
+  }
 });
 
 editInputsButton.addEventListener("click", () => {
@@ -267,4 +294,5 @@ for (const sides of PITCH_DIE_SIDES) {
 
 setManualDiceAvailability();
 updateContextDiamond();
+updateEffectivePitchDie();
 

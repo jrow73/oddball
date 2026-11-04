@@ -52,14 +52,14 @@ for (const expected of [
 
 for (const expected of [
   "Next rule path active",
-  "Replay effective target modifiers",
-  "effective targets 27/37",
-  "adjusted possible-error band",
-  "strikeout rather than a groundball",
+  "Replay the GB+ loaded-bases fixture",
+  "current-play indicator increases it to d12",
+  "forced runner on third scores",
   'id="hitter-power-trait"',
   'id="hitter-contact-plus"',
   'id="hitter-speed-plus"',
-  "P+ first changes the value to 2",
+  'id="pitcher-groundball-plus"',
+  'id="effective-pitch-die"',
   'href="./prototype.css"',
   'src="./companion.mjs"',
 ]) {

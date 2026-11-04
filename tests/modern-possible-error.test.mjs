@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { calculateEffectiveTargets, classifyMss, requiresHitDefense, resolveAtBat } from "../rules/deadball/modern.mjs";
+import { calculateEffectivePitchDie, calculateEffectiveTargets, classifyMss, requiresHitDefense, resolveAtBat } from "../rules/deadball/modern.mjs";
 
 const example = {
   outs: 0,
@@ -723,6 +723,136 @@ test("K+ changes Out Table result 3 into a strikeout", () => {
   assert.equal(result.stateDelta.outsAfter, 1);
   assert.deepEqual(result.stateDelta.bases, { first: true, second: true, third: true });
   assert.match(result.calculations.at(-2), /K\+ changes Out Table result 3/);
+});
+
+test("GB+ increases the Pitch Die one level with the bases loaded", () => {
+  const pitchDie = calculateEffectivePitchDie({
+    ...example,
+    bases: { first: true, second: true, third: true },
+    pitcherGroundballPlus: true,
+  });
+
+  assert.equal(pitchDie.sides, 12);
+  assert.match(pitchDie.calculations[0], /d8 increases one level to d12/);
+});
+
+test("GB+ leaves the Pitch Die unchanged unless the bases are loaded", () => {
+  const pitchDie = calculateEffectivePitchDie({
+    ...example,
+    bases: { first: true, second: true, third: false },
+    pitcherGroundballPlus: true,
+  });
+
+  assert.equal(pitchDie.sides, 8);
+  assert.deepEqual(pitchDie.calculations, []);
+});
+
+test("GB+ respects the d20 maximum with the bases loaded", () => {
+  const pitchDie = calculateEffectivePitchDie({
+    ...example,
+    bases: { first: true, second: true, third: true },
+    pitchDieSides: 20,
+    pitcherGroundballPlus: true,
+  });
+
+  assert.equal(pitchDie.sides, 20);
+  assert.match(pitchDie.calculations[0], /remains d20/);
+});
+
+test("GB+ loaded-bases fixture uses d12 and makes an automatic double play", () => {
+  const result = resolveAtBat({
+    ...example,
+    bases: { first: true, second: true, third: true },
+    swingRoll: 60,
+    pitchRoll: 12,
+    pitcherGroundballPlus: true,
+  });
+
+  assert.equal(result.mss, 72);
+  assert.equal(result.score, "DP");
+  assert.equal(result.play.position, "SS");
+  assert.equal(result.stateDelta.outsAfter, 2);
+  assert.equal(result.stateDelta.runsScored, 1);
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: false, third: true });
+  assert.match(result.detail, /Runner on third scores on the force/);
+  assert.match(result.detail, /Runner on second to third on the force/);
+  assert.match(result.calculations[1], /d8 increases one level to d12/);
+  assert.match(result.calculations.at(-1), /automatic double play/);
+});
+
+test("loaded infield double play advances every forced lead runner", () => {
+  const result = resolveAtBat({
+    ...example,
+    bases: { first: true, second: true, third: true },
+    swingRoll: 68,
+    pitchRoll: 8,
+  });
+
+  assert.equal(result.mss, 76);
+  assert.equal(result.score, "DP");
+  assert.equal(result.stateDelta.runsScored, 1);
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: false, third: true });
+});
+
+test("loaded shortstop fielder's choice advances every forced lead runner", () => {
+  const result = resolveAtBat({
+    ...example,
+    bt: 20,
+    obt: 30,
+    bases: { first: true, second: true, third: true },
+    swingRoll: 48,
+    pitchRoll: 8,
+  });
+
+  assert.equal(result.mss, 56);
+  assert.equal(result.score, "FC");
+  assert.equal(result.stateDelta.runsScored, 1);
+  assert.deepEqual(result.stateDelta.bases, { first: true, second: false, third: true });
+});
+
+test("inning-ending loaded GB+ double play suppresses the forced run", () => {
+  const result = resolveAtBat({
+    ...example,
+    outs: 1,
+    bases: { first: true, second: true, third: true },
+    swingRoll: 60,
+    pitchRoll: 12,
+    pitcherGroundballPlus: true,
+  });
+
+  assert.equal(result.score, "DP");
+  assert.equal(result.stateDelta.outsAfter, 3);
+  assert.equal(result.stateDelta.runsScored, 0);
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: false, third: false });
+  assert.match(result.detail, /does not score/);
+});
+
+test("GB+ Out Table result 2 is a 6-3 groundball without a runner on first", () => {
+  const result = resolveAtBat({
+    ...example,
+    bases: { first: false, second: false, third: false },
+    swingRoll: 64,
+    pitchRoll: 8,
+    pitcherGroundballPlus: true,
+  });
+
+  assert.equal(result.mss, 72);
+  assert.equal(result.score, "6-3");
+  assert.equal(result.outcomeCode, "groundball");
+  assert.equal(result.play.position, "SS");
+  assert.match(result.calculations.at(-2), /GB\+ changes Out Table result 2/);
+});
+
+test("rejects a loaded-bases d12 roll when GB+ is not active", () => {
+  const result = resolveAtBat({
+    ...example,
+    bases: { first: true, second: true, third: true },
+    swingRoll: 60,
+    pitchRoll: 12,
+  });
+
+  assert.equal(result.outcomeCode, "invalid-input");
+  assert.match(result.errors[0].message, /1 through 8/);
 });
 
 test("rejects an unknown pitcher control trait", () => {

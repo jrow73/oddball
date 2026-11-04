@@ -201,7 +201,7 @@ Date: 2026-11-03
 
 ## RD-011 — Compatible hitter traits and Hit Table ordering
 
-Status: **Implemented; awaiting acceptance**
+Status: **Approved**
 Date: 2026-11-03
 
 ### Verified source rules
@@ -220,4 +220,26 @@ Date: 2026-11-03
 - The prototype separates the mutually exclusive P tier into a dropdown and represents C+ and S+ as independent checkboxes.
 - P+ and C+, P+ and S+, or all three may coexist. The calculation trail shows the P adjustment before any C+ or S+ transformation.
 - When C+ and S+ both apply to modified value 2, the S+ triple takes precedence over the C+ double. At modified value 1, both lead to the same double.
+
+## RD-012 — GB+ Groundball Machine
+
+Status: **Implemented; awaiting acceptance**
+Date: 2026-11-03
+
+### Verified source rules
+
+- Page 24: GB+ records a 6-3 groundball on Out Table result 2.
+- Page 24: on that GB+ result, a runner on first makes the double play automatic.
+- Page 24: GB+ increases the Pitch Die one level with the bases loaded, with d20 as the maximum.
+- Page 60: the positive Modern Pitch Die levels are d4, d8, d12, and d20. The Modern table does not use d6 or d10.
+
+### Implementation decisions
+
+- The selected Pitch Die remains the pitcher's base rating. A visible current-play indicator shows the one-level GB+ increase when all three bases are occupied.
+- Automatic rolling uses the effective die. Manual entry validates against the effective die, so a base d8 pitcher may enter a roll of 9 through 12 only when GB+ is active with the bases loaded.
+- The Out Table result 2 conversion applies whenever GB+ is active. With a runner on first, it overrides the ordinary MSS-based groundball branches and records the automatic double play.
+- User clarification: when a groundball begins with a force chain, every forced runner is running. On a loaded-base double play with no outs, the runner on third scores, the runner on second advances to third, and the runner on first and batter are retired.
+- The same forced-runner advancement applies to ordinary infield double plays and fielder's choices, not only the GB+ conversion.
+- If the double play makes the third out, the forced run does not score and the bases clear for the next inning.
+- The current UI supports positive Pitch Dice only. GB+ level changes involving no die or negative dice remain deferred until negative Pitch Dice are implemented.
 
