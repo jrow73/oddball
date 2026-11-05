@@ -52,8 +52,8 @@ for (const expected of [
 
 for (const expected of [
   "Next rule path active",
-  "Replay the double-steal fixture",
-  "both runners are safe at second and third",
+  "Replay the steal-home fixture",
+  "scores one run",
   '<option value="-20">−d20</option>',
   'id="pitch-operator"',
   'id="batter-hand"',
@@ -70,7 +70,7 @@ for (const expected of [
   'id="pitcher-groundball-plus"',
   'id="effective-pitch-die"',
   'href="./prototype.css"',
-  'src="./companion.mjs?v=0.16"',
+  'src="./companion.mjs?v=0.17"',
 ]) {
   if (!prototype.includes(expected)) {
     failures.push(`prototype.html is missing: ${expected}`);

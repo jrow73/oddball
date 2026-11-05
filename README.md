@@ -7,7 +7,7 @@ ODDBALL is a planned browser-based baseball dice companion and league simulator.
 
 ## Current status
 
-This repository contains the foundation build and the first functional Dice Companion vertical slice. It resolves compatible hitter and pitcher traits, hits, defensive checks, walks, possible errors, outs, six play-state oddities, ordinary steals of second or third, and double steals with explainable calculations, suggested state changes, and retained manual overrides. Power modifiers are applied before C+ or S+ evaluates the modified Hit Table value; GB+ changes Out Table result 2 and increases the Pitch Die with the bases loaded. The complete Modern Pitch Die ladder supports positive and negative dice, including the same-handed matchup increase and its starter/reliever limits. Oddities that require broader game state are identified for manual handling. Saved games, trait generation, digital scorekeeping, and league simulation are not yet implemented.
+This repository contains the foundation build and the first functional Dice Companion vertical slice. It resolves compatible hitter and pitcher traits, hits, defensive checks, walks, possible errors, outs, six play-state oddities, ordinary steals, double steals, and S+ attempts to steal home with explainable calculations, suggested state changes, and retained manual overrides. Power modifiers are applied before C+ or S+ evaluates the modified Hit Table value; GB+ changes Out Table result 2 and increases the Pitch Die with the bases loaded. The complete Modern Pitch Die ladder supports positive and negative dice, including the same-handed matchup increase and its starter/reliever limits. Oddities that require broader game state are identified for manual handling. Saved games, trait generation, digital scorekeeping, and league simulation are not yet implemented.
 
 ## Run locally
 
@@ -61,5 +61,5 @@ The supplied Akers Games image remains unchanged in the project root. The rulebo
 
 ## Next decision
 
-Review and accept the double-steal increment before selecting the next unsupported Modern-rules path. See [docs/FIRST-PLAYABLE-SLICE.md](docs/FIRST-PLAYABLE-SLICE.md), [docs/RULES-DECISIONS.md](docs/RULES-DECISIONS.md), and open `prototype.html` with Live Server.
+Review and accept the stealing-home increment before selecting the next unsupported Modern-rules path. See [docs/FIRST-PLAYABLE-SLICE.md](docs/FIRST-PLAYABLE-SLICE.md), [docs/RULES-DECISIONS.md](docs/RULES-DECISIONS.md), and open `prototype.html` with Live Server.
 

@@ -16,7 +16,7 @@
         <span class="brand-mark" aria-hidden="true">O</span>
         <span>ODDBALL</span>
       </a>
-      <span class="build-label">Vertical slice 0.16</span>
+      <span class="build-label">Vertical slice 0.17</span>
     </header>
 
     <main id="prototype-main" class="prototype-shell">
@@ -98,7 +98,7 @@
                 </label>
                 <label>
                   <input type="radio" name="play-type" value="steal" />
-                  <span><strong>Stolen base</strong><small>Single or double steal</small></span>
+                  <span><strong>Stolen base</strong><small>Single, double, or home</small></span>
                 </label>
               </div>
             </fieldset>
@@ -248,7 +248,7 @@
               <div class="steal-heading">
                 <p class="panel-kicker">Between pitches</p>
                 <h3 id="steal-title">Stolen-base attempt</h3>
-                <p>Use the occupied bases in Play context. Resolve a single steal or send runners from first and second together.</p>
+                <p>Use the occupied bases in Play context. Resolve a single steal, a double steal, or an S+ attempt at home.</p>
               </div>
               <div class="steal-options">
                 <label class="field-label">
@@ -256,6 +256,7 @@
                   <select id="steal-target">
                     <option value="second" selected>Second base</option>
                     <option value="third">Third base</option>
+                    <option value="home">Home plate</option>
                     <option value="double">Double steal</option>
                   </select>
                 </label>
@@ -399,17 +400,17 @@
 
       <section class="prototype-review" aria-labelledby="review-title">
         <p class="eyebrow">Acceptance fixtures</p>
-        <h2 id="review-title">Replay the double-steal fixture</h2>
+        <h2 id="review-title">Replay the steal-home fixture</h2>
         <p>
-          Select Stolen base and manual dice, with runners on first and second and
-          third base empty. Target Double steal, give the lead runner S+, and leave
-          the catcher trait at None. Enter a d8 roll of 5. The lead runner's +1 makes
-          the modified roll 6: both runners are safe at second and third.
+          Select Stolen base and manual dice, with only third base occupied. Target
+          Home plate, give the runner S+, and leave the catcher trait at None. Enter
+          a d8 roll of 7. The runner's +1 makes the modified roll 8: the runner steals
+          home, scores one run, and clears third base.
         </p>
       </section>
     </main>
 
-    <script type="module" src="./companion.mjs?v=0.16"></script>
+    <script type="module" src="./companion.mjs?v=0.17"></script>
   </body>
 </html>
 

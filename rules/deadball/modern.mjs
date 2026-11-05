@@ -215,8 +215,8 @@ export function resolveStealAttempt(input) {
   if (!isIntegerBetween(input.outs, 0, 2)) {
     errors.push({ field: "outs", message: "Choose 0, 1, or 2 outs." });
   }
-  if (!["second", "third", "double"].includes(target)) {
-    errors.push({ field: "steal-target", message: "Choose a steal of second, third, or a double steal." });
+  if (!["second", "third", "home", "double"].includes(target)) {
+    errors.push({ field: "steal-target", message: "Choose a steal of second, third, home, or a double steal." });
   }
   if (!["none", "s-plus", "s-minus"].includes(runnerTrait)) {
     errors.push({ field: "steal-runner-trait", message: "Choose no running trait, S+, or S-." });
@@ -236,6 +236,14 @@ export function resolveStealAttempt(input) {
       errors.push({ field: "runner-third", message: "Third base must be empty for this double steal." });
     }
   }
+  if (target === "home") {
+    if (!bases.third) {
+      errors.push({ field: "runner-third", message: "A runner must occupy third base to steal home." });
+    }
+    if (runnerTrait !== "s-plus") {
+      errors.push({ field: "steal-runner-trait", message: "Only an S+ Speedy Runner may attempt to steal home." });
+    }
+  }
 
   const origin = target === "third" ? "second" : "first";
   if (["second", "third"].includes(target) && !bases[origin]) {
@@ -245,6 +253,61 @@ export function resolveStealAttempt(input) {
     errors.push({ field: `runner-${target}`, message: `${target[0].toUpperCase()}${target.slice(1)} base must be empty for this steal attempt.` });
   }
   if (errors.length > 0) return { supported: false, outcomeCode: "invalid-input", errors };
+
+  if (target === "home") {
+    const runnerModifier = 1;
+    const modifiedRoll = input.stealRoll + runnerModifier + catcherModifier;
+    const calculations = [
+      `Steal Home d8 ${input.stealRoll}`,
+      "S+ Speedy Runner -> steal roll +1",
+    ];
+    if (catcherModifier) calculations.push(`${catcherModifier < 0 ? "D+" : "D-"} catcher -> opposing steal roll ${catcherModifier > 0 ? "+1" : "-1"}`);
+    calculations.push(`Modified steal-home roll = ${modifiedRoll}`);
+
+    const safe = modifiedRoll >= 8;
+    const nextBases = copyBases(bases);
+    nextBases.third = false;
+    let outsAfter = input.outs;
+    let detail;
+    let runnerMoves;
+
+    if (safe) {
+      detail = "Runner on third steals home and scores.";
+      runnerMoves = ["Runner on third scores on a stolen base"];
+      calculations.push("Modified roll 8 or higher -> runner steals home");
+    } else {
+      outsAfter += 1;
+      detail = "Runner on third is out attempting to steal home.";
+      runnerMoves = ["Runner on third out attempting to steal home"];
+      calculations.push("Modified roll 7 or lower -> runner caught stealing home");
+      if (outsAfter === 3) {
+        nextBases.first = false;
+        nextBases.second = false;
+        nextBases.third = false;
+        detail += " Inning over; bases clear.";
+      }
+    }
+
+    return {
+      supported: true,
+      outcomeCode: safe ? "stolen-home" : "caught-stealing-home",
+      classification: "steal-home-attempt",
+      score: safe ? "SB" : "CS",
+      summary: safe ? "Stolen base: home." : "Caught stealing home.",
+      detail,
+      modifiedStealRoll: modifiedRoll,
+      calculations,
+      stateDelta: {
+        outsBefore: input.outs,
+        outsAfter,
+        outsAdded: safe ? 0 : 1,
+        runsScored: safe ? 1 : 0,
+        bases: nextBases,
+        runnerMoves,
+      },
+      sourceRefs: ["Deadball 2E pp. 24, 31"],
+    };
+  }
 
   if (target === "double") {
     const leadRunnerModifier = runnerTrait === "s-plus" ? 1 : runnerTrait === "s-minus" ? -1 : 0;

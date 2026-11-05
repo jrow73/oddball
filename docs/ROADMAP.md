@@ -36,7 +36,7 @@ Deliverables:
 
 ## Milestone 2 — Dice Companion vertical slice
 
-Status: **Core plate-appearance, handedness, and ordinary stolen-base increments accepted; double steals awaiting user acceptance**
+Status: **Core plate-appearance, handedness, ordinary steals, and double steals accepted; stealing home awaiting user acceptance**
 
 Goal: resolve a deliberately limited set of Modern-rule plate appearances end to end.
 
@@ -62,6 +62,7 @@ Implemented components:
 - Same-handed batter/pitcher Pitch Die adjustment with starter and reliever caps
 - Single-runner steals of second and third with runner and catcher trait modifiers
 - Double steals with separate lead-runner, trailing-runner, and both-safe result bands
+- S+ steal-home attempts with catcher modifiers, scoring, and caught-stealing outcomes
 
 Acceptance examples now cover the documented MSS 47 possible-error scenario, walks, hits, outs, critical and trait-modified results, plus wild-pitch and pitcher-error oddities.
 

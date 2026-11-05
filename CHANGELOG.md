@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-11-05 — Stealing-home increment
+
+### Added
+
+- Home-plate target limited to S+ runners occupying third base
+- Modified d8 threshold using the mandatory S+ bonus and catcher D+/D- effects
+- Successful steal-home scoring and caught-stealing state changes
+- Third-out cleanup while preserving other runners on non-inning-ending attempts
+- Five focused tests for success, failure, traits, validation, and inning-ending behavior
+- Rules decision RD-017 documenting the source procedure and modifier interpretation
+
+### Changed
+
+- Marked the double-steal increment as approved
+- Replaced the acceptance fixture with a steal-home boundary example
+
 ## 2026-11-04 — Double-steal increment
 
 ### Added

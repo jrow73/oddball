@@ -1224,6 +1224,104 @@ test("double steals require runners on first and second with third empty", () =>
   assert.ok(occupiedThird.errors.some((error) => error.field === "runner-third"));
 });
 
+test("S+ runner steals home when the modified d8 reaches 8", () => {
+  const result = resolveStealAttempt({
+    outs: 0,
+    bases: { first: false, second: false, third: true },
+    stealTarget: "home",
+    stealRunnerTrait: "s-plus",
+    catcherStealModifier: 0,
+    stealRoll: 7,
+  });
+
+  assert.equal(result.outcomeCode, "stolen-home");
+  assert.equal(result.modifiedStealRoll, 8);
+  assert.equal(result.stateDelta.runsScored, 1);
+  assert.equal(result.stateDelta.outsAfter, 0);
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: false, third: false });
+  assert.match(result.detail, /steals home and scores/);
+});
+
+test("failed steal-home attempt retires the runner from third", () => {
+  const result = resolveStealAttempt({
+    outs: 0,
+    bases: { first: true, second: false, third: true },
+    stealTarget: "home",
+    stealRunnerTrait: "s-plus",
+    catcherStealModifier: 0,
+    stealRoll: 6,
+  });
+
+  assert.equal(result.outcomeCode, "caught-stealing-home");
+  assert.equal(result.modifiedStealRoll, 7);
+  assert.equal(result.stateDelta.outsAfter, 1);
+  assert.equal(result.stateDelta.runsScored, 0);
+  assert.deepEqual(result.stateDelta.bases, { first: true, second: false, third: false });
+});
+
+test("catcher traits modify steal-home attempts", () => {
+  const greatCatcher = resolveStealAttempt({
+    outs: 0,
+    bases: { first: false, second: false, third: true },
+    stealTarget: "home",
+    stealRunnerTrait: "s-plus",
+    catcherStealModifier: -1,
+    stealRoll: 7,
+  });
+  const poorCatcher = resolveStealAttempt({
+    outs: 0,
+    bases: { first: false, second: false, third: true },
+    stealTarget: "home",
+    stealRunnerTrait: "s-plus",
+    catcherStealModifier: 1,
+    stealRoll: 6,
+  });
+
+  assert.equal(greatCatcher.modifiedStealRoll, 7);
+  assert.equal(greatCatcher.score, "CS");
+  assert.equal(poorCatcher.modifiedStealRoll, 8);
+  assert.equal(poorCatcher.score, "SB");
+});
+
+test("stealing home requires an S+ runner on third", () => {
+  const ordinaryRunner = resolveStealAttempt({
+    outs: 0,
+    bases: { first: false, second: false, third: true },
+    stealTarget: "home",
+    stealRunnerTrait: "none",
+    catcherStealModifier: 0,
+    stealRoll: 8,
+  });
+  const missingRunner = resolveStealAttempt({
+    outs: 0,
+    bases: { first: false, second: false, third: false },
+    stealTarget: "home",
+    stealRunnerTrait: "s-plus",
+    catcherStealModifier: 0,
+    stealRoll: 8,
+  });
+
+  assert.equal(ordinaryRunner.outcomeCode, "invalid-input");
+  assert.ok(ordinaryRunner.errors.some((error) => error.field === "steal-runner-trait"));
+  assert.equal(missingRunner.outcomeCode, "invalid-input");
+  assert.ok(missingRunner.errors.some((error) => error.field === "runner-third"));
+});
+
+test("caught stealing home for the third out clears every base", () => {
+  const result = resolveStealAttempt({
+    outs: 2,
+    bases: { first: true, second: true, third: true },
+    stealTarget: "home",
+    stealRunnerTrait: "s-plus",
+    catcherStealModifier: 0,
+    stealRoll: 1,
+  });
+
+  assert.equal(result.stateDelta.outsAfter, 3);
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: false, third: false });
+  assert.match(result.detail, /Inning over/);
+});
+
 test("GB+ loaded-bases fixture uses d12 and makes an automatic double play", () => {
   const result = resolveAtBat({
     ...example,

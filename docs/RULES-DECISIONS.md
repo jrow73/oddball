@@ -309,7 +309,7 @@ Date: 2026-11-04
 
 ## RD-016 — Double-steal attempts
 
-Status: **Implemented; awaiting acceptance**
+Status: **Approved**
 Date: 2026-11-04
 
 ### Verified source rules
@@ -326,5 +326,26 @@ Date: 2026-11-04
 - Both runners always attempt to advance. On a modified 1-3, the lead runner is out attempting third and the trailing runner reaches second. On 4-5, the lead runner reaches third and the trailing runner is out attempting second. On 6 or higher, both runners advance safely.
 - A caught runner adds one out. If that is the third out, the suggested next context clears all bases.
 - Both app-generated and manual d8 rolls are supported, and the result names the action of each runner.
-- Stealing home remains deferred for its own rule interpretation and acceptance check.
+- Stealing home was deferred from this increment for its own rule interpretation and acceptance check.
+
+## RD-017 — Stealing home
+
+Status: **Implemented; awaiting acceptance**
+Date: 2026-11-05
+
+### Verified source rules
+
+- Page 24: only an S+ Speedy Runner may attempt to steal home from third base. Roll d8; a result of 8 steals home.
+- Page 24: S+ adds 1 when rolling to steal a base.
+- Page 24: a D+ catcher subtracts 1 from every opposing stolen-base roll, while a D- catcher adds 1.
+- Page 31: only Speedy Runners may steal home, and steal attempts occur before the batting roll.
+
+### Implementation decisions
+
+- Stealing home is a single-runner target within the stolen-base play type. Third base must be occupied and the runner trait must be S+.
+- The S+ and catcher modifiers apply to the d8 because their trait descriptions cover stolen-base rolls. A modified result of 8 or higher succeeds; 7 or lower retires the runner.
+- The steal-third -1 does not apply to home because the source assigns it specifically to attempts to steal third and gives stealing home its own d8 procedure.
+- A successful attempt removes the runner from third and records one run without adding an out. Other occupied bases are unchanged.
+- A failed attempt removes the runner from third and adds one out. If that is the third out, all suggested bases clear for the next inning.
+- Both app-generated and manual d8 rolls are supported, with the S+ and catcher arithmetic shown in the explanation trail.
 
