@@ -289,7 +289,7 @@ Date: 2026-11-03
 
 ## RD-015 — Ordinary stolen-base attempts
 
-Status: **Implemented; awaiting acceptance**
+Status: **Approved**
 Date: 2026-11-04
 
 ### Verified source rules
@@ -305,5 +305,26 @@ Date: 2026-11-04
 - Runner and catcher modifiers combine with the steal-third penalty before applying the safe/out threshold. Modified values may fall below 1 or rise above 8; the outer result bands continue naturally.
 - A successful attempt moves only the stealing runner. A caught runner is removed and adds one out. A third-out caught stealing clears the suggested bases for the next inning.
 - Both app-generated and manual d8 rolls are supported, with the full arithmetic shown in the explanation trail.
-- Double steals and stealing home remain deferred. They use distinct procedures and will receive their own rule interpretation and acceptance checks.
+- Double steals and stealing home were deferred from this increment because they use distinct procedures.
+
+## RD-016 — Double-steal attempts
+
+Status: **Implemented; awaiting acceptance**
+Date: 2026-11-04
+
+### Verified source rules
+
+- Page 31: roll d8 for a double steal. Modified results 1-3 retire the lead runner, 4-5 retire the trailing runner, and 6-8 leave both runners safe.
+- Page 31: add 1 when the lead runner is S+ and subtract 1 when that runner is slow.
+- Page 24: a D+ catcher subtracts 1 from every opposing stolen-base roll, while a D- catcher adds 1.
+
+### Implementation decisions
+
+- A double steal requires runners on first and second with third base empty. The runner on second is the lead runner and the runner on first is the trailing runner.
+- The dedicated page 31 double-steal instruction is treated as the specific rule for the lead runner: S+ adds 1 and S- subtracts 1. The ordinary page 24 S- modifier of -2 remains unchanged for single-runner attempts.
+- Catcher D+ and D- modifiers apply because the trait description covers all opposing stolen-base rolls.
+- Both runners always attempt to advance. On a modified 1-3, the lead runner is out attempting third and the trailing runner reaches second. On 4-5, the lead runner reaches third and the trailing runner is out attempting second. On 6 or higher, both runners advance safely.
+- A caught runner adds one out. If that is the third out, the suggested next context clears all bases.
+- Both app-generated and manual d8 rolls are supported, and the result names the action of each runner.
+- Stealing home remains deferred for its own rule interpretation and acceptance check.
 

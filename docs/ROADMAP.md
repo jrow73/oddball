@@ -36,7 +36,7 @@ Deliverables:
 
 ## Milestone 2 — Dice Companion vertical slice
 
-Status: **Core plate-appearance and handedness increments accepted; ordinary stolen-base attempts awaiting user acceptance**
+Status: **Core plate-appearance, handedness, and ordinary stolen-base increments accepted; double steals awaiting user acceptance**
 
 Goal: resolve a deliberately limited set of Modern-rule plate appearances end to end.
 
@@ -61,6 +61,7 @@ Implemented components:
 - Full Modern Pitch Die ladder from -d20 through d20, including negative-roll subtraction
 - Same-handed batter/pitcher Pitch Die adjustment with starter and reliever caps
 - Single-runner steals of second and third with runner and catcher trait modifiers
+- Double steals with separate lead-runner, trailing-runner, and both-safe result bands
 
 Acceptance examples now cover the documented MSS 47 possible-error scenario, walks, hits, outs, critical and trait-modified results, plus wild-pitch and pitcher-error oddities.
 

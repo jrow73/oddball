@@ -1,4 +1,4 @@
-import { PITCH_DIE_SIDES, calculateEffectivePitchDie, calculateEffectiveTargets, classifyMss, formatPitchDie, requiresHitDefense, resolveAtBat, resolveStealAttempt } from "./rules/deadball/modern.mjs?v=0.15";
+import { PITCH_DIE_SIDES, calculateEffectivePitchDie, calculateEffectiveTargets, classifyMss, formatPitchDie, requiresHitDefense, resolveAtBat, resolveStealAttempt } from "./rules/deadball/modern.mjs?v=0.16";
 
 const form = document.querySelector("#companion-form");
 const resultPanel = document.querySelector("#result-panel");

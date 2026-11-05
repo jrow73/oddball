@@ -215,8 +215,8 @@ export function resolveStealAttempt(input) {
   if (!isIntegerBetween(input.outs, 0, 2)) {
     errors.push({ field: "outs", message: "Choose 0, 1, or 2 outs." });
   }
-  if (!["second", "third"].includes(target)) {
-    errors.push({ field: "steal-target", message: "Choose a steal of second or third." });
+  if (!["second", "third", "double"].includes(target)) {
+    errors.push({ field: "steal-target", message: "Choose a steal of second, third, or a double steal." });
   }
   if (!["none", "s-plus", "s-minus"].includes(runnerTrait)) {
     errors.push({ field: "steal-runner-trait", message: "Choose no running trait, S+, or S-." });
@@ -228,6 +228,15 @@ export function resolveStealAttempt(input) {
     errors.push({ field: "steal-roll", message: "The stolen-base d8 must be from 1 through 8." });
   }
 
+  if (target === "double") {
+    if (!bases.first || !bases.second) {
+      errors.push({ field: "steal-target", message: "A double steal requires runners on first and second." });
+    }
+    if (bases.third) {
+      errors.push({ field: "runner-third", message: "Third base must be empty for this double steal." });
+    }
+  }
+
   const origin = target === "third" ? "second" : "first";
   if (["second", "third"].includes(target) && !bases[origin]) {
     errors.push({ field: `runner-${origin}`, message: `A runner must occupy ${origin} base to steal ${target}.` });
@@ -236,6 +245,83 @@ export function resolveStealAttempt(input) {
     errors.push({ field: `runner-${target}`, message: `${target[0].toUpperCase()}${target.slice(1)} base must be empty for this steal attempt.` });
   }
   if (errors.length > 0) return { supported: false, outcomeCode: "invalid-input", errors };
+
+  if (target === "double") {
+    const leadRunnerModifier = runnerTrait === "s-plus" ? 1 : runnerTrait === "s-minus" ? -1 : 0;
+    const modifiedRoll = input.stealRoll + leadRunnerModifier + catcherModifier;
+    const calculations = [`Double Steal d8 ${input.stealRoll}`];
+    if (leadRunnerModifier) calculations.push(`${runnerTrait === "s-plus" ? "S+ Speedy" : "S- Slow"} lead runner -> double-steal roll ${leadRunnerModifier > 0 ? "+1" : "-1"}`);
+    if (catcherModifier) calculations.push(`${catcherModifier < 0 ? "D+" : "D-"} catcher -> opposing steal roll ${catcherModifier > 0 ? "+1" : "-1"}`);
+    calculations.push(`Modified double-steal roll = ${modifiedRoll}`);
+
+    const nextBases = copyBases(bases);
+    const runnerMoves = [];
+    let outsAfter = input.outs;
+    let outcomeCode;
+    let score;
+    let summary;
+    let detail;
+
+    if (modifiedRoll <= 3) {
+      nextBases.first = false;
+      nextBases.second = true;
+      outsAfter += 1;
+      outcomeCode = "double-steal-lead-out";
+      score = "CS";
+      summary = "Lead runner caught stealing third.";
+      detail = "Runner on second is out attempting third; Runner on first reaches second.";
+      runnerMoves.push("Runner on second out attempting third", "Runner on first to second");
+      calculations.push("Modified roll 3 or lower -> lead runner out; trailing runner reaches second");
+    } else if (modifiedRoll <= 5) {
+      nextBases.first = false;
+      nextBases.second = false;
+      nextBases.third = true;
+      outsAfter += 1;
+      outcomeCode = "double-steal-trailing-out";
+      score = "CS";
+      summary = "Trailing runner caught stealing second.";
+      detail = "Runner on second reaches third; Runner on first is out attempting second.";
+      runnerMoves.push("Runner on second to third", "Runner on first out attempting second");
+      calculations.push("Modified roll 4-5 -> trailing runner out; lead runner reaches third");
+    } else {
+      nextBases.first = false;
+      nextBases.second = true;
+      nextBases.third = true;
+      outcomeCode = "double-stolen-base";
+      score = "2xSB";
+      summary = "Double steal succeeds.";
+      detail = "Runner on second reaches third; Runner on first reaches second.";
+      runnerMoves.push("Runner on second to third", "Runner on first to second");
+      calculations.push("Modified roll 6 or higher -> both runners safe");
+    }
+
+    if (outsAfter === 3) {
+      nextBases.first = false;
+      nextBases.second = false;
+      nextBases.third = false;
+      detail += " Inning over; bases clear.";
+    }
+
+    return {
+      supported: true,
+      outcomeCode,
+      classification: "double-steal-attempt",
+      score,
+      summary,
+      detail,
+      modifiedStealRoll: modifiedRoll,
+      calculations,
+      stateDelta: {
+        outsBefore: input.outs,
+        outsAfter,
+        outsAdded: outsAfter - input.outs,
+        runsScored: 0,
+        bases: nextBases,
+        runnerMoves,
+      },
+      sourceRefs: ["Deadball 2E pp. 24, 31"],
+    };
+  }
 
   const targetModifier = target === "third" ? -1 : 0;
   const runnerModifier = runnerTrait === "s-plus" ? 1 : runnerTrait === "s-minus" ? -2 : 0;

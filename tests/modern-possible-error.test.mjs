@@ -1096,6 +1096,134 @@ test("rejects impossible or incomplete steal attempts", () => {
   assert.ok(result.errors.some((error) => error.field === "runner-third"));
 });
 
+test("double-steal table retires the lead runner on modified rolls 1-3", () => {
+  const result = resolveStealAttempt({
+    outs: 0,
+    bases: { first: true, second: true, third: false },
+    stealTarget: "double",
+    stealRunnerTrait: "none",
+    catcherStealModifier: 0,
+    stealRoll: 3,
+  });
+
+  assert.equal(result.outcomeCode, "double-steal-lead-out");
+  assert.equal(result.stateDelta.outsAfter, 1);
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: true, third: false });
+  assert.match(result.detail, /Runner on first reaches second/);
+  assert.deepEqual(result.stateDelta.runnerMoves, [
+    "Runner on second out attempting third",
+    "Runner on first to second",
+  ]);
+});
+
+test("double-steal table retires the trailing runner on modified rolls 4-5", () => {
+  const result = resolveStealAttempt({
+    outs: 0,
+    bases: { first: true, second: true, third: false },
+    stealTarget: "double",
+    stealRunnerTrait: "none",
+    catcherStealModifier: 0,
+    stealRoll: 4,
+  });
+
+  assert.equal(result.outcomeCode, "double-steal-trailing-out");
+  assert.equal(result.stateDelta.outsAfter, 1);
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: false, third: true });
+});
+
+test("double-steal table advances both runners on modified rolls 6 or higher", () => {
+  const result = resolveStealAttempt({
+    outs: 0,
+    bases: { first: true, second: true, third: false },
+    stealTarget: "double",
+    stealRunnerTrait: "none",
+    catcherStealModifier: 0,
+    stealRoll: 6,
+  });
+
+  assert.equal(result.outcomeCode, "double-stolen-base");
+  assert.equal(result.score, "2xSB");
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: true, third: true });
+});
+
+test("double steals use the dedicated lead-runner S+1 and S-1 modifiers", () => {
+  const speedy = resolveStealAttempt({
+    outs: 0,
+    bases: { first: true, second: true, third: false },
+    stealTarget: "double",
+    stealRunnerTrait: "s-plus",
+    catcherStealModifier: 0,
+    stealRoll: 5,
+  });
+  const slow = resolveStealAttempt({
+    outs: 0,
+    bases: { first: true, second: true, third: false },
+    stealTarget: "double",
+    stealRunnerTrait: "s-minus",
+    catcherStealModifier: 0,
+    stealRoll: 6,
+  });
+
+  assert.equal(speedy.modifiedStealRoll, 6);
+  assert.equal(speedy.score, "2xSB");
+  assert.equal(slow.modifiedStealRoll, 5);
+  assert.equal(slow.outcomeCode, "double-steal-trailing-out");
+  assert.match(slow.calculations[1], /S- Slow lead runner.*-1/);
+});
+
+test("catcher traits modify double-steal rolls", () => {
+  const result = resolveStealAttempt({
+    outs: 0,
+    bases: { first: true, second: true, third: false },
+    stealTarget: "double",
+    stealRunnerTrait: "none",
+    catcherStealModifier: -1,
+    stealRoll: 6,
+  });
+
+  assert.equal(result.modifiedStealRoll, 5);
+  assert.equal(result.outcomeCode, "double-steal-trailing-out");
+});
+
+test("double-steal third outs clear all suggested bases", () => {
+  const result = resolveStealAttempt({
+    outs: 2,
+    bases: { first: true, second: true, third: false },
+    stealTarget: "double",
+    stealRunnerTrait: "none",
+    catcherStealModifier: 0,
+    stealRoll: 2,
+  });
+
+  assert.equal(result.stateDelta.outsAfter, 3);
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: false, third: false });
+  assert.match(result.detail, /Inning over/);
+});
+
+test("double steals require runners on first and second with third empty", () => {
+  const missingRunner = resolveStealAttempt({
+    outs: 0,
+    bases: { first: true, second: false, third: false },
+    stealTarget: "double",
+    stealRunnerTrait: "none",
+    catcherStealModifier: 0,
+    stealRoll: 6,
+  });
+  const occupiedThird = resolveStealAttempt({
+    outs: 0,
+    bases: { first: true, second: true, third: true },
+    stealTarget: "double",
+    stealRunnerTrait: "none",
+    catcherStealModifier: 0,
+    stealRoll: 6,
+  });
+
+  assert.equal(missingRunner.outcomeCode, "invalid-input");
+  assert.ok(missingRunner.errors.some((error) => error.field === "steal-target"));
+  assert.equal(occupiedThird.outcomeCode, "invalid-input");
+  assert.ok(occupiedThird.errors.some((error) => error.field === "runner-third"));
+});
+
 test("GB+ loaded-bases fixture uses d12 and makes an automatic double play", () => {
   const result = resolveAtBat({
     ...example,

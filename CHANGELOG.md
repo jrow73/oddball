@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-11-04 — Double-steal increment
+
+### Added
+
+- Double-steal target for runners on first and second with third base empty
+- Separate result bands for the lead runner out, trailing runner out, and both runners safe
+- Dedicated lead-runner S+1 and S-1 modifiers plus catcher D+/D- modifiers
+- Explicit runner-by-runner advancement explanations and third-out base cleanup
+- Seven focused tests for table bands, modifiers, validation, and inning-ending behavior
+- Rules decision RD-016 documenting the page 31-specific S- treatment and remaining boundary
+
+### Changed
+
+- Marked the ordinary stolen-base increment as approved
+- Replaced the acceptance fixture with a double-steal boundary example
+
 ## 2026-11-04 — Ordinary stolen-base increment
 
 ### Added
