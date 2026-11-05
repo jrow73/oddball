@@ -351,7 +351,7 @@ Date: 2026-11-05
 
 ## RD-018 — Bunt Table
 
-Status: **Implemented; awaiting acceptance**
+Status: **Approved**
 Date: 2026-11-05
 
 ### Verified source rules
@@ -371,4 +371,30 @@ Date: 2026-11-05
 - When the lead runner advances and the batter is out, every runner who was forced when the bunt was put in play also advances one base. Other unforced runners hold. A runner advancing from third scores unless the batter's out is the third out; in that case the inning ends and the run does not count.
 - The S+ top result reuses the established defensive-single procedure with the third baseman as the fielder, including D+/D- effects, errors, and outstanding-play conversion.
 - Both app-generated and manual d6 rolls are supported. A d12 DEF roll is generated or required only when the S+ top result calls for it.
+
+## RD-019 — Hit & Run Table
+
+Status: **Implemented; awaiting acceptance**
+Date: 2026-11-05
+
+### Verified source rules
+
+- Page 32: roll for a stolen base with all normal modifiers at the same time as the MSS.
+- Pages 24 and 32: add 5 to BT and OBT for the play, add 10 instead for a C+ batter, and give a C- batter no Hit & Run target bonus.
+- Page 33: a hit with a successful steal puts runners at first and third; a hit with a failed steal puts runners at first and second.
+- Page 33: a pop-up or strikeout with a successful steal retires the batter and returns the runner safely to first; a failed steal produces a double play.
+- Page 33: a groundball with a successful steal retires the batter and advances the runner to second; a failed steal produces a double play.
+- Pages 24 and 31: the normal d8 stolen-base threshold and the runner S+/S- and catcher D+/D- modifiers apply.
+
+### Implementation decisions
+
+- This first Hit & Run increment requires exactly one runner on first because every explicit result in the table describes that starting situation.
+- Pitch Die, handedness, K+, GB+, and control-trait effects are applied before classifying the batting result. The Hit & Run target bonus is then added to both effective targets.
+- C+ and C- cannot both be selected for this play because the source gives them conflicting Hit & Run target bonuses.
+- The table's Hit row is authoritative for runner placement and does not request a Hit Table or DEF roll. Both ordinary and critical-hit MSS classifications therefore use the Hit row directly.
+- K+ Out Table result 3 and GB+ Out Table result 2 retain their established strikeout and groundball conversions before choosing the Hit & Run row.
+- A walk reverts to the standard walk rules: the batter takes first and the runner is forced from first to second. The simultaneous stolen-base result does not change that final placement.
+- With two outs, an out by the batter ends the inning and only one out is recorded; the bases clear before a second out can occur.
+- The Hit & Run table does not state how to combine a possible error or oddity with the simultaneous steal. Those classifications are shown as requiring a manual ruling rather than inventing advancement.
+- Both app-generated and manual Swing, Pitch Die, and stolen-base d8 rolls are supported.
 

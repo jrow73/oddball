@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-11-05 — Hit & Run increment
+
+### Added
+
+- Hit & Run as a separate play type combining an MSS with a simultaneous stolen-base d8
+- Standard +5 BT/OBT bonus, C+ +10 bonus, and C- no-bonus behavior
+- Normal runner S+/S- and catcher D+/D- stolen-base modifiers with visible arithmetic
+- Complete table-defined outcomes for hits, pop-ups or strikeouts, groundballs, and double plays
+- Standard walk resolution with the batter at first and the original runner forced to second
+- Explicit manual-ruling boundary for possible errors and oddities not covered by the Hit & Run table
+- Ten focused tests for all table rows, target and steal modifiers, validation, and third-out behavior
+- Rules decision RD-019 documenting source behavior and the intentionally unresolved interactions
+
+### Changed
+
+- Marked the bunting increment as approved
+- Replaced the acceptance fixture with a C+ Hit & Run boundary example
+
 ## 2026-11-05 — Bunting increment
 
 ### Added

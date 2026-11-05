@@ -628,6 +628,232 @@ export function resolveBuntAttempt(input) {
   };
 }
 
+export function resolveHitAndRunAttempt(input) {
+  const errors = validateCoreInput(input);
+  const bases = copyBases(input.bases);
+  const runnerTrait = input.hitRunRunnerTrait ?? "none";
+  const catcherModifier = input.catcherStealModifier ?? 0;
+
+  if (!bases.first || bases.second || bases.third) {
+    errors.push({ field: "runner-first", message: "This Hit & Run table requires one runner on first and second and third base empty." });
+  }
+  if (!["none", "s-plus", "s-minus"].includes(runnerTrait)) {
+    errors.push({ field: "hit-run-runner-trait", message: "Choose no running trait, S+, or S- for the runner." });
+  }
+  if (![-1, 0, 1].includes(catcherModifier)) {
+    errors.push({ field: "hit-run-catcher-modifier", message: "Choose D+, no catcher trait, or D-." });
+  }
+  if (!isIntegerBetween(input.hitRunStealRoll, 1, 8)) {
+    errors.push({ field: "hit-run-steal-roll", message: "The Hit & Run stolen-base d8 must be from 1 through 8." });
+  }
+  if (input.hitterContactPlus && input.hitterFreeSwinger) {
+    errors.push({ field: "hitter-contact-plus", message: "A Hit & Run batter cannot use both C+ and C- for the target bonus." });
+  }
+  if (errors.length > 0) return { supported: false, outcomeCode: "invalid-input", errors };
+
+  const targets = calculateEffectiveTargets(input);
+  const pitchDie = calculateEffectivePitchDie(input);
+  const hitRunBonus = input.hitterFreeSwinger ? 0 : input.hitterContactPlus ? 10 : 5;
+  const effectiveBt = targets.bt + hitRunBonus;
+  const effectiveObt = targets.obt + hitRunBonus;
+  const effectiveInput = {
+    ...input,
+    bt: effectiveBt,
+    obt: effectiveObt,
+    effectivePitchDieSides: pitchDie.sides,
+  };
+  const mss = input.swingRoll + signedPitchResult(pitchDie.sides, input.pitchRoll);
+  const classification = classifyMss(mss, effectiveBt, effectiveObt, input.odditiesEnabled !== false);
+  const runnerModifier = runnerTrait === "s-plus" ? 1 : runnerTrait === "s-minus" ? -2 : 0;
+  const modifiedStealRoll = input.hitRunStealRoll + runnerModifier + catcherModifier;
+  const stealSucceeded = modifiedStealRoll >= 4;
+  const calculations = [
+    describeMssCalculation(effectiveInput, mss),
+    ...pitchDie.calculations,
+    ...targets.calculations,
+  ];
+
+  if (input.hitterContactPlus) {
+    calculations.push(`C+ Hit & Run bonus -> BT and OBT +10: BT ${targets.bt} to ${effectiveBt}; OBT ${targets.obt} to ${effectiveObt}`);
+  } else if (input.hitterFreeSwinger) {
+    calculations.push(`C- Hit & Run rule -> no target bonus: BT ${effectiveBt}; OBT ${effectiveObt}`);
+  } else {
+    calculations.push(`Hit & Run bonus -> BT and OBT +5: BT ${targets.bt} to ${effectiveBt}; OBT ${targets.obt} to ${effectiveObt}`);
+  }
+  calculations.push(`Hit & Run stolen-base d8 ${input.hitRunStealRoll}`);
+  if (runnerModifier) calculations.push(`${runnerTrait === "s-plus" ? "S+ Speedy Runner" : "S- Slow Runner"} -> steal roll ${runnerModifier > 0 ? "+1" : "-2"}`);
+  if (catcherModifier) calculations.push(`${catcherModifier < 0 ? "D+" : "D-"} catcher -> opposing steal roll ${catcherModifier > 0 ? "+1" : "-1"}`);
+  calculations.push(`Modified stolen-base roll = ${modifiedStealRoll} -> ${stealSucceeded ? "success" : "failure"}`);
+
+  if (classification === "oddity" || classification === "possible-error") {
+    const label = classification === "possible-error" ? "possible-error" : classification;
+    calculations.push(`MSS ${mss} -> ${label}; no Hit & Run table row specifies this interaction`);
+    return {
+      supported: false,
+      outcomeCode: "outside-hit-and-run-table",
+      classification,
+      mss,
+      modifiedStealRoll,
+      summary: `Hit & Run ${label} needs a manual ruling.`,
+      detail: "The Hit & Run table specifies hits, pop-ups or strikeouts, and groundballs. This result is left unresolved rather than inventing runner movement.",
+      calculations,
+      sourceRefs: ["Deadball 2E pp. 24, 32-33"],
+    };
+  }
+
+  if (classification === "walk") {
+    const runnerMoves = ["Batter to first", "Runner on first to second on the force"];
+    calculations.push(`MSS ${mss} -> walk; standard walk rules force the runner from first to second`);
+    calculations.push("The simultaneous stolen-base result does not change the final walk placement");
+    return {
+      supported: true,
+      outcomeCode: "hit-and-run-walk",
+      classification: "hit-and-run",
+      mss,
+      modifiedStealRoll,
+      score: "BB",
+      summary: "Walk during the Hit & Run.",
+      detail: runnerMoves.join("; ") + ".",
+      calculations,
+      stateDelta: {
+        outsBefore: input.outs,
+        outsAfter: input.outs,
+        outsAdded: 0,
+        runsScored: 0,
+        bases: { first: true, second: true, third: false },
+        runnerMoves,
+      },
+      sourceRefs: ["Deadball 2E pp. 26-27, 32-33"],
+    };
+  }
+
+  if (classification === "ordinary-hit" || classification === "critical-hit") {
+    const nextBases = stealSucceeded
+      ? { first: true, second: false, third: true }
+      : { first: true, second: true, third: false };
+    const runnerMoves = stealSucceeded
+      ? ["Runner on first to third", "Batter to first"]
+      : ["Runner on first to second", "Batter to first"];
+    calculations.push(`MSS ${mss} -> hit; ${stealSucceeded ? "successful steal puts runners at first and third" : "failed steal puts runners at first and second"}`);
+    return {
+      supported: true,
+      outcomeCode: stealSucceeded ? "hit-and-run-hit-success" : "hit-and-run-hit-failure",
+      classification: "hit-and-run",
+      mss,
+      modifiedStealRoll,
+      score: "1B",
+      summary: stealSucceeded ? "Hit & Run succeeds: runners at the corners." : "Hit lands safely after the failed steal.",
+      detail: runnerMoves.join("; ") + ".",
+      calculations,
+      stateDelta: {
+        outsBefore: input.outs,
+        outsAfter: input.outs,
+        outsAdded: 0,
+        runsScored: 0,
+        bases: nextBases,
+        runnerMoves,
+      },
+      sourceRefs: ["Deadball 2E pp. 24, 32-33"],
+    };
+  }
+
+  const lastDigit = Math.abs(mss) % 10;
+  const play = input.pitcherKPlus && lastDigit === 3
+    ? { position: "K", fielder: "pitcher", kind: "strikeout", score: "K" }
+    : input.pitcherGroundballPlus && lastDigit === 2
+      ? { position: "SS", fielder: "shortstop", kind: "groundball", score: "6-3" }
+      : OUT_PLAYS[lastDigit];
+  calculations.push(`MSS ${mss} -> out; last digit ${lastDigit} -> ${play.kind === "strikeout" ? "strikeout" : play.kind === "popup" ? `pop-up to ${play.position}` : `groundball to ${play.position}`}`);
+  if (input.pitcherKPlus && lastDigit === 3) calculations.push("K+ changes Out Table result 3 from a groundball to a strikeout");
+  if (input.pitcherGroundballPlus && lastDigit === 2) calculations.push("GB+ changes Out Table result 2 from a strikeout to a 6-3 groundball");
+
+  if (input.outs === 2) {
+    calculations.push("Batter out is the third out -> inning ends before another out can be recorded");
+    return {
+      supported: true,
+      outcomeCode: "hit-and-run-third-out",
+      classification: "hit-and-run",
+      mss,
+      modifiedStealRoll,
+      play,
+      score: play.score,
+      summary: `${play.kind === "groundball" ? "Groundball" : play.kind === "strikeout" ? "Strikeout" : "Pop-up"}; inning over.`,
+      detail: "Batter out; the third out ends the inning and the bases clear.",
+      calculations,
+      stateDelta: {
+        outsBefore: input.outs,
+        outsAfter: 3,
+        outsAdded: 1,
+        runsScored: 0,
+        bases: { first: false, second: false, third: false },
+        runnerMoves: ["Batter out; inning over"],
+      },
+      sourceRefs: ["Deadball 2E pp. 24, 29, 32-33"],
+    };
+  }
+
+  if (stealSucceeded) {
+    const groundball = play.kind === "groundball";
+    const nextBases = groundball
+      ? { first: false, second: true, third: false }
+      : { first: true, second: false, third: false };
+    const runnerMoves = groundball
+      ? ["Batter out on the groundball", "Runner on first to second"]
+      : ["Batter out", "Runner returns safely to first"];
+    calculations.push(groundball
+      ? "Groundball with successful steal -> batter out; runner reaches second"
+      : "Pop-up or strikeout with successful steal -> batter out; runner returns safely to first");
+    return {
+      supported: true,
+      outcomeCode: groundball ? "hit-and-run-groundball-success" : "hit-and-run-air-out-success",
+      classification: "hit-and-run",
+      mss,
+      modifiedStealRoll,
+      play,
+      score: play.score,
+      summary: groundball ? "Groundball out; runner reaches second." : `${play.kind === "strikeout" ? "Strikeout" : "Pop-up"}; runner returns safely.`,
+      detail: runnerMoves.join("; ") + ".",
+      calculations,
+      stateDelta: {
+        outsBefore: input.outs,
+        outsAfter: input.outs + 1,
+        outsAdded: 1,
+        runsScored: 0,
+        bases: nextBases,
+        runnerMoves,
+      },
+      sourceRefs: ["Deadball 2E pp. 24, 29, 32-33"],
+    };
+  }
+
+  const outsAfter = Math.min(3, input.outs + 2);
+  const runnerMoves = play.kind === "groundball"
+    ? ["Runner on first out on the groundball", "Batter out at first"]
+    : ["Batter out", "Runner doubled off first"];
+  calculations.push(`${play.kind === "groundball" ? "Groundball" : "Pop-up or strikeout"} with failed steal -> double play`);
+  return {
+    supported: true,
+    outcomeCode: "hit-and-run-double-play",
+    classification: "hit-and-run",
+    mss,
+    modifiedStealRoll,
+    play,
+    score: "DP",
+    summary: "Hit & Run double play.",
+    detail: runnerMoves.join("; ") + (outsAfter === 3 ? "; inning over." : "."),
+    calculations,
+    stateDelta: {
+      outsBefore: input.outs,
+      outsAfter,
+      outsAdded: 2,
+      runsScored: 0,
+      bases: { first: false, second: false, third: false },
+      runnerMoves,
+    },
+    sourceRefs: ["Deadball 2E pp. 24, 29, 32-33"],
+  };
+}
+
 export function classifyMss(mss, bt, obt, odditiesEnabled = true) {
   if (odditiesEnabled && mss === 1) return "oddity";
   if (odditiesEnabled && mss === 99) return "oddity";

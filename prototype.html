@@ -104,6 +104,10 @@
                   <input type="radio" name="play-type" value="bunt" />
                   <span><strong>Bunt</strong><small>Advance the lead runner</small></span>
                 </label>
+                <label>
+                  <input type="radio" name="play-type" value="hit-and-run" />
+                  <span><strong>Hit &amp; Run</strong><small>Combine the swing and steal</small></span>
+                </label>
               </div>
             </fieldset>
 
@@ -152,7 +156,7 @@
                 </label>
                 <label class="trait-toggle">
                   <input id="hitter-contact-plus" type="checkbox" />
-                  <span><strong>C+ Contact Hitter</strong><small>Uses the P-modified Hit Table value</small></span>
+                  <span><strong>C+ Contact Hitter</strong><small>Hit Table trait; Hit &amp; Run targets +10</small></span>
                 </label>
                 <label class="trait-toggle">
                   <input id="hitter-speed-plus" type="checkbox" />
@@ -160,7 +164,7 @@
                 </label>
                 <label class="trait-toggle">
                   <input id="hitter-free-swinger" type="checkbox" />
-                  <span><strong>C− Free Swinger</strong><small>BT/OBT −3 with a runner on 2nd or 3rd</small></span>
+                  <span><strong>C− Free Swinger</strong><small>BT/OBT −3 with runner on 2nd/3rd; no Hit &amp; Run bonus</small></span>
                 </label>
                 <p class="field-hint">Compatible traits may coexist. P modifies the Hit Table value before C+ or S+ is evaluated.</p>
               </section>
@@ -331,6 +335,37 @@
               </div>
             </section>
 
+            <section id="hit-run-controls" class="steal-controls" aria-labelledby="hit-run-title" hidden>
+              <div class="steal-heading">
+                <p class="panel-kicker">Swing and steal together</p>
+                <h3 id="hit-run-title">Hit &amp; Run attempt</h3>
+                <p>Requires one runner on first. Add 5 to BT/OBT, add 10 for C+, or add nothing for C−, then combine the batting result with the stolen-base d8.</p>
+              </div>
+              <div class="steal-options">
+                <label class="field-label">
+                  Runner trait
+                  <select id="hit-run-runner-trait">
+                    <option value="none" selected>None</option>
+                    <option value="s-plus">S+ Speedy</option>
+                    <option value="s-minus">S− Slow</option>
+                  </select>
+                </label>
+                <label class="field-label">
+                  Catcher trait
+                  <select id="hit-run-catcher-modifier">
+                    <option value="0" selected>None</option>
+                    <option value="-1">D+ Great Defender</option>
+                    <option value="1">D− Poor Defender</option>
+                  </select>
+                </label>
+                <label class="steal-roll-card">
+                  <span><span class="panel-kicker">Base Stealing</span><strong>d8 roll</strong></span>
+                  <input id="hit-run-steal-roll" aria-label="Hit and Run stolen-base d8" type="number" value="4" min="1" max="8" />
+                </label>
+              </div>
+              <p class="field-hint">Walks use standard forced advancement. Possible-error and oddity interactions remain identified for manual ruling.</p>
+            </section>
+
             <div id="at-bat-rolls">
             <div class="dice-grid">
               <label class="die-input">
@@ -349,7 +384,7 @@
               </div>
             </div>
 
-            <div class="secondary-rolls">
+            <div id="at-bat-secondary-rolls" class="secondary-rolls">
               <label class="hit-roll-card">
                 <span>
                   <span class="panel-kicker">If MSS is a hit</span>
@@ -448,16 +483,17 @@
 
       <section class="prototype-review" aria-labelledby="review-title">
         <p class="eyebrow">Acceptance fixtures</p>
-        <h2 id="review-title">Replay the squeeze-bunt fixture</h2>
+        <h2 id="review-title">Replay the C+ Hit &amp; Run fixture</h2>
         <p>
-          Select Bunt and manual dice, with only third base occupied and no outs.
-          Give the batter C+ and enter a d6 roll of 3. The +1 makes the modified roll
-          4: the runner scores, the batter is out, and the bases finish empty with one out.
+          Select Hit &amp; Run and manual dice, with only first base occupied and no outs.
+          Use BT 31, OBT 42, a C+ batter, Swing 33, Pitch Die d8 with a roll of 8,
+          and a stolen-base d8 roll of 4. C+ raises the targets to BT 41 and OBT 52.
+          MSS 41 is a hit and the successful steal puts the runner on third and batter on first.
         </p>
       </section>
     </main>
 
-    <script type="module" src="./companion.mjs?v=0.18"></script>
+    <script type="module" src="./companion.mjs?v=0.19"></script>
   </body>
 </html>
 

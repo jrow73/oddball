@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { PITCH_DIE_SIDES, calculateEffectivePitchDie, calculateEffectiveTargets, classifyMss, requiresHitDefense, resolveAtBat, resolveBuntAttempt, resolveStealAttempt } from "../rules/deadball/modern.mjs";
+import { PITCH_DIE_SIDES, calculateEffectivePitchDie, calculateEffectiveTargets, classifyMss, requiresHitDefense, resolveAtBat, resolveBuntAttempt, resolveHitAndRunAttempt, resolveStealAttempt } from "../rules/deadball/modern.mjs";
 
 const example = {
   outs: 0,
@@ -1511,6 +1511,159 @@ test("bunting requires a baserunner and a valid d6", () => {
   assert.equal(result.outcomeCode, "invalid-input");
   assert.ok(result.errors.some((error) => error.field === "runner-first"));
   assert.ok(result.errors.some((error) => error.field === "bunt-roll"));
+});
+
+const hitAndRunExample = {
+  outs: 0,
+  bases: { first: true, second: false, third: false },
+  bt: 31,
+  obt: 42,
+  pitchDieSides: 8,
+  swingRoll: 33,
+  pitchRoll: 8,
+  batterHand: "none",
+  pitcherHand: "none",
+  pitcherRole: "starter",
+  hitterContactPlus: true,
+  hitterFreeSwinger: false,
+  pitcherKPlus: false,
+  pitcherGroundballPlus: false,
+  pitcherControlTrait: "none",
+  hitRunRunnerTrait: "none",
+  catcherStealModifier: 0,
+  hitRunStealRoll: 4,
+  odditiesEnabled: true,
+};
+
+test("C+ Hit & Run acceptance fixture turns MSS 41 into a hit and puts runners at the corners", () => {
+  const result = resolveHitAndRunAttempt(hitAndRunExample);
+
+  assert.equal(result.outcomeCode, "hit-and-run-hit-success");
+  assert.equal(result.mss, 41);
+  assert.equal(result.modifiedStealRoll, 4);
+  assert.deepEqual(result.stateDelta.bases, { first: true, second: false, third: true });
+  assert.match(result.calculations.join(" "), /BT 31 to 41; OBT 42 to 52/);
+});
+
+test("a Hit & Run hit with a failed steal leaves runners at first and second", () => {
+  const result = resolveHitAndRunAttempt({ ...hitAndRunExample, hitRunStealRoll: 3 });
+
+  assert.equal(result.outcomeCode, "hit-and-run-hit-failure");
+  assert.deepEqual(result.stateDelta.bases, { first: true, second: true, third: false });
+});
+
+test("a successful steal on a Hit & Run pop-up returns the runner safely to first", () => {
+  const result = resolveHitAndRunAttempt({
+    ...hitAndRunExample,
+    hitterContactPlus: false,
+    swingRoll: 70,
+    pitchRoll: 8,
+  });
+
+  assert.equal(result.outcomeCode, "hit-and-run-air-out-success");
+  assert.equal(result.play.kind, "popup");
+  assert.equal(result.stateDelta.outsAfter, 1);
+  assert.deepEqual(result.stateDelta.bases, { first: true, second: false, third: false });
+});
+
+test("a failed steal on a Hit & Run strikeout becomes a double play", () => {
+  const result = resolveHitAndRunAttempt({
+    ...hitAndRunExample,
+    hitterContactPlus: false,
+    swingRoll: 72,
+    pitchRoll: 8,
+    hitRunStealRoll: 3,
+  });
+
+  assert.equal(result.outcomeCode, "hit-and-run-double-play");
+  assert.equal(result.play.kind, "strikeout");
+  assert.equal(result.stateDelta.outsAfter, 2);
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: false, third: false });
+});
+
+test("a successful steal on a Hit & Run groundball retires the batter and advances the runner", () => {
+  const result = resolveHitAndRunAttempt({
+    ...hitAndRunExample,
+    hitterContactPlus: false,
+    swingRoll: 56,
+    pitchRoll: 8,
+  });
+
+  assert.equal(result.mss, 64);
+  assert.equal(result.outcomeCode, "hit-and-run-groundball-success");
+  assert.equal(result.stateDelta.outsAfter, 1);
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: true, third: false });
+});
+
+test("runner and catcher traits modify the Hit & Run stolen-base roll", () => {
+  const result = resolveHitAndRunAttempt({
+    ...hitAndRunExample,
+    hitRunRunnerTrait: "s-minus",
+    catcherStealModifier: 1,
+    hitRunStealRoll: 4,
+  });
+
+  assert.equal(result.modifiedStealRoll, 3);
+  assert.equal(result.outcomeCode, "hit-and-run-hit-failure");
+});
+
+test("C- receives no Hit & Run target bonus and a walk uses standard forced advancement", () => {
+  const result = resolveHitAndRunAttempt({
+    ...hitAndRunExample,
+    hitterContactPlus: false,
+    hitterFreeSwinger: true,
+    swingRoll: 34,
+    pitchRoll: 8,
+  });
+
+  assert.equal(result.mss, 42);
+  assert.equal(result.outcomeCode, "hit-and-run-walk");
+  assert.equal(result.score, "BB");
+  assert.deepEqual(result.stateDelta.bases, { first: true, second: true, third: false });
+  assert.equal(result.stateDelta.outsAfter, 0);
+  assert.match(result.calculations.join(" "), /no target bonus: BT 31; OBT 42/);
+  assert.match(result.detail, /Runner on first to second on the force/);
+});
+
+test("Hit & Run leaves possible-error interactions unresolved instead of inventing movement", () => {
+  const result = resolveHitAndRunAttempt({
+    ...hitAndRunExample,
+    hitterContactPlus: false,
+    swingRoll: 40,
+    pitchRoll: 8,
+  });
+
+  assert.equal(result.mss, 48);
+  assert.equal(result.classification, "possible-error");
+  assert.equal(result.supported, false);
+});
+
+test("Hit & Run validates its runner-on-first situation and d8 roll", () => {
+  const result = resolveHitAndRunAttempt({
+    ...hitAndRunExample,
+    bases: { first: true, second: true, third: false },
+    hitRunStealRoll: 9,
+  });
+
+  assert.equal(result.outcomeCode, "invalid-input");
+  assert.ok(result.errors.some((error) => error.field === "runner-first"));
+  assert.ok(result.errors.some((error) => error.field === "hit-run-steal-roll"));
+});
+
+test("a two-out Hit & Run out records only the inning-ending third out", () => {
+  const result = resolveHitAndRunAttempt({
+    ...hitAndRunExample,
+    outs: 2,
+    hitterContactPlus: false,
+    swingRoll: 72,
+    pitchRoll: 8,
+    hitRunStealRoll: 3,
+  });
+
+  assert.equal(result.outcomeCode, "hit-and-run-third-out");
+  assert.equal(result.stateDelta.outsAdded, 1);
+  assert.equal(result.stateDelta.outsAfter, 3);
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: false, third: false });
 });
 
 test("GB+ loaded-bases fixture uses d12 and makes an automatic double play", () => {

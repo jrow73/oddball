@@ -1,4 +1,4 @@
-import { PITCH_DIE_SIDES, calculateEffectivePitchDie, calculateEffectiveTargets, classifyMss, formatPitchDie, requiresHitDefense, resolveAtBat, resolveBuntAttempt, resolveStealAttempt } from "./rules/deadball/modern.mjs?v=0.18";
+import { PITCH_DIE_SIDES, calculateEffectivePitchDie, calculateEffectiveTargets, classifyMss, formatPitchDie, requiresHitDefense, resolveAtBat, resolveBuntAttempt, resolveHitAndRunAttempt, resolveStealAttempt } from "./rules/deadball/modern.mjs?v=0.19";
 
 const form = document.querySelector("#companion-form");
 const resultPanel = document.querySelector("#result-panel");
@@ -75,31 +75,40 @@ function setManualDiceAvailability() {
   const playType = selectedPlayType();
   const stealing = playType === "steal";
   const bunting = playType === "bunt";
+  const hitAndRun = playType === "hit-and-run";
   const atBat = playType === "at-bat";
-  for (const id of ["swing-roll", "pitch-roll", "hit-roll", "def-roll", "oddity-roll-one", "oddity-roll-two"]) {
+  for (const id of ["swing-roll", "pitch-roll"]) {
+    document.querySelector(`#${id}`).disabled = !manual || (!atBat && !hitAndRun);
+  }
+  for (const id of ["hit-roll", "def-roll", "oddity-roll-one", "oddity-roll-two"]) {
     document.querySelector(`#${id}`).disabled = !manual || !atBat;
   }
   document.querySelector("#steal-roll").disabled = !manual || !stealing;
   document.querySelector("#bunt-roll").disabled = !manual || !bunting;
   document.querySelector("#bunt-def-roll").disabled = !manual || !bunting;
+  document.querySelector("#hit-run-steal-roll").disabled = !manual || !hitAndRun;
   document.querySelector("#dice-help").textContent = manual
     ? "Enter physical or known rolls."
-    : `ODDBALL will roll the ${stealing ? "stolen-base d8" : bunting ? "Bunt Table d6 and any required DEF die" : "dice required by the resulting rule path"}.`;
+    : `ODDBALL will roll the ${stealing ? "stolen-base d8" : bunting ? "Bunt Table d6 and any required DEF die" : hitAndRun ? "Swing Score, Pitch Die, and stolen-base d8" : "dice required by the resulting rule path"}.`;
 }
 
 function updatePlayType() {
   const playType = selectedPlayType();
   const stealing = playType === "steal";
   const bunting = playType === "bunt";
+  const hitAndRun = playType === "hit-and-run";
   const atBat = playType === "at-bat";
-  document.querySelector("#at-bat-participants").hidden = !atBat;
-  document.querySelector("#at-bat-rolls").hidden = !atBat;
+  const battingPlay = atBat || hitAndRun;
+  document.querySelector("#at-bat-participants").hidden = !battingPlay;
+  document.querySelector("#at-bat-rolls").hidden = !battingPlay;
+  document.querySelector("#at-bat-secondary-rolls").hidden = hitAndRun;
   document.querySelector("#oddities-option").hidden = !atBat;
   document.querySelector("#steal-controls").hidden = !stealing;
   document.querySelector("#bunt-controls").hidden = !bunting;
+  document.querySelector("#hit-run-controls").hidden = !hitAndRun;
   document.querySelector("#resolve-mode-label").textContent = stealing
     ? "Stolen-base attempt"
-    : bunting ? "Bunt attempt" : "Common at-bat slice";
+    : bunting ? "Bunt attempt" : hitAndRun ? "Hit & Run attempt" : "Common at-bat slice";
   setManualDiceAvailability();
 }
 
@@ -181,6 +190,57 @@ function collectInput() {
         stealRunnerTrait: document.querySelector("#steal-runner-trait").value,
         catcherStealModifier: numberValue("catcher-steal-modifier"),
         stealRoll: numberValue("steal-roll"),
+      },
+    };
+  }
+
+  if (selectedPlayType() === "hit-and-run") {
+    const pitchDieSides = numberValue("pitch-die");
+    const bases = {
+      first: form.elements.namedItem("runner-first").checked,
+      second: form.elements.namedItem("runner-second").checked,
+      third: form.elements.namedItem("runner-third").checked,
+    };
+    const targetInput = {
+      bt: numberValue("bt"),
+      obt: numberValue("obt"),
+      bases,
+      batterHand: document.querySelector("#batter-hand").value,
+      hitterFreeSwinger: document.querySelector("#hitter-free-swinger").checked,
+      pitcherHand: document.querySelector("#pitcher-hand").value,
+      pitcherRole: document.querySelector("#pitcher-role").value,
+      pitcherKPlus: document.querySelector("#pitcher-k-plus").checked,
+      pitcherGroundballPlus: document.querySelector("#pitcher-groundball-plus").checked,
+      pitcherControlTrait: document.querySelector("#pitcher-control-trait").value,
+    };
+    if (selectedDiceMode() === "automatic") {
+      const effectivePitchDie = calculateEffectivePitchDie({ ...targetInput, pitchDieSides });
+      document.querySelector("#swing-roll").value = String(rollDie(100));
+      document.querySelector("#pitch-roll").value = String(rollDie(Math.abs(effectivePitchDie.sides)));
+      document.querySelector("#hit-run-steal-roll").value = String(rollDie(8));
+    }
+    return {
+      playType: "hit-and-run",
+      input: {
+        outs: Number(form.elements.namedItem("outs").value),
+        bases,
+        bt: targetInput.bt,
+        obt: targetInput.obt,
+        pitchDieSides,
+        swingRoll: numberValue("swing-roll"),
+        pitchRoll: numberValue("pitch-roll"),
+        hitterContactPlus: document.querySelector("#hitter-contact-plus").checked,
+        hitterFreeSwinger: targetInput.hitterFreeSwinger,
+        batterHand: targetInput.batterHand,
+        pitcherHand: targetInput.pitcherHand,
+        pitcherRole: targetInput.pitcherRole,
+        pitcherKPlus: targetInput.pitcherKPlus,
+        pitcherGroundballPlus: targetInput.pitcherGroundballPlus,
+        pitcherControlTrait: targetInput.pitcherControlTrait,
+        hitRunRunnerTrait: document.querySelector("#hit-run-runner-trait").value,
+        catcherStealModifier: numberValue("hit-run-catcher-modifier"),
+        hitRunStealRoll: numberValue("hit-run-steal-roll"),
+        odditiesEnabled: document.querySelector("#oddities-enabled").checked,
       },
     };
   }
@@ -350,7 +410,9 @@ form.addEventListener("submit", (event) => {
     ? resolveStealAttempt(collected.input)
     : collected.playType === "bunt"
       ? resolveBuntAttempt(collected.input)
-      : resolveAtBat(collected.input);
+      : collected.playType === "hit-and-run"
+        ? resolveHitAndRunAttempt(collected.input)
+        : resolveAtBat(collected.input);
   renderResult(result);
 });
 
@@ -369,7 +431,9 @@ form.addEventListener("change", (event) => {
 editInputsButton.addEventListener("click", () => {
   const focusTarget = selectedPlayType() === "steal"
     ? "#steal-target"
-    : selectedPlayType() === "bunt" ? "#bunt-roll" : "#bt";
+    : selectedPlayType() === "bunt"
+      ? "#bunt-roll"
+      : selectedPlayType() === "hit-and-run" ? "#hit-run-runner-trait" : "#bt";
   document.querySelector(focusTarget).focus();
 });
 
