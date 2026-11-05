@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { PITCH_DIE_SIDES, calculateEffectivePitchDie, calculateEffectiveTargets, classifyMss, requiresHitDefense, resolveAtBat, resolveStealAttempt } from "../rules/deadball/modern.mjs";
+import { PITCH_DIE_SIDES, calculateEffectivePitchDie, calculateEffectiveTargets, classifyMss, requiresHitDefense, resolveAtBat, resolveBuntAttempt, resolveStealAttempt } from "../rules/deadball/modern.mjs";
 
 const example = {
   outs: 0,
@@ -1320,6 +1320,197 @@ test("caught stealing home for the third out clears every base", () => {
   assert.equal(result.stateDelta.outsAfter, 3);
   assert.deepEqual(result.stateDelta.bases, { first: false, second: false, third: false });
   assert.match(result.detail, /Inning over/);
+});
+
+test("bunt rolls 1-2 retire the lead runner and put the batter on first", () => {
+  const result = resolveBuntAttempt({
+    outs: 0,
+    bases: { first: true, second: true, third: true },
+    buntContactPlus: false,
+    buntFreeSwinger: false,
+    buntSpeedPlus: false,
+    buntRoll: 2,
+    defRoll: 6,
+    defModifier: 0,
+  });
+
+  assert.equal(result.outcomeCode, "bunt-lead-runner-out");
+  assert.equal(result.stateDelta.outsAfter, 1);
+  assert.deepEqual(result.stateDelta.bases, { first: true, second: true, third: true });
+  assert.deepEqual(result.stateDelta.runnerMoves, [
+    "Runner on third out on the bunt",
+    "Runner on second to third on the force",
+    "Runner on first to second on the force",
+    "Batter to first",
+  ]);
+});
+
+test("bunt roll 3 advances the lead runner and every forced trailing runner", () => {
+  const result = resolveBuntAttempt({
+    outs: 0,
+    bases: { first: true, second: true, third: false },
+    buntContactPlus: false,
+    buntFreeSwinger: false,
+    buntSpeedPlus: false,
+    buntRoll: 3,
+    defRoll: 6,
+    defModifier: 0,
+  });
+
+  assert.equal(result.score, "SAC");
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: true, third: true });
+  assert.match(result.detail, /Runner on second to third/);
+  assert.match(result.detail, /Runner on first to second on the force/);
+  assert.doesNotMatch(result.detail, /holds/);
+});
+
+test("a successful bunt with the bases loaded advances every runner who was forced at contact", () => {
+  const result = resolveBuntAttempt({
+    outs: 1,
+    bases: { first: true, second: true, third: true },
+    buntContactPlus: false,
+    buntFreeSwinger: false,
+    buntSpeedPlus: false,
+    buntRoll: 6,
+    defRoll: 6,
+    defModifier: 0,
+  });
+
+  assert.equal(result.score, "SAC");
+  assert.equal(result.stateDelta.outsAfter, 2);
+  assert.equal(result.stateDelta.runsScored, 1);
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: true, third: true });
+  assert.deepEqual(result.stateDelta.runnerMoves, [
+    "Runner on third scores",
+    "Runner on second to third on the force",
+    "Runner on first to second on the force",
+    "Batter out on the bunt",
+  ]);
+});
+
+test("an unforced trailing runner may hold on a successful bunt", () => {
+  const result = resolveBuntAttempt({
+    outs: 0,
+    bases: { first: false, second: true, third: true },
+    buntContactPlus: false,
+    buntFreeSwinger: false,
+    buntSpeedPlus: false,
+    buntRoll: 4,
+    defRoll: 6,
+    defModifier: 0,
+  });
+
+  assert.equal(result.stateDelta.runsScored, 1);
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: true, third: false });
+  assert.match(result.detail, /Runner on third scores/);
+  assert.match(result.detail, /Runner on second holds/);
+});
+
+test("bunt roll 3 with the lead runner at third retires that runner", () => {
+  const result = resolveBuntAttempt({
+    outs: 0,
+    bases: { first: false, second: false, third: true },
+    buntContactPlus: false,
+    buntFreeSwinger: false,
+    buntSpeedPlus: false,
+    buntRoll: 3,
+    defRoll: 6,
+    defModifier: 0,
+  });
+
+  assert.equal(result.score, "FC");
+  assert.deepEqual(result.stateDelta.bases, { first: true, second: false, third: false });
+  assert.match(result.detail, /Runner on third out/);
+  assert.match(result.detail, /Batter to first/);
+});
+
+test("C+ squeeze-bunt fixture moves raw 3 into the successful sacrifice band", () => {
+  const result = resolveBuntAttempt({
+    outs: 0,
+    bases: { first: false, second: false, third: true },
+    buntContactPlus: true,
+    buntFreeSwinger: false,
+    buntSpeedPlus: false,
+    buntRoll: 3,
+    defRoll: 6,
+    defModifier: 0,
+  });
+
+  assert.equal(result.modifiedBuntRoll, 4);
+  assert.equal(result.score, "SAC");
+  assert.equal(result.stateDelta.outsAfter, 1);
+  assert.equal(result.stateDelta.runsScored, 1);
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: false, third: false });
+});
+
+test("C- lowers the bunt roll and can turn a squeeze into a lead-runner out", () => {
+  const result = resolveBuntAttempt({
+    outs: 0,
+    bases: { first: false, second: false, third: true },
+    buntContactPlus: false,
+    buntFreeSwinger: true,
+    buntSpeedPlus: false,
+    buntRoll: 4,
+    defRoll: 6,
+    defModifier: 0,
+  });
+
+  assert.equal(result.modifiedBuntRoll, 3);
+  assert.equal(result.outcomeCode, "bunt-lead-runner-out");
+  assert.equal(result.stateDelta.runsScored, 0);
+});
+
+test("an S+ top bunt result becomes a defensive single to third", () => {
+  const result = resolveBuntAttempt({
+    outs: 0,
+    bases: { first: true, second: false, third: false },
+    buntContactPlus: false,
+    buntFreeSwinger: false,
+    buntSpeedPlus: true,
+    buntRoll: 6,
+    defRoll: 6,
+    defModifier: 0,
+  });
+
+  assert.equal(result.score, "1B");
+  assert.equal(result.play.position, "3B");
+  assert.deepEqual(result.stateDelta.bases, { first: true, second: true, third: false });
+  assert.ok(result.calculations.some((calculation) => /DEF \(3B\)/.test(calculation)));
+});
+
+test("a third-out sacrifice bunt cannot score the lead runner", () => {
+  const result = resolveBuntAttempt({
+    outs: 2,
+    bases: { first: false, second: false, third: true },
+    buntContactPlus: false,
+    buntFreeSwinger: false,
+    buntSpeedPlus: false,
+    buntRoll: 4,
+    defRoll: 6,
+    defModifier: 0,
+  });
+
+  assert.equal(result.stateDelta.outsAfter, 3);
+  assert.equal(result.stateDelta.runsScored, 0);
+  assert.deepEqual(result.stateDelta.bases, { first: false, second: false, third: false });
+  assert.match(result.detail, /third out ends the inning/);
+});
+
+test("bunting requires a baserunner and a valid d6", () => {
+  const result = resolveBuntAttempt({
+    outs: 0,
+    bases: { first: false, second: false, third: false },
+    buntContactPlus: false,
+    buntFreeSwinger: false,
+    buntSpeedPlus: false,
+    buntRoll: 7,
+    defRoll: 6,
+    defModifier: 0,
+  });
+
+  assert.equal(result.outcomeCode, "invalid-input");
+  assert.ok(result.errors.some((error) => error.field === "runner-first"));
+  assert.ok(result.errors.some((error) => error.field === "bunt-roll"));
 });
 
 test("GB+ loaded-bases fixture uses d12 and makes an automatic double play", () => {

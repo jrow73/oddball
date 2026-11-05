@@ -1,4 +1,4 @@
-import { PITCH_DIE_SIDES, calculateEffectivePitchDie, calculateEffectiveTargets, classifyMss, formatPitchDie, requiresHitDefense, resolveAtBat, resolveStealAttempt } from "./rules/deadball/modern.mjs?v=0.17";
+import { PITCH_DIE_SIDES, calculateEffectivePitchDie, calculateEffectiveTargets, classifyMss, formatPitchDie, requiresHitDefense, resolveAtBat, resolveBuntAttempt, resolveStealAttempt } from "./rules/deadball/modern.mjs?v=0.18";
 
 const form = document.querySelector("#companion-form");
 const resultPanel = document.querySelector("#result-panel");
@@ -72,25 +72,34 @@ function showErrors(errors) {
 
 function setManualDiceAvailability() {
   const manual = selectedDiceMode() === "manual";
-  const stealing = selectedPlayType() === "steal";
+  const playType = selectedPlayType();
+  const stealing = playType === "steal";
+  const bunting = playType === "bunt";
+  const atBat = playType === "at-bat";
   for (const id of ["swing-roll", "pitch-roll", "hit-roll", "def-roll", "oddity-roll-one", "oddity-roll-two"]) {
-    document.querySelector(`#${id}`).disabled = !manual || stealing;
+    document.querySelector(`#${id}`).disabled = !manual || !atBat;
   }
   document.querySelector("#steal-roll").disabled = !manual || !stealing;
+  document.querySelector("#bunt-roll").disabled = !manual || !bunting;
+  document.querySelector("#bunt-def-roll").disabled = !manual || !bunting;
   document.querySelector("#dice-help").textContent = manual
     ? "Enter physical or known rolls."
-    : `ODDBALL will roll the ${stealing ? "stolen-base d8" : "dice required by the resulting rule path"}.`;
+    : `ODDBALL will roll the ${stealing ? "stolen-base d8" : bunting ? "Bunt Table d6 and any required DEF die" : "dice required by the resulting rule path"}.`;
 }
 
 function updatePlayType() {
-  const stealing = selectedPlayType() === "steal";
-  document.querySelector("#at-bat-participants").hidden = stealing;
-  document.querySelector("#at-bat-rolls").hidden = stealing;
-  document.querySelector("#oddities-option").hidden = stealing;
+  const playType = selectedPlayType();
+  const stealing = playType === "steal";
+  const bunting = playType === "bunt";
+  const atBat = playType === "at-bat";
+  document.querySelector("#at-bat-participants").hidden = !atBat;
+  document.querySelector("#at-bat-rolls").hidden = !atBat;
+  document.querySelector("#oddities-option").hidden = !atBat;
   document.querySelector("#steal-controls").hidden = !stealing;
+  document.querySelector("#bunt-controls").hidden = !bunting;
   document.querySelector("#resolve-mode-label").textContent = stealing
     ? "Stolen-base attempt"
-    : "Common at-bat slice";
+    : bunting ? "Bunt attempt" : "Common at-bat slice";
   setManualDiceAvailability();
 }
 
@@ -123,6 +132,38 @@ function updateEffectivePitchDie() {
 }
 
 function collectInput() {
+  if (selectedPlayType() === "bunt") {
+    const automatic = selectedDiceMode() === "automatic";
+    const contactPlus = document.querySelector("#bunt-contact-plus").checked;
+    const freeSwinger = document.querySelector("#bunt-free-swinger").checked;
+    const speedPlus = document.querySelector("#bunt-speed-plus").checked;
+    if (automatic) {
+      const buntRoll = rollDie(6);
+      document.querySelector("#bunt-roll").value = String(buntRoll);
+      const modifiedRoll = buntRoll + (contactPlus ? 1 : 0) - (freeSwinger ? 1 : 0);
+      if (speedPlus && modifiedRoll >= 6) {
+        document.querySelector("#bunt-def-roll").value = String(rollDie(12));
+      }
+    }
+    return {
+      playType: "bunt",
+      input: {
+        outs: Number(form.elements.namedItem("outs").value),
+        bases: {
+          first: form.elements.namedItem("runner-first").checked,
+          second: form.elements.namedItem("runner-second").checked,
+          third: form.elements.namedItem("runner-third").checked,
+        },
+        buntContactPlus: contactPlus,
+        buntFreeSwinger: freeSwinger,
+        buntSpeedPlus: speedPlus,
+        buntRoll: numberValue("bunt-roll"),
+        defRoll: numberValue("bunt-def-roll"),
+        defModifier: numberValue("bunt-def-modifier"),
+      },
+    };
+  }
+
   if (selectedPlayType() === "steal") {
     if (selectedDiceMode() === "automatic") {
       document.querySelector("#steal-roll").value = String(rollDie(8));
@@ -259,7 +300,7 @@ function renderResult(result) {
   resultDetail.textContent = result.detail;
   renderCalculations(result.calculations);
 
-  document.querySelector("#mss-output").textContent = String(result.mss);
+  document.querySelector("#mss-output").textContent = result.mss == null ? "—" : String(result.mss);
   document.querySelector("#result-source").textContent = result.supported
     ? result.sourceRefs.join(" · ")
     : "Outside the first supported rule path";
@@ -305,9 +346,12 @@ form.addEventListener("submit", (event) => {
   event.preventDefault();
   clearFieldErrors();
   const collected = collectInput();
-  renderResult(collected.playType === "steal"
+  const result = collected.playType === "steal"
     ? resolveStealAttempt(collected.input)
-    : resolveAtBat(collected.input));
+    : collected.playType === "bunt"
+      ? resolveBuntAttempt(collected.input)
+      : resolveAtBat(collected.input);
+  renderResult(result);
 });
 
 form.addEventListener("change", (event) => {
@@ -323,7 +367,10 @@ form.addEventListener("change", (event) => {
 });
 
 editInputsButton.addEventListener("click", () => {
-  document.querySelector("#bt").focus();
+  const focusTarget = selectedPlayType() === "steal"
+    ? "#steal-target"
+    : selectedPlayType() === "bunt" ? "#bunt-roll" : "#bt";
+  document.querySelector(focusTarget).focus();
 });
 
 overrideButton.addEventListener("click", () => {

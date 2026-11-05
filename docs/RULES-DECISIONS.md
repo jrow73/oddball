@@ -330,7 +330,7 @@ Date: 2026-11-04
 
 ## RD-017 — Stealing home
 
-Status: **Implemented; awaiting acceptance**
+Status: **Approved**
 Date: 2026-11-05
 
 ### Verified source rules
@@ -348,4 +348,27 @@ Date: 2026-11-05
 - A successful attempt removes the runner from third and records one run without adding an out. Other occupied bases are unchanged.
 - A failed attempt removes the runner from third and adds one out. If that is the third out, all suggested bases clear for the next inning.
 - Both app-generated and manual d8 rolls are supported, with the S+ and catcher arithmetic shown in the explanation trail.
+
+## RD-018 — Bunt Table
+
+Status: **Implemented; awaiting acceptance**
+Date: 2026-11-05
+
+### Verified source rules
+
+- Page 31: a bunt replaces the ordinary batting roll. Roll d6 on the Bunt Table and follow the result from left to right.
+- Page 33: results 1-2 retire the lead runner and leave the batter safe.
+- Page 33: on a 3, a lead runner at first or second advances and the batter is out; a lead runner at third is out and the batter is safe.
+- Page 33: results 4-5 advance the lead runner and retire the batter.
+- Page 33: on a 6 with an S+ hitter, resolve a single with a DEF check by the third baseman. All other hitters advance the lead runner while the batter is out.
+- Page 24: C+ adds 1 to the bunt roll and C- subtracts 1.
+
+### Implementation decisions
+
+- Bunt is a separate play type from an ordinary plate appearance. At least one base must be occupied, and the occupied runner closest to home is the lead runner.
+- C+ and C- are independent trait inputs and may cancel. Modified rolls below 1 continue in the 1-2 band; modified rolls above 6 continue in the 6 band.
+- When the lead runner is out and the batter is safe, trailing runners advance only as required to make room for the batter at first. This preserves a legal base state without inventing optional advancement.
+- When the lead runner advances and the batter is out, every runner who was forced when the bunt was put in play also advances one base. Other unforced runners hold. A runner advancing from third scores unless the batter's out is the third out; in that case the inning ends and the run does not count.
+- The S+ top result reuses the established defensive-single procedure with the third baseman as the fielder, including D+/D- effects, errors, and outstanding-play conversion.
+- Both app-generated and manual d6 rolls are supported. A d12 DEF roll is generated or required only when the S+ top result calls for it.
 

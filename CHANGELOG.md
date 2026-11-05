@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-11-05 — Bunting increment
+
+### Added
+
+- Bunt as a separate play type using the complete d6 Bunt Table
+- C+ and C- bunt modifiers with visible arithmetic
+- Lead-runner identification, sacrifice movement, forced trailing-runner movement, and squeeze scoring
+- S+ top result as a defensive single to the third baseman using the existing DEF engine
+- Eight focused tests for every table branch, traits, force movement, third-out scoring, and validation
+- Rules decision RD-018 documenting table behavior and base-state interpretations
+
+### Changed
+
+- Marked the stealing-home increment as approved
+- Replaced the acceptance fixture with a C+ squeeze-bunt boundary example
+
 ## 2026-11-05 — Stealing-home increment
 
 ### Added

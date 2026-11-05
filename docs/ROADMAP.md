@@ -36,7 +36,7 @@ Deliverables:
 
 ## Milestone 2 — Dice Companion vertical slice
 
-Status: **Core plate-appearance, handedness, ordinary steals, and double steals accepted; stealing home awaiting user acceptance**
+Status: **Core plate-appearance and baserunning increments accepted; bunting awaiting user acceptance**
 
 Goal: resolve a deliberately limited set of Modern-rule plate appearances end to end.
 
@@ -63,6 +63,7 @@ Implemented components:
 - Single-runner steals of second and third with runner and catcher trait modifiers
 - Double steals with separate lead-runner, trailing-runner, and both-safe result bands
 - S+ steal-home attempts with catcher modifiers, scoring, and caught-stealing outcomes
+- Full Bunt Table with C+/C- modifiers, lead-runner movement, and the S+ defensive-single result
 
 Acceptance examples now cover the documented MSS 47 possible-error scenario, walks, hits, outs, critical and trait-modified results, plus wild-pitch and pitcher-error oddities.
 

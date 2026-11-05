@@ -441,6 +441,193 @@ export function resolveStealAttempt(input) {
   };
 }
 
+export function resolveBuntAttempt(input) {
+  const errors = [];
+  const bases = copyBases(input.bases);
+  const contactPlus = Boolean(input.buntContactPlus);
+  const freeSwinger = Boolean(input.buntFreeSwinger);
+  const speedPlus = Boolean(input.buntSpeedPlus);
+
+  if (!isIntegerBetween(input.outs, 0, 2)) {
+    errors.push({ field: "outs", message: "Choose 0, 1, or 2 outs." });
+  }
+  if (!Object.values(bases).some(Boolean)) {
+    errors.push({ field: "runner-first", message: "A bunt attempt requires at least one baserunner." });
+  }
+  if (!isIntegerBetween(input.buntRoll, 1, 6)) {
+    errors.push({ field: "bunt-roll", message: "The Bunt Table d6 must be from 1 through 6." });
+  }
+  if (errors.length > 0) return { supported: false, outcomeCode: "invalid-input", errors };
+
+  const leadBase = bases.third ? "third" : bases.second ? "second" : "first";
+  const buntModifier = (contactPlus ? 1 : 0) + (freeSwinger ? -1 : 0);
+  const modifiedRoll = input.buntRoll + buntModifier;
+  const calculations = [`Bunt Table d6 ${input.buntRoll}`];
+  if (contactPlus) calculations.push("C+ Contact Hitter -> bunt roll +1");
+  if (freeSwinger) calculations.push("C- Free Swinger -> bunt roll -1");
+  calculations.push(`Modified bunt roll = ${modifiedRoll}`);
+
+  const leadRunnerOutBatterSafe = () => {
+    const outsAfter = input.outs + 1;
+    const nextBases = { first: true, second: false, third: false };
+    const runnerMoves = [`Runner on ${leadBase} out on the bunt`];
+    const trailingFirst = bases.first && leadBase !== "first";
+    const trailingSecond = bases.second && leadBase !== "second";
+
+    if (trailingSecond && trailingFirst) {
+      nextBases.third = true;
+      runnerMoves.push("Runner on second to third on the force");
+    } else if (trailingSecond) {
+      nextBases.second = true;
+      runnerMoves.push("Runner on second holds");
+    }
+    if (trailingFirst) {
+      nextBases.second = true;
+      runnerMoves.push("Runner on first to second on the force");
+    }
+    runnerMoves.push("Batter to first");
+
+    let detail = runnerMoves.join("; ") + ".";
+    if (outsAfter === 3) {
+      nextBases.first = false;
+      nextBases.second = false;
+      nextBases.third = false;
+      detail += " Inning over; bases clear.";
+    }
+    return {
+      supported: true,
+      outcomeCode: "bunt-lead-runner-out",
+      classification: "bunt-attempt",
+      score: "FC",
+      summary: "Bunt: lead runner out; batter safe.",
+      detail,
+      modifiedBuntRoll: modifiedRoll,
+      calculations,
+      stateDelta: {
+        outsBefore: input.outs,
+        outsAfter,
+        outsAdded: 1,
+        runsScored: 0,
+        bases: nextBases,
+        runnerMoves,
+      },
+      sourceRefs: ["Deadball 2E pp. 24, 31, 33"],
+    };
+  };
+
+  if (modifiedRoll <= 2 || (modifiedRoll === 3 && leadBase === "third")) {
+    calculations.push(modifiedRoll === 3
+      ? "Modified roll 3 with lead runner on third -> lead runner out; batter safe"
+      : "Modified roll 2 or lower -> lead runner out; batter safe");
+    return leadRunnerOutBatterSafe();
+  }
+
+  if (modifiedRoll >= 6 && speedPlus) {
+    const tableResult = {
+      defensive: true,
+      label: "Single, DEF (3B)",
+      score: "1B",
+      batterBases: 1,
+      runnerAdvance: 1,
+      play: { position: "3B", fielder: "third baseman", number: 5 },
+    };
+    calculations.push("Modified roll 6 or higher with S+ hitter -> single, DEF (3B)");
+    const defensiveResult = resolveDefensiveHit({
+      bases,
+      calculations,
+      input: { ...input, hitRoll: null },
+      mss: null,
+      tableResult,
+    });
+    return {
+      ...defensiveResult,
+      classification: defensiveResult.supported ? "bunt-attempt" : defensiveResult.classification,
+      modifiedBuntRoll: modifiedRoll,
+      sourceRefs: defensiveResult.supported ? ["Deadball 2E pp. 24, 28, 31, 33"] : defensiveResult.sourceRefs,
+    };
+  }
+
+  calculations.push(modifiedRoll === 3
+    ? `Modified roll 3 with lead runner on ${leadBase} -> lead runner and forced trailing runners advance; batter out`
+    : modifiedRoll >= 6
+      ? "Modified roll 6 or higher without S+ -> lead runner and forced trailing runners advance; batter out"
+      : "Modified roll 4-5 -> lead runner and forced trailing runners advance; batter out");
+
+  const outsAfter = input.outs + 1;
+  if (outsAfter === 3) {
+    return {
+      supported: true,
+      outcomeCode: "bunt-sacrifice",
+      classification: "bunt-attempt",
+      score: "SAC",
+      summary: "Bunt: batter out; inning over.",
+      detail: "Batter is out before reaching first; the third out ends the inning before any run scores.",
+      modifiedBuntRoll: modifiedRoll,
+      calculations,
+      stateDelta: {
+        outsBefore: input.outs,
+        outsAfter,
+        outsAdded: 1,
+        runsScored: 0,
+        bases: { first: false, second: false, third: false },
+        runnerMoves: ["Batter out; inning over"],
+      },
+      sourceRefs: ["Deadball 2E pp. 24, 31, 33"],
+    };
+  }
+
+  const nextBases = { first: false, second: false, third: false };
+  const runnerMoves = [];
+  let runsScored = 0;
+  const forcedAtContact = {
+    first: bases.first,
+    second: bases.first && bases.second,
+    third: bases.first && bases.second && bases.third,
+  };
+
+  for (const [base, destination] of [
+    ["third", "home"],
+    ["second", "third"],
+    ["first", "second"],
+  ]) {
+    if (!bases[base]) continue;
+
+    const advances = base === leadBase || forcedAtContact[base];
+    if (!advances) {
+      nextBases[base] = true;
+      runnerMoves.push(`Runner on ${base} holds`);
+    } else if (destination === "home") {
+      runsScored += 1;
+      runnerMoves.push("Runner on third scores");
+    } else {
+      nextBases[destination] = true;
+      const forceDescription = base === leadBase ? "" : " on the force";
+      runnerMoves.push(`Runner on ${base} to ${destination}${forceDescription}`);
+    }
+  }
+  runnerMoves.push("Batter out on the bunt");
+
+  return {
+    supported: true,
+    outcomeCode: "bunt-sacrifice",
+    classification: "bunt-attempt",
+    score: "SAC",
+    summary: "Successful sacrifice bunt.",
+    detail: runnerMoves.join("; ") + ".",
+    modifiedBuntRoll: modifiedRoll,
+    calculations,
+    stateDelta: {
+      outsBefore: input.outs,
+      outsAfter,
+      outsAdded: 1,
+      runsScored,
+      bases: nextBases,
+      runnerMoves,
+    },
+    sourceRefs: ["Deadball 2E pp. 24, 31, 33"],
+  };
+}
+
 export function classifyMss(mss, bt, obt, odditiesEnabled = true) {
   if (odditiesEnabled && mss === 1) return "oddity";
   if (odditiesEnabled && mss === 99) return "oddity";

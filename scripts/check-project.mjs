@@ -52,8 +52,8 @@ for (const expected of [
 
 for (const expected of [
   "Next rule path active",
-  "Replay the steal-home fixture",
-  "scores one run",
+  "Replay the squeeze-bunt fixture",
+  "the runner scores",
   '<option value="-20">−d20</option>',
   'id="pitch-operator"',
   'id="batter-hand"',
@@ -64,13 +64,19 @@ for (const expected of [
   'id="steal-runner-trait"',
   'id="catcher-steal-modifier"',
   'id="steal-roll"',
+  'id="bunt-controls"',
+  'id="bunt-contact-plus"',
+  'id="bunt-free-swinger"',
+  'id="bunt-speed-plus"',
+  'id="bunt-roll"',
+  'id="bunt-def-roll"',
   'id="hitter-power-trait"',
   'id="hitter-contact-plus"',
   'id="hitter-speed-plus"',
   'id="pitcher-groundball-plus"',
   'id="effective-pitch-die"',
   'href="./prototype.css"',
-  'src="./companion.mjs?v=0.17"',
+  'src="./companion.mjs?v=0.18"',
 ]) {
   if (!prototype.includes(expected)) {
     failures.push(`prototype.html is missing: ${expected}`);
