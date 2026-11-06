@@ -18,6 +18,7 @@ const saveOverrideButton = document.querySelector("#save-override");
 
 let latestResult = null;
 let profileStore;
+let pendingDefense = null;
 const profileDialogState = new Map();
 
 try {
@@ -46,14 +47,6 @@ function selectedDiceMode() {
 
 function selectedPlayType() {
   return form.elements.namedItem("play-type").value;
-}
-
-function selectedHitTableTraits() {
-  return {
-    powerTrait: document.querySelector("#hitter-power-trait").value,
-    contactPlus: document.querySelector("#hitter-contact-plus").checked,
-    speedPlus: document.querySelector("#hitter-speed-plus").checked,
-  };
 }
 
 function setProfileStatus(role, message) {
@@ -388,16 +381,22 @@ function setManualDiceAvailability() {
   const bunting = playType === "bunt";
   const hitAndRun = playType === "hit-and-run";
   const atBat = playType === "at-bat";
+  const battingPlay = atBat || hitAndRun;
   for (const id of ["swing-roll", "pitch-roll"]) {
     document.querySelector(`#${id}`).disabled = !manual || (!atBat && !hitAndRun);
   }
-  for (const id of ["hit-roll", "def-roll", "oddity-roll-one", "oddity-roll-two"]) {
+  for (const id of ["hit-roll", "oddity-roll-one", "oddity-roll-two"]) {
     document.querySelector(`#${id}`).disabled = !manual || !atBat;
   }
   document.querySelector("#steal-roll").disabled = !manual || !stealing;
   document.querySelector("#bunt-roll").disabled = !manual || !bunting;
-  document.querySelector("#bunt-def-roll").disabled = !manual || !bunting;
   document.querySelector("#hit-run-steal-roll").disabled = !manual || !hitAndRun;
+  document.querySelector("#at-bat-rolls").hidden = !manual || !battingPlay;
+  document.querySelector("#at-bat-secondary-rolls").hidden = !manual || !atBat;
+  document.querySelector("#oddity-manual-rolls").hidden = !manual || !atBat;
+  document.querySelector("#steal-manual-roll").hidden = !manual || !stealing;
+  document.querySelector("#bunt-manual-rolls").hidden = !manual || !bunting;
+  document.querySelector("#hit-run-manual-roll").hidden = !manual || !hitAndRun;
   document.querySelector("#dice-help").textContent = manual
     ? "Enter physical or known rolls."
     : `ODDBALL will roll the ${stealing ? "stolen-base d8" : bunting ? "Bunt Table d6 and any required DEF die" : hitAndRun ? "Swing Score, Pitch Die, and stolen-base d8" : "dice required by the resulting rule path"}.`;
@@ -411,8 +410,6 @@ function updatePlayType() {
   const atBat = playType === "at-bat";
   const battingPlay = atBat || hitAndRun;
   document.querySelector("#at-bat-participants").hidden = !battingPlay;
-  document.querySelector("#at-bat-rolls").hidden = !battingPlay;
-  document.querySelector("#at-bat-secondary-rolls").hidden = hitAndRun;
   document.querySelector("#oddities-option").hidden = !atBat;
   document.querySelector("#steal-controls").hidden = !stealing;
   document.querySelector("#bunt-controls").hidden = !bunting;
@@ -460,10 +457,6 @@ function collectInput() {
     if (automatic) {
       const buntRoll = rollDie(6);
       document.querySelector("#bunt-roll").value = String(buntRoll);
-      const modifiedRoll = buntRoll + (contactPlus ? 1 : 0) - (freeSwinger ? 1 : 0);
-      if (speedPlus && modifiedRoll >= 6) {
-        document.querySelector("#bunt-def-roll").value = String(rollDie(12));
-      }
     }
     return {
       playType: "bunt",
@@ -478,8 +471,8 @@ function collectInput() {
         buntFreeSwinger: freeSwinger,
         buntSpeedPlus: speedPlus,
         buntRoll: numberValue("bunt-roll"),
-        defRoll: numberValue("bunt-def-roll"),
-        defModifier: numberValue("bunt-def-modifier"),
+        defRoll: numberValue("def-roll"),
+        defModifier: numberValue("def-modifier"),
       },
     };
   }
@@ -592,12 +585,6 @@ function collectInput() {
     if (classification === "ordinary-hit" || classification === "critical-hit") {
       const hitRoll = rollDie(20);
       document.querySelector("#hit-roll").value = String(hitRoll);
-      if (requiresHitDefense(hitRoll, selectedHitTableTraits(), classification)) {
-        document.querySelector("#def-roll").value = String(rollDie(12));
-      }
-    }
-    if (classification === "possible-error") {
-      document.querySelector("#def-roll").value = String(rollDie(12));
     }
     if (classification === "oddity") {
       document.querySelector("#oddity-roll-one").value = String(rollDie(10));
@@ -654,8 +641,72 @@ function renderCalculations(calculations = []) {
   });
 }
 
+function resolveCollected(collected) {
+  return collected.playType === "steal"
+    ? resolveStealAttempt(collected.input)
+    : collected.playType === "bunt"
+      ? resolveBuntAttempt(collected.input)
+      : collected.playType === "hit-and-run"
+        ? resolveHitAndRunAttempt(collected.input)
+        : resolveAtBat(collected.input);
+}
+
+function collectedNeedsDefense(collected) {
+  if (collected.playType === "bunt") {
+    const input = collected.input;
+    const modifiedRoll = input.buntRoll + (input.buntContactPlus ? 1 : 0) - (input.buntFreeSwinger ? 1 : 0);
+    return input.buntSpeedPlus && modifiedRoll >= 6;
+  }
+  if (collected.playType !== "at-bat") return false;
+  const input = collected.input;
+  const effectivePitchDie = calculateEffectivePitchDie(input);
+  const targets = calculateEffectiveTargets(input);
+  const mss = input.swingRoll + (effectivePitchDie.sides < 0 ? -input.pitchRoll : input.pitchRoll);
+  const classification = classifyMss(mss, targets.bt, targets.obt, input.odditiesEnabled);
+  return classification === "possible-error"
+    || requiresHitDefense(input.hitRoll, {
+      powerTrait: input.hitterPowerTrait,
+      contactPlus: input.hitterContactPlus,
+      speedPlus: input.hitterSpeedPlus,
+    }, classification);
+}
+
+function beginDefenseCheckpoint(collected) {
+  pendingDefense = collected;
+  const preview = resolveCollected({
+    ...collected,
+    input: { ...collected.input, defRoll: 6, defModifier: 0 },
+  });
+  const automatic = selectedDiceMode() === "automatic";
+  const defRoll = document.querySelector("#def-roll");
+  defRoll.disabled = automatic;
+  defRoll.value = automatic ? String(rollDie(12)) : "";
+  document.querySelector("#def-modifier").value = "0";
+  document.querySelector("#defense-fielder").textContent = preview.play?.fielder
+    ? preview.play.fielder.replace(/^./, (letter) => letter.toUpperCase())
+    : preview.play?.position ?? "Fielder";
+  document.querySelector("#defense-instruction").textContent = automatic
+    ? `ODDBALL rolled DEF ${defRoll.value}. Confirm the fielder's trait, then finish the ruling.`
+    : "Enter the physical DEF d12 and choose the fielder's trait, then finish the ruling.";
+  document.querySelector("#defense-checkpoint").hidden = false;
+  resultPanel.dataset.state = "ready";
+  resultCall.textContent = "DEF";
+  resultTitle.textContent = `Defense check: ${document.querySelector("#defense-fielder").textContent}`;
+  resultDetail.textContent = "No defensive trait is assumed. None is selected unless you choose D+ or D−.";
+  const defIndex = preview.calculations?.findIndex((line) => line.startsWith("DEF ")) ?? -1;
+  renderCalculations(defIndex >= 0 ? preview.calculations.slice(0, defIndex) : preview.calculations);
+  for (const id of ["outs-delta", "runs-delta", "result-base-first", "result-base-second", "result-base-third"]) {
+    document.querySelector(`#${id}`).textContent = "—";
+  }
+  applyContextButton.disabled = true;
+  editInputsButton.disabled = true;
+  overrideButton.disabled = true;
+  resultPanel.focus();
+}
+
 function renderResult(result) {
   latestResult = result;
+  document.querySelector("#defense-checkpoint").hidden = true;
   overrideForm.hidden = true;
   overrideDisplay.hidden = true;
   confirmMessage.hidden = true;
@@ -716,15 +767,38 @@ function applySuggestedContext() {
 form.addEventListener("submit", (event) => {
   event.preventDefault();
   clearFieldErrors();
+  pendingDefense = null;
+  document.querySelector("#defense-checkpoint").hidden = true;
   const collected = collectInput();
-  const result = collected.playType === "steal"
-    ? resolveStealAttempt(collected.input)
-    : collected.playType === "bunt"
-      ? resolveBuntAttempt(collected.input)
-      : collected.playType === "hit-and-run"
-        ? resolveHitAndRunAttempt(collected.input)
-        : resolveAtBat(collected.input);
-  renderResult(result);
+  if (collectedNeedsDefense(collected)) {
+    beginDefenseCheckpoint(collected);
+    return;
+  }
+  renderResult(resolveCollected(collected));
+});
+
+document.querySelector("#finish-defense").addEventListener("click", () => {
+  if (!pendingDefense) return;
+  const defRoll = numberValue("def-roll");
+  const defRollInput = document.querySelector("#def-roll");
+  if (!Number.isInteger(defRoll) || defRoll < 1 || defRoll > 12) {
+    defRollInput.setAttribute("aria-invalid", "true");
+    document.querySelector("#defense-instruction").textContent = "Enter a DEF d12 roll from 1 through 12 before finishing the ruling.";
+    defRollInput.focus();
+    return;
+  }
+
+  defRollInput.removeAttribute("aria-invalid");
+  const collected = {
+    ...pendingDefense,
+    input: {
+      ...pendingDefense.input,
+      defRoll,
+      defModifier: numberValue("def-modifier"),
+    },
+  };
+  pendingDefense = null;
+  renderResult(resolveCollected(collected));
 });
 
 form.addEventListener("change", (event) => {

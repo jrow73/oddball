@@ -724,6 +724,10 @@ input:disabled {
   margin-top: 1rem;
 }
 
+.secondary-rolls.single-roll {
+  grid-template-columns: 1fr;
+}
+
 .hit-roll-card,
 .defense-row {
   display: grid;
@@ -811,6 +815,16 @@ input:disabled {
   background: var(--navy-deep);
 }
 
+@media (min-width: 1121px) {
+  .result-panel {
+    position: sticky;
+    top: 1rem;
+    max-height: calc(100vh - 2rem);
+    align-self: start;
+    overflow-y: auto;
+  }
+}
+
 .result-status {
   display: flex;
   justify-content: space-between;
@@ -839,6 +853,67 @@ input:disabled {
 .result-detail {
   color: rgb(255 255 255 / 68%);
   font-size: 0.84rem;
+}
+
+.defense-checkpoint {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.2rem;
+  padding: 1rem;
+  border: 1px solid rgb(234 177 41 / 70%);
+  border-radius: 10px;
+  background: rgb(255 255 255 / 7%);
+}
+
+.defense-checkpoint h3 {
+  margin: 0.15rem 0 0.35rem;
+  color: white;
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+}
+
+.defense-checkpoint p {
+  margin: 0;
+  color: rgb(255 255 255 / 72%);
+  font-size: 0.8rem;
+}
+
+.defense-checkpoint .panel-kicker {
+  color: var(--gold);
+}
+
+.defense-checkpoint-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.defense-checkpoint .compact-field {
+  display: grid;
+  gap: 0.35rem;
+  color: rgb(255 255 255 / 72%);
+  text-align: left;
+}
+
+.defense-checkpoint input,
+.defense-checkpoint select {
+  min-height: 44px;
+  border-color: rgb(255 255 255 / 35%);
+  color: var(--navy-deep);
+  background: white;
+}
+
+.defense-checkpoint button {
+  min-height: 44px;
+  border-color: var(--gold);
+  color: var(--navy-deep);
+  background: var(--gold);
+  font-weight: 850;
+}
+
+.defense-checkpoint button:hover,
+.defense-checkpoint button:focus-visible {
+  background: white;
 }
 
 .result-panel[data-state="limited"] .result-call {
@@ -1122,6 +1197,10 @@ input:disabled {
 }
 
 @media (max-width: 430px) {
+  .defense-checkpoint-controls {
+    grid-template-columns: 1fr;
+  }
+
   .dice-grid {
     grid-template-columns: 1fr auto 1fr;
   }

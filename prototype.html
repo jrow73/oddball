@@ -6,7 +6,7 @@
     <meta name="description" content="First functional ODDBALL Dice Companion vertical slice." />
     <title>Dice Companion | ODDBALL</title>
     <link rel="stylesheet" href="./styles.css" />
-    <link rel="stylesheet" href="./prototype.css?v=0.22" />
+    <link rel="stylesheet" href="./prototype.css?v=0.24" />
   </head>
   <body class="prototype-page">
     <a class="skip-link" href="#prototype-main">Skip to Dice Companion</a>
@@ -16,7 +16,7 @@
         <span class="brand-mark" aria-hidden="true">O</span>
         <span>ODDBALL</span>
       </a>
-      <span class="build-label">Dice Companion 0.22</span>
+      <span class="build-label">Dice Companion 0.24</span>
     </header>
 
     <main id="prototype-main" class="prototype-shell">
@@ -217,7 +217,7 @@
                   </select>
                 </label>
               </div>
-              <label class="steal-roll-card">
+              <label id="steal-manual-roll" class="steal-roll-card">
                 <span><span class="panel-kicker">Base Stealing</span><strong>d8 roll</strong></span>
                 <input id="steal-roll" aria-label="Stolen-base d8" type="number" value="4" min="1" max="8" />
               </label>
@@ -243,27 +243,11 @@
                   <span><strong>S+ Speedy Runner</strong><small>Top result becomes Single, DEF (3B)</small></span>
                 </label>
               </div>
-              <div class="secondary-rolls">
+              <div id="bunt-manual-rolls" class="secondary-rolls single-roll">
                 <label class="steal-roll-card">
                   <span><span class="panel-kicker">Bunt Table</span><strong>d6 roll</strong></span>
                   <input id="bunt-roll" aria-label="Bunt Table d6" type="number" value="3" min="1" max="6" />
                 </label>
-                <div class="defense-row">
-                  <div>
-                    <p class="panel-kicker">If S+ produces Single, DEF (3B)</p>
-                    <strong>DEF check</strong>
-                  </div>
-                  <label class="compact-field">d12 <input id="bunt-def-roll" aria-label="Bunt DEF d12" type="number" value="6" min="1" max="12" /></label>
-                  <span class="operator" aria-hidden="true">+</span>
-                  <label class="compact-field">
-                    Trait
-                    <select id="bunt-def-modifier" aria-label="Bunt defender trait">
-                      <option value="-1">D−</option>
-                      <option value="0" selected>None</option>
-                      <option value="1">D+</option>
-                    </select>
-                  </label>
-                </div>
               </div>
             </section>
 
@@ -290,7 +274,7 @@
                     <option value="1">D− Poor Defender</option>
                   </select>
                 </label>
-                <label class="steal-roll-card">
+                <label id="hit-run-manual-roll" class="steal-roll-card">
                   <span><span class="panel-kicker">Base Stealing</span><strong>d8 roll</strong></span>
                   <input id="hit-run-steal-roll" aria-label="Hit and Run stolen-base d8" type="number" value="4" min="1" max="8" />
                 </label>
@@ -316,7 +300,7 @@
               </div>
             </div>
 
-            <div id="at-bat-secondary-rolls" class="secondary-rolls">
+            <div id="at-bat-secondary-rolls" class="secondary-rolls single-roll">
               <label class="hit-roll-card">
                 <span>
                   <span class="panel-kicker">If MSS is a hit</span>
@@ -325,25 +309,9 @@
                 <span class="compact-field">d20 <input id="hit-roll" aria-label="Hit Table d20" type="number" value="8" min="1" max="20" /></span>
               </label>
 
-              <div class="defense-row">
-                <div>
-                  <p class="panel-kicker">When the result calls for DEF</p>
-                  <strong>DEF check</strong>
-                </div>
-                <label class="compact-field">d12 <input id="def-roll" type="number" value="2" min="1" max="12" /></label>
-                <span class="operator" aria-hidden="true">+</span>
-                <label class="compact-field">
-                  Trait
-                  <select id="def-modifier" aria-label="Defender trait">
-                    <option value="-1">D−</option>
-                    <option value="0">None</option>
-                    <option value="1" selected>D+</option>
-                  </select>
-                </label>
-              </div>
             </div>
 
-            <div class="oddity-rolls">
+            <div id="oddity-manual-rolls" class="oddity-rolls">
               <div>
                 <p class="panel-kicker">When MSS is 1 or 99 and Oddities are enabled</p>
                 <strong>Oddities Table</strong>
@@ -369,6 +337,29 @@
             <p id="result-detail" class="result-detail">
               Choose “Roll for me,” or use “Enter my dice” for physical rolls.
             </p>
+
+            <div id="defense-checkpoint" class="defense-checkpoint" hidden>
+              <div>
+                <p class="panel-kicker">Defense required</p>
+                <h3 id="defense-fielder">Fielder</h3>
+                <p id="defense-instruction">Choose this fielder's trait before completing the ruling.</p>
+              </div>
+              <div class="defense-checkpoint-controls">
+                <label class="compact-field">
+                  DEF d12
+                  <input id="def-roll" aria-label="DEF d12" type="number" min="1" max="12" />
+                </label>
+                <label class="compact-field">
+                  Defender trait
+                  <select id="def-modifier" aria-label="Defender trait">
+                    <option value="0" selected>None</option>
+                    <option value="1">D+</option>
+                    <option value="-1">D−</option>
+                  </select>
+                </label>
+              </div>
+              <button id="finish-defense" type="button">Finish ruling</button>
+            </div>
 
             <div class="state-delta" aria-label="Suggested state after the play">
               <div><span>Outs</span><strong id="outs-delta">—</strong></div>
@@ -580,7 +571,7 @@
       </details>
     </main>
 
-    <script type="module" src="./companion.mjs?v=0.22"></script>
+    <script type="module" src="./companion.mjs?v=0.24"></script>
   </body>
 </html>
 

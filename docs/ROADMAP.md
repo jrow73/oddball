@@ -78,6 +78,8 @@ Goal: cover the agreed Modern-rule play-resolution scope while preserving paper 
 - Player and lineup management
 - Browser-local batter and pitcher profile presets implemented as the first player-management increment
 - Compact participant summaries with focused create/edit dialogs for ratings, traits, and profile tools
+- Mode-aware physical-dice entry and a sticky desktop result panel to reduce scrolling
+- Conditional DEF entry that identifies the fielder and never assumes a defensive trait
 - Save, export, and import
 - Rules citations and decision log
 - Licensing welcome and persistent credits

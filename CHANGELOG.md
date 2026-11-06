@@ -9,6 +9,8 @@
 - Focused usability acceptance notes for the first public-release interface pass
 - Focused batter and pitcher setup dialogs with explicit create, edit, apply-without-saving, save/update, cancel, and remove actions
 - Compact participant summaries showing the ratings and active traits used by the next play
+- Mode-aware dice entry that hides physical-roll controls until **Enter my dice** is selected
+- A conditional defense checkpoint that identifies the fielder and exposes the DEF roll and trait only when the play requires them
 
 ### Changed
 
@@ -17,6 +19,8 @@
 - Replaced the ambiguous unsaved-player option with the clearer “Enter ratings manually” choice
 - Replaced the accepted expandable player sections with modal setup dialogs to reduce page height and scrolling
 - Made Cancel and Escape restore the participant values that were active before the dialog opened
+- Kept the calculated-result panel visible while scrolling the setup on wide desktop layouts
+- Changed the default defender trait from an implied D+ to **None** and preserve the original play rolls while the user confirms defense
 
 ## 2026-11-05 — Saved player-profile foundation
 

@@ -65,5 +65,5 @@ The supplied Akers Games image remains unchanged in the project root. The rulebo
 
 ## Next decision
 
-Review the player-setup dialog slice. The rolling screen now keeps only saved-player selection and compact rating summaries visible; creating, editing, and temporarily adjusting a player happens in a focused dialog. See [docs/DICE-COMPANION-USABILITY.md](docs/DICE-COMPANION-USABILITY.md) and open `prototype.html` with Live Server.
+Review the mode-aware dice-entry and conditional-defense slice. Automatic mode omits physical-roll fields, **Enter my dice** reveals only the rolls required by the selected play type, and plays that require DEF pause to show the fielder with a neutral default trait. See [docs/DICE-COMPANION-USABILITY.md](docs/DICE-COMPANION-USABILITY.md) and open `prototype.html` with Live Server.
 
