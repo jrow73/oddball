@@ -36,7 +36,7 @@ Deliverables:
 
 ## Milestone 2 — Dice Companion vertical slice
 
-Status: **Core plate-appearance, baserunning, and bunting increments accepted; Hit & Run awaiting user acceptance**
+Status: **Accepted**
 
 Goal: resolve a deliberately limited set of Modern-rule plate appearances end to end.
 
@@ -70,10 +70,13 @@ Acceptance examples now cover the documented MSS 47 possible-error scenario, wal
 
 ## Milestone 3 — Complete standalone Dice Companion
 
+Status: **Saved player-profile foundation awaiting user acceptance**
+
 Goal: cover the agreed Modern-rule play-resolution scope while preserving paper scorekeeping.
 
 - Full supported tables and modifiers
 - Player and lineup management
+- Browser-local batter and pitcher profile presets implemented as the first player-management increment
 - Save, export, and import
 - Rules citations and decision log
 - Licensing welcome and persistent credits

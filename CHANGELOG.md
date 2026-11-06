@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-11-05 — Saved player-profile foundation
+
+### Added
+
+- Browser-local saved batter and pitcher profiles in the Dice Companion
+- Versioned profile storage separating player identity from Deadball Modern rating records
+- Save, load, update, and confirmed removal controls in each participant card
+- Explicit New profile, Save new profile, and Update profile states so adding a second player cannot be mistaken for editing the selected one
+- Safe fallback when stored profile data is invalid or uses an unknown schema version
+- Six focused profile-store tests covering creation, updates, role filtering, removal, persistence, and invalid data
+- Player-profile scope and acceptance documentation
+
+### Changed
+
+- Marked the Hit & Run increment as approved
+- Began Milestone 3 with saved profiles while leaving lineups and team assignment for later increments
+
 ## 2026-11-05 — Hit & Run increment
 
 ### Added

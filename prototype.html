@@ -6,7 +6,7 @@
     <meta name="description" content="First functional ODDBALL Dice Companion vertical slice." />
     <title>Dice Companion | ODDBALL</title>
     <link rel="stylesheet" href="./styles.css" />
-    <link rel="stylesheet" href="./prototype.css" />
+    <link rel="stylesheet" href="./prototype.css?v=0.20" />
   </head>
   <body class="prototype-page">
     <a class="skip-link" href="#prototype-main">Skip to Dice Companion</a>
@@ -125,6 +125,20 @@
                   <span>Name <small>optional</small></span>
                   <input type="text" id="batter-name" placeholder="Example batter" />
                 </label>
+                <div class="profile-tools" aria-label="Saved batter profiles">
+                  <label class="field-label">
+                    Saved batter
+                    <select id="batter-profile-select">
+                      <option value="">Unsaved batter</option>
+                    </select>
+                  </label>
+                  <div class="profile-actions">
+                    <button id="new-batter-profile" type="button">New profile</button>
+                    <button id="save-batter-profile" type="button">Save new profile</button>
+                    <button id="remove-batter-profile" type="button" disabled>Remove</button>
+                  </div>
+                  <p id="batter-profile-status" class="profile-status" role="status" aria-live="polite"></p>
+                </div>
                 <label class="field-label">
                   Bats
                   <select id="batter-hand">
@@ -181,6 +195,20 @@
                   <span>Name <small>optional</small></span>
                   <input type="text" id="pitcher-name" placeholder="Example pitcher" />
                 </label>
+                <div class="profile-tools" aria-label="Saved pitcher profiles">
+                  <label class="field-label">
+                    Saved pitcher
+                    <select id="pitcher-profile-select">
+                      <option value="">Unsaved pitcher</option>
+                    </select>
+                  </label>
+                  <div class="profile-actions">
+                    <button id="new-pitcher-profile" type="button">New profile</button>
+                    <button id="save-pitcher-profile" type="button">Save new profile</button>
+                    <button id="remove-pitcher-profile" type="button" disabled>Remove</button>
+                  </div>
+                  <p id="pitcher-profile-status" class="profile-status" role="status" aria-live="polite"></p>
+                </div>
                 <div class="rating-pair">
                   <label class="field-label">
                     Throws
@@ -493,7 +521,7 @@
       </section>
     </main>
 
-    <script type="module" src="./companion.mjs?v=0.19"></script>
+    <script type="module" src="./companion.mjs?v=0.20"></script>
   </body>
 </html>
 

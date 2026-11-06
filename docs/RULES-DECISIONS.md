@@ -374,7 +374,7 @@ Date: 2026-11-05
 
 ## RD-019 — Hit & Run Table
 
-Status: **Implemented; awaiting acceptance**
+Status: **Approved**
 Date: 2026-11-05
 
 ### Verified source rules

@@ -7,7 +7,7 @@ ODDBALL is a planned browser-based baseball dice companion and league simulator.
 
 ## Current status
 
-This repository contains the foundation build and the first functional Dice Companion vertical slice. It resolves compatible hitter and pitcher traits, hits, defensive checks, walks, possible errors, outs, six play-state oddities, stolen-base attempts, the Bunt Table, and the table-defined Hit & Run outcomes with explainable calculations, suggested state changes, and retained manual overrides. Power modifiers are applied before C+ or S+ evaluates the modified Hit Table value; GB+ changes Out Table result 2 and increases the Pitch Die with the bases loaded. The complete Modern Pitch Die ladder supports positive and negative dice, including the same-handed matchup increase and its starter/reliever limits. Oddities and Hit & Run interactions that require broader or unspecified rules are identified for manual handling. Saved games, trait generation, digital scorekeeping, and league simulation are not yet implemented.
+This repository contains the foundation build and the first functional Dice Companion vertical slice. It resolves compatible hitter and pitcher traits, hits, defensive checks, walks, possible errors, outs, six play-state oddities, stolen-base attempts, the Bunt Table, and the table-defined Hit & Run outcomes with explainable calculations, suggested state changes, and retained manual overrides. Batter and pitcher profiles can now be saved locally in the current browser without creating a lineup or league. Power modifiers are applied before C+ or S+ evaluates the modified Hit Table value; GB+ changes Out Table result 2 and increases the Pitch Die with the bases loaded. The complete Modern Pitch Die ladder supports positive and negative dice, including the same-handed matchup increase and its starter/reliever limits. Oddities and Hit & Run interactions that require broader or unspecified rules are identified for manual handling. Saved games, trait generation, digital scorekeeping, and league simulation are not yet implemented.
 
 ## Run locally
 
@@ -29,11 +29,13 @@ ODDBALL/
 ├── prototype.html
 ├── prototype.css
 ├── companion.mjs
+├── profiles.mjs
 ├── styles.css
 ├── app.js
 ├── docs/
 │   ├── DEVELOPMENT-WORKFLOW.md
 │   ├── FIRST-PLAYABLE-SLICE.md
+│   ├── PLAYER-PROFILES.md
 │   ├── PROJECT-BRIEF.md
 │   ├── RULES-DECISIONS.md
 │   └── ROADMAP.md
@@ -42,7 +44,8 @@ ODDBALL/
 ├── scripts/
 │   └── check-project.mjs
 ├── tests/
-│   └── modern-possible-error.test.mjs
+│   ├── modern-possible-error.test.mjs
+│   └── profiles.test.mjs
 └── Based on Akers Games logo.png
 ```
 
@@ -61,5 +64,5 @@ The supplied Akers Games image remains unchanged in the project root. The rulebo
 
 ## Next decision
 
-Review and accept the Hit & Run increment, including standard walk advancement and its explicit manual-ruling boundary for possible errors and oddities. See [docs/FIRST-PLAYABLE-SLICE.md](docs/FIRST-PLAYABLE-SLICE.md), [docs/RULES-DECISIONS.md](docs/RULES-DECISIONS.md), and open `prototype.html` with Live Server.
+Review and accept the saved player-profile foundation before adding lineup structure or backup import/export. See [docs/PLAYER-PROFILES.md](docs/PLAYER-PROFILES.md), [docs/RULES-DECISIONS.md](docs/RULES-DECISIONS.md), and open `prototype.html` with Live Server.
 
