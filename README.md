@@ -7,7 +7,7 @@ ODDBALL is a planned browser-based baseball dice companion and league simulator.
 
 ## Current status
 
-This repository contains the foundation build and the first functional Dice Companion vertical slice. It resolves compatible hitter and pitcher traits, hits, defensive checks, walks, possible errors, outs, six play-state oddities, stolen-base attempts, the Bunt Table, and the table-defined Hit & Run outcomes with explainable calculations, suggested state changes, and retained manual overrides. Batter and pitcher profiles can now be saved locally in the current browser without creating a lineup or league. Power modifiers are applied before C+ or S+ evaluates the modified Hit Table value; GB+ changes Out Table result 2 and increases the Pitch Die with the bases loaded. The complete Modern Pitch Die ladder supports positive and negative dice, including the same-handed matchup increase and its starter/reliever limits. Oddities and Hit & Run interactions that require broader or unspecified rules are identified for manual handling. Saved games, trait generation, digital scorekeeping, and league simulation are not yet implemented.
+This repository contains the foundation build and the complete Modern-rules Dice Companion engine. It resolves compatible hitter and pitcher traits, hits, defensive checks, walks, possible errors, outs, six play-state oddities, stolen-base attempts, the Bunt Table, and the table-defined Hit & Run outcomes with explainable calculations, suggested state changes, and retained manual overrides. Batter and pitcher profiles can be saved locally without creating a lineup or league. A focused usability pass is now reorganizing the interface for people who only want to resolve the next play. Saved games, trait generation, digital scorekeeping, and league simulation are not yet implemented.
 
 ## Run locally
 
@@ -34,6 +34,7 @@ ODDBALL/
 ├── app.js
 ├── docs/
 │   ├── DEVELOPMENT-WORKFLOW.md
+│   ├── DICE-COMPANION-USABILITY.md
 │   ├── FIRST-PLAYABLE-SLICE.md
 │   ├── PLAYER-PROFILES.md
 │   ├── PROJECT-BRIEF.md
@@ -64,5 +65,5 @@ The supplied Akers Games image remains unchanged in the project root. The rulebo
 
 ## Next decision
 
-Review and accept the saved player-profile foundation before adding lineup structure or backup import/export. See [docs/PLAYER-PROFILES.md](docs/PLAYER-PROFILES.md), [docs/RULES-DECISIONS.md](docs/RULES-DECISIONS.md), and open `prototype.html` with Live Server.
+Review the player-setup dialog slice. The rolling screen now keeps only saved-player selection and compact rating summaries visible; creating, editing, and temporarily adjusting a player happens in a focused dialog. See [docs/DICE-COMPANION-USABILITY.md](docs/DICE-COMPANION-USABILITY.md) and open `prototype.html` with Live Server.
 

@@ -268,6 +268,58 @@ legend,
   background: #f7f3eb;
 }
 
+.player-at-a-glance {
+  display: grid;
+  gap: 0.2rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border-left: 4px solid var(--gold);
+  border-radius: 6px;
+  background: var(--paper);
+}
+
+.player-at-a-glance strong {
+  color: var(--navy-deep);
+  font-size: 0.9rem;
+}
+
+.player-at-a-glance span {
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+}
+
+.participant-card-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+}
+
+.participant-card-actions button {
+  min-height: 40px;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--navy);
+  border-radius: 8px;
+  color: var(--navy);
+  background: white;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.participant-card-actions button:last-child {
+  color: white;
+  background: var(--navy);
+}
+
+.participant-card-actions button:hover,
+.participant-card-actions button:focus-visible {
+  border-color: var(--red);
+  color: white;
+  background: var(--red);
+}
+
 .participant-heading {
   display: flex;
   gap: 0.7rem;
@@ -315,46 +367,169 @@ legend,
   text-transform: none;
 }
 
-.profile-tools {
-  margin: 0 0 0.9rem;
-  padding: 0.75rem;
+.quick-profile {
+  grid-template-columns: 1fr;
+  gap: 0.35rem;
+  margin-bottom: 0.2rem;
+}
+
+.prototype-review summary::-webkit-details-marker {
+  display: none;
+}
+
+.prototype-review summary::after {
+  position: absolute;
+  top: 50%;
+  right: 0.9rem;
+  content: "+";
+  color: var(--red-dark);
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  transform: translateY(-50%);
+}
+
+.prototype-review[open] summary::after {
+  content: "−";
+}
+
+.prototype-review summary:focus-visible {
+  outline: 3px solid rgb(189 59 49 / 35%);
+  outline-offset: 2px;
+}
+
+.profile-dialog {
+  width: min(680px, calc(100vw - 2rem));
+  max-height: min(88vh, 820px);
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  color: var(--ink);
+  background: var(--paper-light);
+  box-shadow: 0 24px 80px rgb(4 25 43 / 32%);
+}
+
+.profile-dialog::backdrop {
+  background: rgb(4 25 43 / 65%);
+  backdrop-filter: blur(3px);
+}
+
+.profile-dialog-shell {
+  max-height: min(88vh, 820px);
+  overflow-y: auto;
+}
+
+.profile-dialog-header {
+  display: flex;
+  padding: 1.2rem 1.3rem;
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+  background: var(--paper-light);
+}
+
+.profile-dialog-header h2 {
+  font-size: clamp(1.6rem, 4vw, 2.3rem);
+}
+
+.dialog-close {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--navy);
+  background: white;
+  font: inherit;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.profile-dialog-description {
+  margin: 0;
+  padding: 1rem 1.3rem 0;
+  color: var(--ink-soft);
+}
+
+.profile-dialog-fields {
+  padding: 1rem 1.3rem 1.3rem;
+}
+
+.profile-dialog-fields > .field-label,
+.profile-dialog-fields > .rating-pair,
+.profile-dialog-fields > .profile-traits {
+  margin-top: 0.8rem;
+}
+
+.profile-traits {
+  padding: 0.15rem 0.8rem 0.8rem;
   border: 1px solid var(--line);
   border-radius: 9px;
   background: var(--paper);
 }
 
-.profile-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+.profile-dialog-actions {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem 1.3rem;
+  position: sticky;
+  z-index: 2;
+  bottom: 0;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--line);
+  background: var(--paper-light);
+}
+
+.profile-dialog-actions > div {
+  display: flex;
   gap: 0.5rem;
-  margin-top: 0.55rem;
 }
 
-.profile-actions button[id^="new-"] {
-  grid-column: 1 / -1;
-}
-
-.profile-actions button {
-  min-height: 36px;
-  padding: 0.45rem 0.55rem;
+.profile-dialog-actions button {
+  min-height: 40px;
+  padding: 0.55rem 0.75rem;
   border: 1px solid var(--navy);
-  border-radius: 7px;
+  border-radius: 8px;
   color: var(--navy);
   background: white;
   font: inherit;
   font-size: 0.76rem;
-  font-weight: 800;
-}
-
-.profile-actions button:not(:disabled):hover,
-.profile-actions button:not(:disabled):focus-visible {
-  color: white;
-  background: var(--navy);
+  font-weight: 850;
   cursor: pointer;
 }
 
-.profile-actions button:disabled {
-  opacity: 0.45;
+.profile-dialog-actions .dialog-primary {
+  color: white;
+  background: var(--navy);
+}
+
+.profile-dialog-actions .dialog-secondary {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.profile-dialog-actions .dialog-danger {
+  border-color: var(--red);
+  color: var(--red-dark);
+}
+
+.profile-dialog-actions button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.profile-dialog-actions button:not(:disabled):hover,
+.profile-dialog-actions button:not(:disabled):focus-visible,
+.dialog-close:hover,
+.dialog-close:focus-visible {
+  border-color: var(--red);
+  color: white;
+  background: var(--red);
 }
 
 .profile-status {
@@ -843,10 +1018,36 @@ input:disabled {
 .prototype-review {
   max-width: 920px;
   margin: 5rem auto 0;
-  padding: clamp(1.5rem, 4vw, 3rem);
   border-top: 5px solid var(--red);
   background: var(--paper-light);
   box-shadow: var(--shadow);
+}
+
+.prototype-review summary {
+  display: flex;
+  min-height: 88px;
+  padding: 1.3rem 4rem 1.3rem 1.5rem;
+  position: relative;
+  flex-direction: column;
+  justify-content: center;
+  cursor: pointer;
+  list-style: none;
+}
+
+.prototype-review summary strong {
+  margin-top: 0.25rem;
+  color: var(--navy-deep);
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 2.5vw, 2rem);
+}
+
+.prototype-review-body {
+  padding: 0 1.5rem 1.5rem;
+  border-top: 1px solid var(--line);
+}
+
+.prototype-review-body p {
+  margin: 1.2rem 0 0;
 }
 
 .prototype-review ol {
@@ -903,6 +1104,20 @@ input:disabled {
 
   .defense-row {
     grid-template-columns: 1fr 62px auto 62px;
+  }
+
+  .profile-dialog-actions,
+  .profile-dialog-actions > div {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .profile-dialog-actions > div {
+    width: 100%;
+  }
+
+  .profile-dialog-actions .dialog-danger {
+    order: 2;
   }
 }
 

@@ -17,6 +17,7 @@ const requiredFiles = [
   "CHANGELOG.md",
   "docs/PROJECT-BRIEF.md",
   "docs/DEVELOPMENT-WORKFLOW.md",
+  "docs/DICE-COMPANION-USABILITY.md",
   "docs/FIRST-PLAYABLE-SLICE.md",
   "docs/PLAYER-PROFILES.md",
   "docs/RULES-DECISIONS.md",
@@ -54,7 +55,13 @@ for (const expected of [
 }
 
 for (const expected of [
-  "Next rule path active",
+  "Paper-scorekeeping companion",
+  'id="batter-profile-dialog"',
+  'id="pitcher-profile-dialog"',
+  "Use for this play",
+  "Edit current",
+  "Enter ratings manually",
+  "Developer acceptance fixture",
   "Replay the C+ Hit &amp; Run fixture",
   "successful steal puts the runner on third",
   '<option value="-20">−d20</option>',
@@ -90,8 +97,8 @@ for (const expected of [
   'id="hitter-speed-plus"',
   'id="pitcher-groundball-plus"',
   'id="effective-pitch-die"',
-  'href="./prototype.css?v=0.20"',
-  'src="./companion.mjs?v=0.20"',
+  'href="./prototype.css?v=0.22"',
+  'src="./companion.mjs?v=0.22"',
 ]) {
   if (!prototype.includes(expected)) {
     failures.push(`prototype.html is missing: ${expected}`);

@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-11-06 — Dice Companion usability pass, slice 1
+
+### Added
+
+- Expandable player-detail and trait sections that keep optional controls out of the common roll path
+- A collapsed developer acceptance fixture that remains available without interrupting ordinary use
+- Focused usability acceptance notes for the first public-release interface pass
+- Focused batter and pitcher setup dialogs with explicit create, edit, apply-without-saving, save/update, cancel, and remove actions
+- Compact participant summaries showing the ratings and active traits used by the next play
+
+### Changed
+
+- Promoted saved-player selection, BT, OBT, and Pitch Die as the immediately visible participant controls
+- Reframed the page introduction around resolving the next play without creating a lineup or digital game
+- Replaced the ambiguous unsaved-player option with the clearer “Enter ratings manually” choice
+- Replaced the accepted expandable player sections with modal setup dialogs to reduce page height and scrolling
+- Made Cancel and Escape restore the participant values that were active before the dialog opened
+
 ## 2026-11-05 — Saved player-profile foundation
 
 ### Added

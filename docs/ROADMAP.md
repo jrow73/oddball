@@ -70,13 +70,14 @@ Acceptance examples now cover the documented MSS 47 possible-error scenario, wal
 
 ## Milestone 3 — Complete standalone Dice Companion
 
-Status: **Saved player-profile foundation awaiting user acceptance**
+Status: **Public-release usability pass in progress**
 
 Goal: cover the agreed Modern-rule play-resolution scope while preserving paper scorekeeping.
 
 - Full supported tables and modifiers
 - Player and lineup management
 - Browser-local batter and pitcher profile presets implemented as the first player-management increment
+- Compact participant summaries with focused create/edit dialogs for ratings, traits, and profile tools
 - Save, export, and import
 - Rules citations and decision log
 - Licensing welcome and persistent credits

@@ -18,6 +18,7 @@ const saveOverrideButton = document.querySelector("#save-override");
 
 let latestResult = null;
 let profileStore;
+const profileDialogState = new Map();
 
 try {
   profileStore = readProfileStore(window.localStorage);
@@ -57,6 +58,10 @@ function selectedHitTableTraits() {
 
 function setProfileStatus(role, message) {
   document.querySelector(`#${role}-profile-status`).textContent = message;
+  const dialog = document.querySelector(`#${role}-profile-dialog`);
+  if (dialog?.open) {
+    document.querySelector(`#${role}-dialog-description`).textContent = message;
+  }
 }
 
 function persistProfiles() {
@@ -70,14 +75,14 @@ function persistProfiles() {
 
 function refreshProfileSelect(role, selectedId = "") {
   const select = document.querySelector(`#${role}-profile-select`);
-  const label = role === "batter" ? "Unsaved batter" : "Unsaved pitcher";
-  select.replaceChildren(new Option(label, ""));
+  select.replaceChildren(new Option("Enter ratings manually", ""));
   for (const profile of listPlayerProfiles(profileStore, role)) {
     select.add(new Option(profile.name, profile.id));
   }
   select.value = selectedId;
   document.querySelector(`#remove-${role}-profile`).disabled = !select.value;
   document.querySelector(`#save-${role}-profile`).textContent = select.value ? "Update profile" : "Save new profile";
+  updateParticipantSummary(role);
 }
 
 function batterProfileValues() {
@@ -112,6 +117,7 @@ function applyBatterProfile(profile) {
   document.querySelector("#hitter-contact-plus").checked = Boolean(profile.ratings.contactPlus);
   document.querySelector("#hitter-speed-plus").checked = Boolean(profile.ratings.speedPlus);
   document.querySelector("#hitter-free-swinger").checked = Boolean(profile.ratings.freeSwinger);
+  updateParticipantSummary("batter");
 }
 
 function applyPitcherProfile(profile) {
@@ -123,6 +129,90 @@ function applyPitcherProfile(profile) {
   document.querySelector("#pitcher-k-plus").checked = Boolean(profile.ratings.kPlus);
   document.querySelector("#pitcher-groundball-plus").checked = Boolean(profile.ratings.groundballPlus);
   updateEffectivePitchDie();
+  updateParticipantSummary("pitcher");
+}
+
+function updateParticipantSummary(role) {
+  if (role === "batter") {
+    const ratings = batterProfileValues();
+    const traits = [];
+    if (ratings.hand !== "none") traits.push(`Bats ${ratings.hand === "switch" ? "S" : ratings.hand[0].toUpperCase()}`);
+    if (ratings.powerTrait !== "none") {
+      traits.push({
+        "p-plus": "P+",
+        "p-plus-plus": "P++",
+        "p-minus": "P−",
+        "p-minus-minus": "P−−",
+      }[ratings.powerTrait]);
+    }
+    if (ratings.contactPlus) traits.push("C+");
+    if (ratings.speedPlus) traits.push("S+");
+    if (ratings.freeSwinger) traits.push("C−");
+    document.querySelector("#batter-rating-summary").textContent = `BT ${ratings.bt} · OBT ${ratings.obt}`;
+    document.querySelector("#batter-trait-summary").textContent = traits.length ? traits.join(" · ") : "No optional traits";
+    return;
+  }
+
+  const ratings = pitcherProfileValues();
+  const traits = [];
+  if (ratings.hand !== "none") traits.push(`Throws ${ratings.hand[0].toUpperCase()}`);
+  if (ratings.controlTrait === "cn-plus") traits.push("CN+");
+  if (ratings.controlTrait === "cn-minus") traits.push("CN−");
+  if (ratings.kPlus) traits.push("K+");
+  if (ratings.groundballPlus) traits.push("GB+");
+  const roleLabel = ratings.role === "reliever" ? "Reliever" : "Starter";
+  document.querySelector("#pitcher-rating-summary").textContent = `Pitch Die ${formatPitchDie(ratings.pitchDieSides)} · ${roleLabel}`;
+  document.querySelector("#pitcher-trait-summary").textContent = traits.length ? traits.join(" · ") : "No optional traits";
+}
+
+function captureProfileDraft(role) {
+  return {
+    selectedId: document.querySelector(`#${role}-profile-select`).value,
+    status: document.querySelector(`#${role}-profile-status`).textContent,
+    profile: {
+      name: document.querySelector(`#${role}-name`).value,
+      ratings: role === "batter" ? batterProfileValues() : pitcherProfileValues(),
+    },
+  };
+}
+
+function restoreProfileDraft(role, draft) {
+  document.querySelector(`#${role}-profile-select`).value = draft.selectedId;
+  if (role === "batter") applyBatterProfile(draft.profile);
+  else applyPitcherProfile(draft.profile);
+  document.querySelector(`#remove-${role}-profile`).disabled = !draft.selectedId;
+  document.querySelector(`#save-${role}-profile`).textContent = draft.selectedId ? "Update profile" : "Save new profile";
+  document.querySelector(`#${role}-profile-status`).textContent = draft.status;
+  updateParticipantSummary(role);
+}
+
+function applyDefaultProfile(role) {
+  if (role === "batter") {
+    applyBatterProfile({
+      name: "",
+      ratings: {
+        bt: 31,
+        obt: 42,
+        hand: "none",
+        powerTrait: "none",
+        contactPlus: false,
+        speedPlus: false,
+        freeSwinger: false,
+      },
+    });
+    return;
+  }
+  applyPitcherProfile({
+    name: "",
+    ratings: {
+      pitchDieSides: 8,
+      hand: "none",
+      role: "starter",
+      controlTrait: "none",
+      kPlus: false,
+      groundballPlus: false,
+    },
+  });
 }
 
 function loadSelectedProfile(role) {
@@ -131,6 +221,7 @@ function loadSelectedProfile(role) {
   document.querySelector(`#save-${role}-profile`).textContent = select.value ? "Update profile" : "Save new profile";
   if (!select.value) {
     setProfileStatus(role, "Current values are not linked to a saved profile.");
+    updateParticipantSummary(role);
     return;
   }
   const profile = getPlayerProfile(profileStore, select.value);
@@ -142,16 +233,66 @@ function loadSelectedProfile(role) {
   if (role === "batter") applyBatterProfile(profile);
   else applyPitcherProfile(profile);
   setProfileStatus(role, `${profile.name} loaded.`);
+  updateParticipantSummary(role);
 }
 
 function startNewProfile(role) {
   const select = document.querySelector(`#${role}-profile-select`);
   select.value = "";
-  document.querySelector(`#${role}-name`).value = "";
+  applyDefaultProfile(role);
   document.querySelector(`#remove-${role}-profile`).disabled = true;
   document.querySelector(`#save-${role}-profile`).textContent = "Save new profile";
-  setProfileStatus(role, "Enter a new name; the current ratings are retained as a starting point.");
+  setProfileStatus(role, `Fill in the ${role}'s ratings. Add a name only if you want to save this player.`);
+}
+
+function openProfileDialog(role, { createNew = false } = {}) {
+  const dialog = document.querySelector(`#${role}-profile-dialog`);
+  profileDialogState.set(role, { snapshot: captureProfileDraft(role), committed: false });
+  if (createNew) startNewProfile(role);
+  else {
+    const selected = document.querySelector(`#${role}-profile-select`).value;
+    setProfileStatus(role, selected
+      ? `Edit the selected ${role}, then update the saved profile or use adjusted values for this play.`
+      : `Adjust the ${role}'s ratings for this play. Add a name if you want to save a profile.`);
+  }
+  dialog.showModal();
+  document.querySelector(`#${role}-dialog-description`).textContent = document.querySelector(`#${role}-profile-status`).textContent;
   document.querySelector(`#${role}-name`).focus();
+}
+
+function closeProfileDialog(role, { apply = false } = {}) {
+  const dialog = document.querySelector(`#${role}-profile-dialog`);
+  const state = profileDialogState.get(role);
+  if (apply && state) {
+    const ratings = role === "batter" ? batterProfileValues() : pitcherProfileValues();
+    if (role === "batter" && (
+      !Number.isInteger(ratings.bt)
+      || ratings.bt < 5
+      || ratings.bt > 99
+      || !Number.isInteger(ratings.obt)
+      || ratings.obt < 6
+      || ratings.obt > 99
+      || ratings.obt < ratings.bt
+    )) {
+      setProfileStatus(role, "Enter valid BT and OBT values before using this batter.");
+      document.querySelector("#bt").focus();
+      return;
+    }
+    const before = JSON.stringify(state.snapshot.profile);
+    const after = JSON.stringify(captureProfileDraft(role).profile);
+    if (state.snapshot.selectedId && before !== after) {
+      document.querySelector(`#${role}-profile-select`).value = "";
+      document.querySelector(`#remove-${role}-profile`).disabled = true;
+      document.querySelector(`#save-${role}-profile`).textContent = "Save new profile";
+      setProfileStatus(role, "Using adjusted ratings for this play; the saved profile was not changed.");
+    } else {
+      setProfileStatus(role, "Current ratings applied to this play.");
+    }
+    state.committed = true;
+    updateEffectivePitchDie();
+    updateParticipantSummary(role);
+  }
+  dialog.close(apply ? "apply" : "cancel");
 }
 
 function saveCurrentProfile(role) {
@@ -169,7 +310,8 @@ function saveCurrentProfile(role) {
     || ratings.obt < ratings.bt
   )) {
     setProfileStatus(role, "Enter valid BT and OBT values before saving.");
-    return;
+    document.querySelector("#bt").focus();
+    return false;
   }
 
   try {
@@ -182,31 +324,37 @@ function saveCurrentProfile(role) {
     profileStore = saved.store;
     if (!persistProfiles()) {
       setProfileStatus(role, "This browser could not save the profile.");
-      return;
+      return false;
     }
     refreshProfileSelect(role, saved.profileId);
     setProfileStatus(role, `${String(name).trim()} saved in this browser.`);
+    updateParticipantSummary(role);
+    return true;
   } catch (error) {
     setProfileStatus(role, error.message);
+    document.querySelector(`#${role}-name`).focus();
+    return false;
   }
 }
 
 function removeSelectedProfile(role) {
   const select = document.querySelector(`#${role}-profile-select`);
   const profile = getPlayerProfile(profileStore, select.value);
-  if (!profile) return;
-  if (!window.confirm(`Remove the saved profile for ${profile.name}?`)) return;
+  if (!profile) return false;
+  if (!window.confirm(`Remove the saved profile for ${profile.name}?`)) return false;
   profileStore = removePlayerProfile(profileStore, profile.id);
   if (!persistProfiles()) {
     setProfileStatus(role, "This browser could not update saved profiles.");
-    return;
+    return false;
   }
   refreshProfileSelect(role);
   setProfileStatus(role, `${profile.name} removed from this browser.`);
+  updateParticipantSummary(role);
+  return true;
 }
 
 function clearFieldErrors() {
-  for (const field of form.querySelectorAll("[aria-invalid='true']")) {
+  for (const field of document.querySelectorAll("[aria-invalid='true']")) {
     field.removeAttribute("aria-invalid");
   }
   validationSummary.hidden = true;
@@ -225,7 +373,12 @@ function showErrors(errors) {
     document.querySelector(`#${error.field}`)?.setAttribute("aria-invalid", "true");
   }
   validationSummary.append(heading, list);
-  document.querySelector(`#${errors[0].field}`)?.focus();
+  const firstField = errors[0].field;
+  const batterFields = ["bt", "obt", "batter-hand", "hitter-power-trait", "hitter-contact-plus", "hitter-speed-plus", "hitter-free-swinger"];
+  const pitcherFields = ["pitch-die", "pitcher-hand", "pitcher-role", "pitcher-control-trait", "pitcher-k-plus", "pitcher-groundball-plus"];
+  if (batterFields.includes(firstField)) openProfileDialog("batter");
+  if (pitcherFields.includes(firstField)) openProfileDialog("pitcher");
+  document.querySelector(`#${firstField}`)?.focus();
 }
 
 function setManualDiceAvailability() {
@@ -587,11 +740,13 @@ form.addEventListener("change", (event) => {
 });
 
 editInputsButton.addEventListener("click", () => {
+  if (["at-bat", "hit-and-run"].includes(selectedPlayType())) {
+    openProfileDialog("batter");
+    return;
+  }
   const focusTarget = selectedPlayType() === "steal"
     ? "#steal-target"
-    : selectedPlayType() === "bunt"
-      ? "#bunt-roll"
-      : selectedPlayType() === "hit-and-run" ? "#hit-run-runner-trait" : "#bt";
+    : "#bunt-roll";
   document.querySelector(focusTarget).focus();
 });
 
@@ -613,10 +768,37 @@ saveOverrideButton.addEventListener("click", () => {
 applyContextButton.addEventListener("click", applySuggestedContext);
 
 for (const role of ["batter", "pitcher"]) {
+  const dialog = document.querySelector(`#${role}-profile-dialog`);
   document.querySelector(`#${role}-profile-select`).addEventListener("change", () => loadSelectedProfile(role));
-  document.querySelector(`#new-${role}-profile`).addEventListener("click", () => startNewProfile(role));
-  document.querySelector(`#save-${role}-profile`).addEventListener("click", () => saveCurrentProfile(role));
-  document.querySelector(`#remove-${role}-profile`).addEventListener("click", () => removeSelectedProfile(role));
+  document.querySelector(`#new-${role}-profile`).addEventListener("click", () => openProfileDialog(role, { createNew: true }));
+  document.querySelector(`#edit-${role}-profile`).addEventListener("click", () => openProfileDialog(role));
+  document.querySelector(`#use-${role}-profile`).addEventListener("click", () => closeProfileDialog(role, { apply: true }));
+  for (const id of [`close-${role}-profile`, `cancel-${role}-profile`]) {
+    document.querySelector(`#${id}`).addEventListener("click", () => closeProfileDialog(role));
+  }
+  document.querySelector(`#save-${role}-profile`).addEventListener("click", () => {
+    if (!saveCurrentProfile(role)) return;
+    const state = profileDialogState.get(role);
+    if (state) state.committed = true;
+    updateEffectivePitchDie();
+    updateParticipantSummary(role);
+    dialog.close("saved");
+  });
+  document.querySelector(`#remove-${role}-profile`).addEventListener("click", () => {
+    if (!removeSelectedProfile(role)) return;
+    const state = profileDialogState.get(role);
+    if (state) state.committed = true;
+    dialog.close("removed");
+  });
+  dialog.addEventListener("cancel", (event) => {
+    event.preventDefault();
+    closeProfileDialog(role);
+  });
+  dialog.addEventListener("close", () => {
+    const state = profileDialogState.get(role);
+    if (state && !state.committed) restoreProfileDraft(role, state.snapshot);
+    profileDialogState.delete(role);
+  });
   refreshProfileSelect(role);
 }
 

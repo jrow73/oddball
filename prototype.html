@@ -6,7 +6,7 @@
     <meta name="description" content="First functional ODDBALL Dice Companion vertical slice." />
     <title>Dice Companion | ODDBALL</title>
     <link rel="stylesheet" href="./styles.css" />
-    <link rel="stylesheet" href="./prototype.css?v=0.20" />
+    <link rel="stylesheet" href="./prototype.css?v=0.22" />
   </head>
   <body class="prototype-page">
     <a class="skip-link" href="#prototype-main">Skip to Dice Companion</a>
@@ -16,23 +16,22 @@
         <span class="brand-mark" aria-hidden="true">O</span>
         <span>ODDBALL</span>
       </a>
-      <span class="build-label">Vertical slice 0.18</span>
+      <span class="build-label">Dice Companion 0.22</span>
     </header>
 
     <main id="prototype-main" class="prototype-shell">
       <section class="prototype-intro" aria-labelledby="prototype-title">
         <div>
-          <p class="eyebrow">Milestone 2 · Functional vertical slice</p>
-          <h1 id="prototype-title">Resolve one play.</h1>
+          <p class="eyebrow">Dice Companion · Deadball 2E Modern</p>
+          <h1 id="prototype-title">Roll the next play.</h1>
           <p>
-            Common Modern-rules plate appearances now resolve through Hit Table batting
-            traits, target-modifying traits, hits, walks, possible errors, outs, and
-            six play-state oddities. Effective BT and OBT remain visible in every ruling.
+            Set the situation, choose saved players or enter their essential ratings,
+            and let ODDBALL explain the dice and ruling. No lineup or digital game is required.
           </p>
         </div>
         <div class="prototype-notice live" role="note">
-          <strong>Next rule path active</strong>
-          <span>Common at-bats · no saved game state</span>
+          <strong>Paper-scorekeeping companion</strong>
+          <span>Resolve one play without creating a game</span>
         </div>
       </section>
 
@@ -121,66 +120,21 @@
                     <h3 id="batter-title">Batter</h3>
                   </div>
                 </div>
-                <label class="name-field">
-                  <span>Name <small>optional</small></span>
-                  <input type="text" id="batter-name" placeholder="Example batter" />
-                </label>
-                <div class="profile-tools" aria-label="Saved batter profiles">
-                  <label class="field-label">
-                    Saved batter
-                    <select id="batter-profile-select">
-                      <option value="">Unsaved batter</option>
-                    </select>
-                  </label>
-                  <div class="profile-actions">
-                    <button id="new-batter-profile" type="button">New profile</button>
-                    <button id="save-batter-profile" type="button">Save new profile</button>
-                    <button id="remove-batter-profile" type="button" disabled>Remove</button>
-                  </div>
-                  <p id="batter-profile-status" class="profile-status" role="status" aria-live="polite"></p>
-                </div>
-                <label class="field-label">
-                  Bats
-                  <select id="batter-hand">
-                    <option value="none" selected>Not set</option>
-                    <option value="right">Right</option>
-                    <option value="left">Left</option>
-                    <option value="switch">Switch</option>
+                <label class="field-label quick-profile">
+                  Saved batter
+                  <select id="batter-profile-select">
+                    <option value="">Enter ratings manually</option>
                   </select>
                 </label>
-                <div class="rating-pair">
-                  <label class="field-label">
-                    BT
-                    <input id="bt" type="number" value="31" min="5" max="99" />
-                  </label>
-                  <label class="field-label">
-                    OBT
-                    <input id="obt" type="number" value="42" min="6" max="99" />
-                  </label>
+                <p id="batter-profile-status" class="profile-status" role="status" aria-live="polite"></p>
+                <div class="player-at-a-glance" aria-live="polite">
+                  <strong id="batter-rating-summary">BT 31 · OBT 42</strong>
+                  <span id="batter-trait-summary">No optional traits</span>
                 </div>
-                <label class="field-label trait-field">
-                  Power trait
-                  <select id="hitter-power-trait">
-                    <option value="none" selected>None</option>
-                    <option value="p-plus">P+</option>
-                    <option value="p-plus-plus">P++</option>
-                    <option value="p-minus">P−</option>
-                    <option value="p-minus-minus">P−−</option>
-                  </select>
-                </label>
-                <label class="trait-toggle">
-                  <input id="hitter-contact-plus" type="checkbox" />
-                  <span><strong>C+ Contact Hitter</strong><small>Hit Table trait; Hit &amp; Run targets +10</small></span>
-                </label>
-                <label class="trait-toggle">
-                  <input id="hitter-speed-plus" type="checkbox" />
-                  <span><strong>S+ Speedy Runner</strong><small>Uses the P-modified Hit Table value</small></span>
-                </label>
-                <label class="trait-toggle">
-                  <input id="hitter-free-swinger" type="checkbox" />
-                  <span><strong>C− Free Swinger</strong><small>BT/OBT −3 with runner on 2nd/3rd; no Hit &amp; Run bonus</small></span>
-                </label>
-                <p class="field-hint">Compatible traits may coexist. P modifies the Hit Table value before C+ or S+ is evaluated.</p>
+                <div class="participant-card-actions">
+                  <button id="new-batter-profile" type="button">New batter</button>
+                  <button id="edit-batter-profile" type="button">Edit current</button>
+                </div>
               </section>
 
               <section class="participant-card" aria-labelledby="pitcher-title">
@@ -191,72 +145,22 @@
                     <h3 id="pitcher-title">Pitcher</h3>
                   </div>
                 </div>
-                <label class="name-field">
-                  <span>Name <small>optional</small></span>
-                  <input type="text" id="pitcher-name" placeholder="Example pitcher" />
-                </label>
-                <div class="profile-tools" aria-label="Saved pitcher profiles">
-                  <label class="field-label">
-                    Saved pitcher
-                    <select id="pitcher-profile-select">
-                      <option value="">Unsaved pitcher</option>
-                    </select>
-                  </label>
-                  <div class="profile-actions">
-                    <button id="new-pitcher-profile" type="button">New profile</button>
-                    <button id="save-pitcher-profile" type="button">Save new profile</button>
-                    <button id="remove-pitcher-profile" type="button" disabled>Remove</button>
-                  </div>
-                  <p id="pitcher-profile-status" class="profile-status" role="status" aria-live="polite"></p>
-                </div>
-                <div class="rating-pair">
-                  <label class="field-label">
-                    Throws
-                    <select id="pitcher-hand">
-                      <option value="none" selected>Not set</option>
-                      <option value="right">Right</option>
-                      <option value="left">Left</option>
-                    </select>
-                  </label>
-                  <label class="field-label">
-                    Role
-                    <select id="pitcher-role">
-                      <option value="starter" selected>Starter</option>
-                      <option value="reliever">Reliever</option>
-                    </select>
-                  </label>
-                </div>
-                <label class="field-label">
-                  Pitch Die
-                  <select id="pitch-die" aria-label="Pitch Die size">
-                    <option value="-20">−d20</option>
-                    <option value="-12">−d12</option>
-                    <option value="-8">−d8</option>
-                    <option value="-4">−d4</option>
-                    <option value="4">d4</option>
-                    <option value="8" selected>d8</option>
-                    <option value="12">d12</option>
-                    <option value="20">d20</option>
+                <label class="field-label quick-profile">
+                  Saved pitcher
+                  <select id="pitcher-profile-select">
+                    <option value="">Enter ratings manually</option>
                   </select>
                 </label>
+                <p id="pitcher-profile-status" class="profile-status" role="status" aria-live="polite"></p>
+                <div class="player-at-a-glance" aria-live="polite">
+                  <strong id="pitcher-rating-summary">Pitch Die d8 · Starter</strong>
+                  <span id="pitcher-trait-summary">No optional traits</span>
+                </div>
                 <span id="effective-pitch-die" class="field-hint" aria-live="polite">Current play: d8</span>
-                <label class="field-label trait-field">
-                  Control trait
-                  <select id="pitcher-control-trait">
-                    <option value="none" selected>None</option>
-                    <option value="cn-plus">CN+</option>
-                    <option value="cn-minus">CN−</option>
-                  </select>
-                </label>
-                <label class="trait-toggle">
-                  <input id="pitcher-k-plus" type="checkbox" />
-                  <span><strong>K+ Strikeout Artist</strong><small>Opposing BT −1; Out Table 3 becomes K</small></span>
-                </label>
-                <label class="trait-toggle">
-                  <input id="pitcher-groundball-plus" type="checkbox" />
-                  <span><strong>GB+ Groundball Machine</strong><small>Out Table 2 becomes 6-3; Pitch Die +1 level with bases loaded</small></span>
-                </label>
-                <p class="field-hint">Stamina and fatigue effects remain outside this slice.</p>
+                <div class="participant-card-actions">
+                  <button id="new-pitcher-profile" type="button">New pitcher</button>
+                  <button id="edit-pitcher-profile" type="button">Edit current</button>
+                </div>
               </section>
             </div>
             </div>
@@ -463,7 +367,7 @@
             <p id="result-call" class="result-call">—</p>
             <h2 id="result-title">Ready to resolve.</h2>
             <p id="result-detail" class="result-detail">
-              Use “Roll for me,” or select manual entry and use one of the acceptance fixtures below.
+              Choose “Roll for me,” or use “Enter my dice” for physical rolls.
             </p>
 
             <div class="state-delta" aria-label="Suggested state after the play">
@@ -509,19 +413,174 @@
         </div>
       </form>
 
-      <section class="prototype-review" aria-labelledby="review-title">
-        <p class="eyebrow">Acceptance fixtures</p>
-        <h2 id="review-title">Replay the C+ Hit &amp; Run fixture</h2>
-        <p>
-          Select Hit &amp; Run and manual dice, with only first base occupied and no outs.
-          Use BT 31, OBT 42, a C+ batter, Swing 33, Pitch Die d8 with a roll of 8,
-          and a stolen-base d8 roll of 4. C+ raises the targets to BT 41 and OBT 52.
-          MSS 41 is a hit and the successful steal puts the runner on third and batter on first.
-        </p>
-      </section>
+      <dialog id="batter-profile-dialog" class="profile-dialog" aria-labelledby="batter-dialog-title">
+        <div class="profile-dialog-shell">
+          <header class="profile-dialog-header">
+            <div>
+              <p class="panel-kicker">Player setup</p>
+              <h2 id="batter-dialog-title">Batter for this play</h2>
+            </div>
+            <button id="close-batter-profile" class="dialog-close" type="button" aria-label="Close without applying">×</button>
+          </header>
+          <p id="batter-dialog-description" class="profile-dialog-description">
+            Enter the batter's ratings and traits. Saving the player is optional.
+          </p>
+          <div class="profile-dialog-fields">
+            <label class="name-field">
+              <span>Name <small>required only when saving</small></span>
+              <input type="text" id="batter-name" placeholder="Player name" />
+            </label>
+            <div class="rating-pair">
+              <label class="field-label">
+                BT
+                <input id="bt" type="number" value="31" min="5" max="99" />
+              </label>
+              <label class="field-label">
+                OBT
+                <input id="obt" type="number" value="42" min="6" max="99" />
+              </label>
+            </div>
+            <label class="field-label">
+              Bats
+              <select id="batter-hand">
+                <option value="none" selected>Not set</option>
+                <option value="right">Right</option>
+                <option value="left">Left</option>
+                <option value="switch">Switch</option>
+              </select>
+            </label>
+            <label class="field-label trait-field">
+              Power trait
+              <select id="hitter-power-trait">
+                <option value="none" selected>None</option>
+                <option value="p-plus">P+</option>
+                <option value="p-plus-plus">P++</option>
+                <option value="p-minus">P−</option>
+                <option value="p-minus-minus">P−−</option>
+              </select>
+            </label>
+            <div class="profile-traits">
+              <label class="trait-toggle">
+                <input id="hitter-contact-plus" type="checkbox" />
+                <span><strong>C+ Contact Hitter</strong><small>Hit Table trait; Hit &amp; Run targets +10</small></span>
+              </label>
+              <label class="trait-toggle">
+                <input id="hitter-speed-plus" type="checkbox" />
+                <span><strong>S+ Speedy Runner</strong><small>Uses the P-modified Hit Table value</small></span>
+              </label>
+              <label class="trait-toggle">
+                <input id="hitter-free-swinger" type="checkbox" />
+                <span><strong>C− Free Swinger</strong><small>BT/OBT −3 with runner on 2nd/3rd; no Hit &amp; Run bonus</small></span>
+              </label>
+            </div>
+            <p class="field-hint">Compatible traits may coexist. P modifies the Hit Table value before C+ or S+ is evaluated.</p>
+          </div>
+          <footer class="profile-dialog-actions">
+            <button id="remove-batter-profile" class="dialog-danger" type="button" disabled>Remove saved profile</button>
+            <div>
+              <button id="cancel-batter-profile" type="button">Cancel</button>
+              <button id="use-batter-profile" class="dialog-secondary" type="button">Use for this play</button>
+              <button id="save-batter-profile" class="dialog-primary" type="button">Save new profile</button>
+            </div>
+          </footer>
+        </div>
+      </dialog>
+
+      <dialog id="pitcher-profile-dialog" class="profile-dialog" aria-labelledby="pitcher-dialog-title">
+        <div class="profile-dialog-shell">
+          <header class="profile-dialog-header">
+            <div>
+              <p class="panel-kicker">Player setup</p>
+              <h2 id="pitcher-dialog-title">Pitcher for this play</h2>
+            </div>
+            <button id="close-pitcher-profile" class="dialog-close" type="button" aria-label="Close without applying">×</button>
+          </header>
+          <p id="pitcher-dialog-description" class="profile-dialog-description">
+            Enter the pitcher's ratings and traits. Saving the player is optional.
+          </p>
+          <div class="profile-dialog-fields">
+            <label class="name-field">
+              <span>Name <small>required only when saving</small></span>
+              <input type="text" id="pitcher-name" placeholder="Player name" />
+            </label>
+            <label class="field-label">
+              Pitch Die
+              <select id="pitch-die" aria-label="Pitch Die size">
+                <option value="-20">−d20</option>
+                <option value="-12">−d12</option>
+                <option value="-8">−d8</option>
+                <option value="-4">−d4</option>
+                <option value="4">d4</option>
+                <option value="8" selected>d8</option>
+                <option value="12">d12</option>
+                <option value="20">d20</option>
+              </select>
+            </label>
+            <div class="rating-pair">
+              <label class="field-label">
+                Throws
+                <select id="pitcher-hand">
+                  <option value="none" selected>Not set</option>
+                  <option value="right">Right</option>
+                  <option value="left">Left</option>
+                </select>
+              </label>
+              <label class="field-label">
+                Role
+                <select id="pitcher-role">
+                  <option value="starter" selected>Starter</option>
+                  <option value="reliever">Reliever</option>
+                </select>
+              </label>
+            </div>
+            <label class="field-label trait-field">
+              Control trait
+              <select id="pitcher-control-trait">
+                <option value="none" selected>None</option>
+                <option value="cn-plus">CN+</option>
+                <option value="cn-minus">CN−</option>
+              </select>
+            </label>
+            <div class="profile-traits">
+              <label class="trait-toggle">
+                <input id="pitcher-k-plus" type="checkbox" />
+                <span><strong>K+ Strikeout Artist</strong><small>Opposing BT −1; Out Table 3 becomes K</small></span>
+              </label>
+              <label class="trait-toggle">
+                <input id="pitcher-groundball-plus" type="checkbox" />
+                <span><strong>GB+ Groundball Machine</strong><small>Out Table 2 becomes 6-3; Pitch Die +1 level with bases loaded</small></span>
+              </label>
+            </div>
+            <p class="field-hint">Stamina and fatigue effects remain outside this slice.</p>
+          </div>
+          <footer class="profile-dialog-actions">
+            <button id="remove-pitcher-profile" class="dialog-danger" type="button" disabled>Remove saved profile</button>
+            <div>
+              <button id="cancel-pitcher-profile" type="button">Cancel</button>
+              <button id="use-pitcher-profile" class="dialog-secondary" type="button">Use for this play</button>
+              <button id="save-pitcher-profile" class="dialog-primary" type="button">Save new profile</button>
+            </div>
+          </footer>
+        </div>
+      </dialog>
+
+      <details class="prototype-review">
+        <summary>
+          <span class="eyebrow">Developer acceptance fixture</span>
+          <strong id="review-title">Replay the C+ Hit &amp; Run fixture</strong>
+        </summary>
+        <div class="prototype-review-body">
+          <p>
+            Select Hit &amp; Run and manual dice, with only first base occupied and no outs.
+            Use BT 31, OBT 42, a C+ batter, Swing 33, Pitch Die d8 with a roll of 8,
+            and a stolen-base d8 roll of 4. C+ raises the targets to BT 41 and OBT 52.
+            MSS 41 is a hit and the successful steal puts the runner on third and batter on first.
+          </p>
+        </div>
+      </details>
     </main>
 
-    <script type="module" src="./companion.mjs?v=0.20"></script>
+    <script type="module" src="./companion.mjs?v=0.22"></script>
   </body>
 </html>
 
