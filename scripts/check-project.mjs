@@ -67,6 +67,11 @@ for (const expected of [
   'id="def-roll"',
   'id="def-modifier"',
   'id="finish-defense"',
+  'id="manage-profile-library"',
+  'id="profile-library-dialog"',
+  'id="export-profiles"',
+  'id="profile-backup-file"',
+  'id="import-profiles"',
   "Use for this play",
   "Edit current",
   "Enter ratings manually",
@@ -105,8 +110,8 @@ for (const expected of [
   'id="hitter-speed-plus"',
   'id="pitcher-groundball-plus"',
   'id="effective-pitch-die"',
-  'href="./prototype.css?v=0.24"',
-  'src="./companion.mjs?v=0.24"',
+  'href="./prototype.css?v=0.25"',
+  'src="./companion.mjs?v=0.25"',
 ]) {
   if (!prototype.includes(expected)) {
     failures.push(`prototype.html is missing: ${expected}`);

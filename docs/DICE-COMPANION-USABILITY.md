@@ -78,3 +78,30 @@ On wide desktop layouts, the calculated-result panel remains in view while the s
 11. Resolve the same play again with DEF 1 and D+. Confirm the original Swing and Pitch Die remain unchanged and the trail says `DEF 1 + 1 = modified DEF 2`.
 12. In automatic mode, resolve a play that calls for DEF and confirm ODDBALL supplies the DEF d12 but still waits for the visible fielder-trait choice.
 13. In manual Bunt mode, select S+, enter a Bunt Table roll of 6, and confirm the checkpoint identifies the third baseman and asks for the physical DEF d12.
+
+## Slice 4 — Back up and restore saved players
+
+The player-library bar reports how many batters and pitchers are saved in the current browser. **Back up or restore** opens one focused dialog for the complete library.
+
+The exported JSON file contains a versioned ODDBALL player-profile backup. Before an import can run, ODDBALL validates the file type, backup version, profile schema, player identities, rating records, and their relationships. Invalid files leave browser storage unchanged.
+
+Import offers two explicit choices:
+
+- **Merge with this browser** keeps current profiles, adds new records, and updates records with matching saved IDs.
+- **Replace this browser** uses only the backup and requires confirmation when profiles already exist.
+
+Importing updates the saved-player selectors but deliberately leaves the batter and pitcher ratings currently in use unchanged.
+
+### Acceptance checks
+
+1. Save at least one batter and one pitcher. Confirm the player-library bar reports the correct counts.
+2. Open **Back up or restore** and download a backup. Confirm the filename begins with `oddball-player-profiles-` and ends in `.json`.
+3. Add another saved profile after downloading. Import the backup using **Merge** and confirm all profiles remain available.
+4. Change a profile that came from the backup, then merge the same backup again. Confirm the matching saved record returns to the backed-up values rather than creating another copy.
+5. Import the backup using **Replace**, confirm the warning, and verify profiles created after the backup are removed.
+6. Start another Replace import and cancel the warning. Confirm the current library is unchanged.
+7. Select a plain-text or malformed JSON file. Confirm ODDBALL rejects it and no profiles change.
+8. Select a valid backup, then switch the file selection to an invalid file. Confirm **Import profiles** becomes unavailable.
+9. Before importing, note the batter and pitcher currently shown on the rolling screen. Confirm those current-play ratings remain unchanged afterward and the selectors return to manual ratings.
+10. Reload the page and confirm the imported profile library persists.
+11. Inspect the player-library bar and backup dialog at desktop and narrow mobile widths, including keyboard focus and Escape-to-close behavior.

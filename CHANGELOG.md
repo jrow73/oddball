@@ -11,6 +11,8 @@
 - Compact participant summaries showing the ratings and active traits used by the next play
 - Mode-aware dice entry that hides physical-roll controls until **Enter my dice** is selected
 - A conditional defense checkpoint that identifies the fielder and exposes the DEF roll and trait only when the play requires them
+- Versioned player-profile JSON export with strict validation before import
+- Merge and confirmed-replace restore choices for the complete browser-local player library
 
 ### Changed
 
@@ -21,6 +23,7 @@
 - Made Cancel and Escape restore the participant values that were active before the dialog opened
 - Kept the calculated-result panel visible while scrolling the setup on wide desktop layouts
 - Changed the default defender trait from an implied D+ to **None** and preserve the original play rolls while the user confirms defense
+- Kept current-play batter and pitcher ratings unchanged when the saved player library is imported
 
 ## 2026-11-05 — Saved player-profile foundation
 

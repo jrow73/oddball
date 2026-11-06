@@ -1,5 +1,16 @@
 import { PITCH_DIE_SIDES, calculateEffectivePitchDie, calculateEffectiveTargets, classifyMss, formatPitchDie, requiresHitDefense, resolveAtBat, resolveBuntAttempt, resolveHitAndRunAttempt, resolveStealAttempt } from "./rules/deadball/modern.mjs?v=0.19";
-import { createEmptyProfileStore, getPlayerProfile, listPlayerProfiles, readProfileStore, removePlayerProfile, savePlayerProfile, writeProfileStore } from "./profiles.mjs?v=0.1";
+import {
+  createEmptyProfileStore,
+  getPlayerProfile,
+  listPlayerProfiles,
+  mergeProfileStores,
+  parseProfileBackup,
+  readProfileStore,
+  removePlayerProfile,
+  savePlayerProfile,
+  serializeProfileBackup,
+  writeProfileStore,
+} from "./profiles.mjs?v=0.2";
 
 const form = document.querySelector("#companion-form");
 const resultPanel = document.querySelector("#result-panel");
@@ -19,6 +30,7 @@ const saveOverrideButton = document.querySelector("#save-override");
 let latestResult = null;
 let profileStore;
 let pendingDefense = null;
+let pendingImportedProfileStore = null;
 const profileDialogState = new Map();
 
 try {
@@ -66,6 +78,127 @@ function persistProfiles() {
   }
 }
 
+function profileCounts(store = profileStore) {
+  return {
+    batters: listPlayerProfiles(store, "batter").length,
+    pitchers: listPlayerProfiles(store, "pitcher").length,
+  };
+}
+
+function profileCountText(store = profileStore) {
+  const { batters, pitchers } = profileCounts(store);
+  const batterText = `${batters} ${batters === 1 ? "batter" : "batters"}`;
+  const pitcherText = `${pitchers} ${pitchers === 1 ? "pitcher" : "pitchers"}`;
+  return `${batterText} · ${pitcherText}`;
+}
+
+function updateProfileLibrarySummary() {
+  const counts = profileCounts();
+  const total = counts.batters + counts.pitchers;
+  document.querySelector("#profile-library-summary").textContent = total
+    ? `${profileCountText()} saved in this browser`
+    : "No saved players in this browser";
+  document.querySelector("#export-profile-summary").textContent = total
+    ? `Download ${profileCountText()} in one portable file.`
+    : "Save at least one batter or pitcher before exporting a backup.";
+  document.querySelector("#export-profiles").disabled = total === 0;
+}
+
+function setProfileLibraryMessage(message, state = "ready") {
+  const display = document.querySelector("#profile-library-message");
+  display.textContent = message;
+  display.dataset.state = state;
+}
+
+function openProfileLibraryDialog() {
+  pendingImportedProfileStore = null;
+  document.querySelector("#profile-backup-file").value = "";
+  document.querySelector("#import-profiles").disabled = true;
+  setProfileLibraryMessage("");
+  updateProfileLibrarySummary();
+  document.querySelector("#profile-library-dialog").showModal();
+  document.querySelector("#export-profiles").focus();
+}
+
+function closeProfileLibraryDialog() {
+  document.querySelector("#profile-library-dialog").close();
+}
+
+function exportProfileBackup() {
+  const counts = profileCounts();
+  if (counts.batters + counts.pitchers === 0) return;
+  const today = new Date().toISOString().slice(0, 10);
+  const blob = new Blob([serializeProfileBackup(profileStore)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `oddball-player-profiles-${today}.json`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  setProfileLibraryMessage(`Downloaded ${profileCountText()} as an ODDBALL backup.`);
+}
+
+async function readProfileBackupFile() {
+  pendingImportedProfileStore = null;
+  const input = document.querySelector("#profile-backup-file");
+  const importButton = document.querySelector("#import-profiles");
+  importButton.disabled = true;
+  const [file] = input.files;
+  if (!file) {
+    setProfileLibraryMessage("");
+    return;
+  }
+  if (file.size > 5_000_000) {
+    setProfileLibraryMessage("That file is too large to be an ODDBALL player-profile backup.", "error");
+    return;
+  }
+
+  try {
+    const importedStore = parseProfileBackup(await file.text());
+    if (input.files[0] !== file) return;
+    pendingImportedProfileStore = importedStore;
+    importButton.disabled = false;
+    setProfileLibraryMessage(`Ready to import ${profileCountText(importedStore)} from ${file.name}.`);
+  } catch (error) {
+    setProfileLibraryMessage(error.message, "error");
+  }
+}
+
+function importProfileBackup() {
+  if (!pendingImportedProfileStore) return;
+  const importMode = document.querySelector('input[name="profile-import-mode"]:checked').value;
+  const existingCounts = profileCounts();
+  const existingTotal = existingCounts.batters + existingCounts.pitchers;
+  if (
+    importMode === "replace"
+    && existingTotal > 0
+    && !window.confirm(`Replace the ${profileCountText()} currently saved in this browser?`)
+  ) return;
+
+  const previousStore = profileStore;
+  profileStore = importMode === "merge"
+    ? mergeProfileStores(profileStore, pendingImportedProfileStore)
+    : pendingImportedProfileStore;
+  if (!persistProfiles()) {
+    profileStore = previousStore;
+    setProfileLibraryMessage("This browser could not save the imported profiles. Your existing library was not changed.", "error");
+    return;
+  }
+
+  for (const role of ["batter", "pitcher"]) {
+    refreshProfileSelect(role);
+    setProfileStatus(role, "Player library updated; current play ratings were left unchanged.");
+  }
+  updateProfileLibrarySummary();
+  const resultText = profileCountText();
+  pendingImportedProfileStore = null;
+  document.querySelector("#profile-backup-file").value = "";
+  document.querySelector("#import-profiles").disabled = true;
+  setProfileLibraryMessage(`${importMode === "merge" ? "Merged" : "Restored"} successfully. The library now contains ${resultText}.`);
+}
+
 function refreshProfileSelect(role, selectedId = "") {
   const select = document.querySelector(`#${role}-profile-select`);
   select.replaceChildren(new Option("Enter ratings manually", ""));
@@ -76,6 +209,7 @@ function refreshProfileSelect(role, selectedId = "") {
   document.querySelector(`#remove-${role}-profile`).disabled = !select.value;
   document.querySelector(`#save-${role}-profile`).textContent = select.value ? "Update profile" : "Save new profile";
   updateParticipantSummary(role);
+  updateProfileLibrarySummary();
 }
 
 function batterProfileValues() {
@@ -840,6 +974,16 @@ saveOverrideButton.addEventListener("click", () => {
 });
 
 applyContextButton.addEventListener("click", applySuggestedContext);
+
+document.querySelector("#manage-profile-library").addEventListener("click", openProfileLibraryDialog);
+document.querySelector("#close-profile-library").addEventListener("click", closeProfileLibraryDialog);
+document.querySelector("#export-profiles").addEventListener("click", exportProfileBackup);
+document.querySelector("#profile-backup-file").addEventListener("change", readProfileBackupFile);
+document.querySelector("#import-profiles").addEventListener("click", importProfileBackup);
+document.querySelector("#profile-library-dialog").addEventListener("cancel", (event) => {
+  event.preventDefault();
+  closeProfileLibraryDialog();
+});
 
 for (const role of ["batter", "pitcher"]) {
   const dialog = document.querySelector(`#${role}-profile-dialog`);

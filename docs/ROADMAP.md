@@ -80,7 +80,8 @@ Goal: cover the agreed Modern-rule play-resolution scope while preserving paper 
 - Compact participant summaries with focused create/edit dialogs for ratings, traits, and profile tools
 - Mode-aware physical-dice entry and a sticky desktop result panel to reduce scrolling
 - Conditional DEF entry that identifies the fielder and never assumes a defensive trait
-- Save, export, and import
+- Browser-local player-profile save, export, validated merge, and confirmed replacement
+- Broader save, export, and import for future lineups, games, and league data
 - Rules citations and decision log
 - Licensing welcome and persistent credits
 

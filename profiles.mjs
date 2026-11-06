@@ -1,6 +1,8 @@
 export const PROFILE_STORAGE_KEY = "oddball.playerProfiles.v1";
 export const PROFILE_SCHEMA_VERSION = 1;
 export const DEADBALL_RULESET_ID = "deadball-2e-modern";
+export const PROFILE_BACKUP_FORMAT = "oddball-player-profiles";
+export const PROFILE_BACKUP_VERSION = 1;
 
 export function createEmptyProfileStore() {
   return {
@@ -64,6 +66,95 @@ export function readProfileStore(storage) {
 
 export function writeProfileStore(storage, store) {
   storage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(store));
+}
+
+export function createProfileBackup(store, exportedAt = new Date().toISOString()) {
+  return {
+    format: PROFILE_BACKUP_FORMAT,
+    backupVersion: PROFILE_BACKUP_VERSION,
+    exportedAt,
+    profileStore: {
+      schemaVersion: PROFILE_SCHEMA_VERSION,
+      identities: store.identities.map((identity) => ({ ...identity })),
+      ratings: store.ratings.map((rating) => ({ ...rating, values: { ...rating.values } })),
+    },
+  };
+}
+
+export function serializeProfileBackup(store, exportedAt) {
+  return `${JSON.stringify(createProfileBackup(store, exportedAt), null, 2)}\n`;
+}
+
+export function parseProfileBackup(serialized) {
+  let backup;
+  try {
+    backup = JSON.parse(serialized);
+  } catch {
+    throw new Error("This is not a readable JSON backup file.");
+  }
+
+  if (!isRecord(backup) || backup.format !== PROFILE_BACKUP_FORMAT) {
+    throw new Error("This file is not an ODDBALL player-profile backup.");
+  }
+  if (backup.backupVersion !== PROFILE_BACKUP_VERSION) {
+    throw new Error("This backup version is not supported by this build of ODDBALL.");
+  }
+  const source = backup.profileStore;
+  if (
+    !isRecord(source)
+    || source.schemaVersion !== PROFILE_SCHEMA_VERSION
+    || !Array.isArray(source.identities)
+    || !Array.isArray(source.ratings)
+  ) {
+    throw new Error("The backup does not contain a supported player-profile library.");
+  }
+
+  const store = parseProfileStore(JSON.stringify(source));
+  const identityIds = store.identities.map((identity) => identity.id);
+  const ratingIds = store.ratings.map((rating) => rating.id);
+  if (
+    store.identities.length !== source.identities.length
+    || store.ratings.length !== source.ratings.length
+    || new Set(identityIds).size !== identityIds.length
+    || new Set(ratingIds).size !== ratingIds.length
+    || !store.ratings.every((rating) => isValidBackupRatings(rating.role, rating.values))
+  ) {
+    throw new Error("The backup contains incomplete, invalid, or duplicate player records.");
+  }
+  return store;
+}
+
+function isValidBackupRatings(role, values) {
+  if (role === "batter") {
+    return Number.isInteger(values.bt)
+      && values.bt >= 5
+      && values.bt <= 99
+      && Number.isInteger(values.obt)
+      && values.obt >= values.bt
+      && values.obt <= 99
+      && ["none", "right", "left", "switch"].includes(values.hand)
+      && ["none", "p-plus", "p-plus-plus", "p-minus", "p-minus-minus"].includes(values.powerTrait)
+      && [values.contactPlus, values.speedPlus, values.freeSwinger].every((value) => typeof value === "boolean");
+  }
+  return [-20, -12, -8, -4, 4, 8, 12, 20].includes(values.pitchDieSides)
+    && ["none", "right", "left"].includes(values.hand)
+    && ["starter", "reliever"].includes(values.role)
+    && ["none", "cn-plus", "cn-minus"].includes(values.controlTrait)
+    && [values.kPlus, values.groundballPlus].every((value) => typeof value === "boolean");
+}
+
+export function mergeProfileStores(currentStore, importedStore) {
+  const identities = new Map(currentStore.identities.map((identity) => [identity.id, { ...identity }]));
+  const ratings = new Map(currentStore.ratings.map((rating) => [rating.id, { ...rating, values: { ...rating.values } }]));
+
+  for (const identity of importedStore.identities) identities.set(identity.id, { ...identity });
+  for (const rating of importedStore.ratings) ratings.set(rating.id, { ...rating, values: { ...rating.values } });
+
+  return {
+    schemaVersion: PROFILE_SCHEMA_VERSION,
+    identities: [...identities.values()],
+    ratings: [...ratings.values()],
+  };
 }
 
 export function listPlayerProfiles(store, role) {
