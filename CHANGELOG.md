@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-11-07 — Hit & Run possible-error resolution
+
+### Added
+
+- A conditional DEF checkpoint when a Hit & Run MSS lands in the possible-error range
+- Complete Hit & Run possible-error outcomes for the DEF 0-2, 3-9, 10-11, and 12+ bands
+- Special possible-error groundball mapping for MSS endings 0-2, plus the normal infield and outfield positions for endings 3-9
+- Focused automated coverage for every DEF band and both groundball and pop-up placement
+
+### Changed
+
+- Replaced the Hit & Run possible-error manual-ruling boundary with a page 28-29 DEF resolution combined with the applicable Hit & Run row
+- Retained oddities as the only unresolved Hit & Run interaction
+- Reserved “modified” in calculation trails for rolls that actually received a nonzero trait, target, or defensive modifier
+- Moved the manual Hit & Run stolen-base d8 onto its own row so the input remains visible at every layout width
+- Updated the manual-dice MSS display before a required DEF checkpoint so it always reflects the play being resolved
+
 ## 2026-11-06 — Dice Companion usability pass, slice 1
 
 ### Added

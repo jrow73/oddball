@@ -18,6 +18,28 @@ function describeMssCalculation(input, mss) {
   return `Swing ${input.swingRoll} ${operator} Pitch Die ${input.pitchRoll} = MSS ${mss}`;
 }
 
+function pitchDieSourceRefs(input, pitchDie) {
+  const sourceRefs = [];
+  if (input.pitchDieSides < 0) sourceRefs.push("Deadball 2E p. 23");
+  if (pitchDie.calculations.some((calculation) => calculation.startsWith("Same-handed matchup"))) {
+    sourceRefs.push("Deadball 2E p. 34");
+  }
+  return sourceRefs;
+}
+
+function mergeSourceRefs(sourceRefs = [], additionalRefs = []) {
+  return [...new Set([...sourceRefs, ...additionalRefs])];
+}
+
+function describeDefRoll(roll, modifier) {
+  if (modifier === 0) return `DEF roll ${roll} (no modifier)`;
+  return `DEF ${roll} ${modifier > 0 ? "+" : "-"} ${Math.abs(modifier)} = modified DEF ${roll + modifier}`;
+}
+
+function defResultLabel(modifier) {
+  return modifier === 0 ? "DEF" : "Modified DEF";
+}
+
 const POWER_TRAITS = Object.freeze({
   none: { label: "No power trait", modifier: 0 },
   "p-plus": { label: "P+", modifier: 1 },
@@ -312,10 +334,12 @@ export function resolveStealAttempt(input) {
   if (target === "double") {
     const leadRunnerModifier = runnerTrait === "s-plus" ? 1 : runnerTrait === "s-minus" ? -1 : 0;
     const modifiedRoll = input.stealRoll + leadRunnerModifier + catcherModifier;
+    const rollWasModified = leadRunnerModifier !== 0 || catcherModifier !== 0;
+    const resultLabel = rollWasModified ? "Modified roll" : "Roll";
     const calculations = [`Double Steal d8 ${input.stealRoll}`];
     if (leadRunnerModifier) calculations.push(`${runnerTrait === "s-plus" ? "S+ Speedy" : "S- Slow"} lead runner -> double-steal roll ${leadRunnerModifier > 0 ? "+1" : "-1"}`);
     if (catcherModifier) calculations.push(`${catcherModifier < 0 ? "D+" : "D-"} catcher -> opposing steal roll ${catcherModifier > 0 ? "+1" : "-1"}`);
-    calculations.push(`Modified double-steal roll = ${modifiedRoll}`);
+    if (rollWasModified) calculations.push(`Modified double-steal roll = ${modifiedRoll}`);
 
     const nextBases = copyBases(bases);
     const runnerMoves = [];
@@ -334,7 +358,7 @@ export function resolveStealAttempt(input) {
       summary = "Lead runner caught stealing third.";
       detail = "Runner on second is out attempting third; Runner on first reaches second.";
       runnerMoves.push("Runner on second out attempting third", "Runner on first to second");
-      calculations.push("Modified roll 3 or lower -> lead runner out; trailing runner reaches second");
+      calculations.push(`${resultLabel} 3 or lower -> lead runner out; trailing runner reaches second`);
     } else if (modifiedRoll <= 5) {
       nextBases.first = false;
       nextBases.second = false;
@@ -345,7 +369,7 @@ export function resolveStealAttempt(input) {
       summary = "Trailing runner caught stealing second.";
       detail = "Runner on second reaches third; Runner on first is out attempting second.";
       runnerMoves.push("Runner on second to third", "Runner on first out attempting second");
-      calculations.push("Modified roll 4-5 -> trailing runner out; lead runner reaches third");
+      calculations.push(`${resultLabel} 4-5 -> trailing runner out; lead runner reaches third`);
     } else {
       nextBases.first = false;
       nextBases.second = true;
@@ -355,7 +379,7 @@ export function resolveStealAttempt(input) {
       summary = "Double steal succeeds.";
       detail = "Runner on second reaches third; Runner on first reaches second.";
       runnerMoves.push("Runner on second to third", "Runner on first to second");
-      calculations.push("Modified roll 6 or higher -> both runners safe");
+      calculations.push(`${resultLabel} 6 or higher -> both runners safe`);
     }
 
     if (outsAfter === 3) {
@@ -389,11 +413,13 @@ export function resolveStealAttempt(input) {
   const targetModifier = target === "third" ? -1 : 0;
   const runnerModifier = runnerTrait === "s-plus" ? 1 : runnerTrait === "s-minus" ? -2 : 0;
   const modifiedRoll = input.stealRoll + targetModifier + runnerModifier + catcherModifier;
+  const rollWasModified = targetModifier !== 0 || runnerModifier !== 0 || catcherModifier !== 0;
+  const resultLabel = rollWasModified ? "Modified roll" : "Roll";
   const calculations = [`Base Stealing d8 ${input.stealRoll}`];
   if (targetModifier) calculations.push("Attempting third -> steal roll -1");
   if (runnerModifier) calculations.push(`${runnerTrait === "s-plus" ? "S+ Speedy Runner" : "S- Slow Runner"} -> steal roll ${runnerModifier > 0 ? "+1" : "-2"}`);
   if (catcherModifier) calculations.push(`${catcherModifier < 0 ? "D+" : "D-"} catcher -> opposing steal roll ${catcherModifier > 0 ? "+1" : "-1"}`);
-  calculations.push(`Modified steal roll = ${modifiedRoll}`);
+  if (rollWasModified) calculations.push(`Modified steal roll = ${modifiedRoll}`);
 
   const safe = modifiedRoll >= 4;
   const nextBases = copyBases(bases);
@@ -406,12 +432,12 @@ export function resolveStealAttempt(input) {
     nextBases[target] = true;
     detail = `Runner on ${origin} reaches ${target}.`;
     runnerMoves = [`Runner on ${origin} to ${target}`];
-    calculations.push("Modified roll 4 or higher -> runner safe");
+    calculations.push(`${resultLabel} 4 or higher -> runner safe`);
   } else {
     outsAfter += 1;
     detail = `Runner on ${origin} is out attempting to steal ${target}.`;
     runnerMoves = [`Runner on ${origin} out attempting to steal ${target}`];
-    calculations.push("Modified roll 3 or lower -> runner caught stealing");
+    calculations.push(`${resultLabel} 3 or lower -> runner caught stealing`);
     if (outsAfter === 3) {
       nextBases.first = false;
       nextBases.second = false;
@@ -462,10 +488,12 @@ export function resolveBuntAttempt(input) {
   const leadBase = bases.third ? "third" : bases.second ? "second" : "first";
   const buntModifier = (contactPlus ? 1 : 0) + (freeSwinger ? -1 : 0);
   const modifiedRoll = input.buntRoll + buntModifier;
+  const rollWasModified = contactPlus || freeSwinger;
+  const resultLabel = rollWasModified ? "Modified roll" : "Roll";
   const calculations = [`Bunt Table d6 ${input.buntRoll}`];
   if (contactPlus) calculations.push("C+ Contact Hitter -> bunt roll +1");
   if (freeSwinger) calculations.push("C- Free Swinger -> bunt roll -1");
-  calculations.push(`Modified bunt roll = ${modifiedRoll}`);
+  if (rollWasModified) calculations.push(`Modified bunt roll = ${modifiedRoll}`);
 
   const leadRunnerOutBatterSafe = () => {
     const outsAfter = input.outs + 1;
@@ -517,8 +545,8 @@ export function resolveBuntAttempt(input) {
 
   if (modifiedRoll <= 2 || (modifiedRoll === 3 && leadBase === "third")) {
     calculations.push(modifiedRoll === 3
-      ? "Modified roll 3 with lead runner on third -> lead runner out; batter safe"
-      : "Modified roll 2 or lower -> lead runner out; batter safe");
+      ? `${resultLabel} 3 with lead runner on third -> lead runner out; batter safe`
+      : `${resultLabel} 2 or lower -> lead runner out; batter safe`);
     return leadRunnerOutBatterSafe();
   }
 
@@ -531,7 +559,7 @@ export function resolveBuntAttempt(input) {
       runnerAdvance: 1,
       play: { position: "3B", fielder: "third baseman", number: 5 },
     };
-    calculations.push("Modified roll 6 or higher with S+ hitter -> single, DEF (3B)");
+    calculations.push(`${resultLabel} 6 or higher with S+ hitter -> single, DEF (3B)`);
     const defensiveResult = resolveDefensiveHit({
       bases,
       calculations,
@@ -548,10 +576,10 @@ export function resolveBuntAttempt(input) {
   }
 
   calculations.push(modifiedRoll === 3
-    ? `Modified roll 3 with lead runner on ${leadBase} -> lead runner and forced trailing runners advance; batter out`
+    ? `${resultLabel} 3 with lead runner on ${leadBase} -> lead runner and forced trailing runners advance; batter out`
     : modifiedRoll >= 6
-      ? "Modified roll 6 or higher without S+ -> lead runner and forced trailing runners advance; batter out"
-      : "Modified roll 4-5 -> lead runner and forced trailing runners advance; batter out");
+      ? `${resultLabel} 6 or higher without S+ -> lead runner and forced trailing runners advance; batter out`
+      : `${resultLabel} 4-5 -> lead runner and forced trailing runners advance; batter out`);
 
   const outsAfter = input.outs + 1;
   if (outsAfter === 3) {
@@ -667,11 +695,13 @@ export function resolveHitAndRunAttempt(input) {
   const runnerModifier = runnerTrait === "s-plus" ? 1 : runnerTrait === "s-minus" ? -2 : 0;
   const modifiedStealRoll = input.hitRunStealRoll + runnerModifier + catcherModifier;
   const stealSucceeded = modifiedStealRoll >= 4;
+  const stealWasModified = runnerModifier !== 0 || catcherModifier !== 0;
   const calculations = [
     describeMssCalculation(effectiveInput, mss),
     ...pitchDie.calculations,
     ...targets.calculations,
   ];
+  const addPitchDieSources = (sourceRefs) => mergeSourceRefs(sourceRefs, pitchDieSourceRefs(input, pitchDie));
 
   if (input.hitterContactPlus) {
     calculations.push(`C+ Hit & Run bonus -> BT and OBT +10: BT ${targets.bt} to ${effectiveBt}; OBT ${targets.obt} to ${effectiveObt}`);
@@ -683,21 +713,193 @@ export function resolveHitAndRunAttempt(input) {
   calculations.push(`Hit & Run stolen-base d8 ${input.hitRunStealRoll}`);
   if (runnerModifier) calculations.push(`${runnerTrait === "s-plus" ? "S+ Speedy Runner" : "S- Slow Runner"} -> steal roll ${runnerModifier > 0 ? "+1" : "-2"}`);
   if (catcherModifier) calculations.push(`${catcherModifier < 0 ? "D+" : "D-"} catcher -> opposing steal roll ${catcherModifier > 0 ? "+1" : "-1"}`);
-  calculations.push(`Modified stolen-base roll = ${modifiedStealRoll} -> ${stealSucceeded ? "success" : "failure"}`);
+  calculations.push(stealWasModified
+    ? `Modified stolen-base roll = ${modifiedStealRoll} -> ${stealSucceeded ? "success" : "failure"}`
+    : `Stolen-base roll ${modifiedStealRoll} -> ${stealSucceeded ? "success" : "failure"}`);
 
-  if (classification === "oddity" || classification === "possible-error") {
-    const label = classification === "possible-error" ? "possible-error" : classification;
-    calculations.push(`MSS ${mss} -> ${label}; no Hit & Run table row specifies this interaction`);
+  if (classification === "oddity") {
+    calculations.push(`MSS ${mss} -> oddity; no Hit & Run table row specifies this interaction`);
     return {
       supported: false,
       outcomeCode: "outside-hit-and-run-table",
       classification,
       mss,
       modifiedStealRoll,
-      summary: `Hit & Run ${label} needs a manual ruling.`,
+      summary: "Hit & Run oddity needs a manual ruling.",
       detail: "The Hit & Run table specifies hits, pop-ups or strikeouts, and groundballs. This result is left unresolved rather than inventing runner movement.",
       calculations,
-      sourceRefs: ["Deadball 2E pp. 24, 32-33"],
+      sourceRefs: addPitchDieSources(["Deadball 2E pp. 24, 26-27, 32-33"]),
+    };
+  }
+
+  if (classification === "possible-error") {
+    const defenseErrors = [];
+    if (!isIntegerBetween(input.defRoll, 1, 12)) {
+      defenseErrors.push({ field: "def-roll", message: "The DEF roll must be from 1 through 12." });
+    }
+    if (![-1, 0, 1].includes(input.defModifier)) {
+      defenseErrors.push({ field: "def-modifier", message: "Choose D-, no trait, or D+." });
+    }
+    if (defenseErrors.length > 0) {
+      return { supported: false, outcomeCode: "invalid-input", errors: defenseErrors, mss };
+    }
+
+    const lastDigit = Math.abs(mss) % 10;
+    const play = POSSIBLE_ERROR_PLAYS[lastDigit];
+    const modifiedDef = input.defRoll + input.defModifier;
+    const defenseLabel = defResultLabel(input.defModifier);
+    calculations.push(`MSS ${mss} -> possible-error range ${effectiveObt + 1}-${effectiveObt + 5}`);
+    calculations.push(`Last digit ${lastDigit} -> ${play.kind === "popup" ? "pop-up" : "groundball"} to ${play.position}`);
+    calculations.push(describeDefRoll(input.defRoll, input.defModifier));
+    const sourceRefs = addPitchDieSources(["Deadball 2E pp. 24, 26-29, 32-33"]);
+
+    if (modifiedDef <= 2) {
+      const runnerMoves = ["Runner on first to second", "Batter to first"];
+      calculations.push(`${defenseLabel} 2 or less -> error; batter safe and runner advances one base`);
+      return {
+        supported: true,
+        outcomeCode: "hit-and-run-error",
+        classification: "hit-and-run",
+        mss,
+        modifiedStealRoll,
+        modifiedDef,
+        play,
+        score: `E-${play.number}`,
+        summary: `Hit & Run error by ${play.fielder}.`,
+        detail: runnerMoves.join("; ") + ".",
+        calculations,
+        stateDelta: {
+          outsBefore: input.outs,
+          outsAfter: input.outs,
+          outsAdded: 0,
+          runsScored: 0,
+          bases: { first: true, second: true, third: false },
+          runnerMoves,
+        },
+        sourceRefs,
+      };
+    }
+
+    if (modifiedDef <= 11 && modifiedDef >= 10) {
+      const runnerMoves = stealSucceeded
+        ? ["Runner on first to third", "Batter to first"]
+        : ["Runner on first to second", "Batter to first"];
+      calculations.push(`${defenseLabel} 10-11 -> hit goes down one level to a single; ${stealSucceeded ? "successful steal puts runners at first and third" : "failed steal puts runners at first and second"}`);
+      return {
+        supported: true,
+        outcomeCode: stealSucceeded ? "hit-and-run-def-single-success" : "hit-and-run-def-single-failure",
+        classification: "hit-and-run",
+        mss,
+        modifiedStealRoll,
+        modifiedDef,
+        play,
+        score: "1B",
+        summary: stealSucceeded ? "Single after DEF check; runners at the corners." : "Single after DEF check; runners at first and second.",
+        detail: runnerMoves.join("; ") + ".",
+        calculations,
+        stateDelta: {
+          outsBefore: input.outs,
+          outsAfter: input.outs,
+          outsAdded: 0,
+          runsScored: 0,
+          bases: stealSucceeded
+            ? { first: true, second: false, third: true }
+            : { first: true, second: true, third: false },
+          runnerMoves,
+        },
+        sourceRefs,
+      };
+    }
+
+    if (modifiedDef >= 12) calculations.push(`${defenseLabel} 12 or higher -> hit turned into an out`);
+    else calculations.push(`${defenseLabel} 3-9 -> no change`);
+
+    if (input.outs === 2) {
+      calculations.push("Batter out is the third out -> inning ends before another out can be recorded");
+      return {
+        supported: true,
+        outcomeCode: "hit-and-run-possible-error-third-out",
+        classification: "hit-and-run",
+        mss,
+        modifiedStealRoll,
+        modifiedDef,
+        play,
+        score: play.score,
+        summary: `${play.kind === "groundball" ? "Groundball" : "Pop-up"}; inning over.`,
+        detail: "Batter out; the third out ends the inning and the bases clear.",
+        calculations,
+        stateDelta: {
+          outsBefore: input.outs,
+          outsAfter: 3,
+          outsAdded: 1,
+          runsScored: 0,
+          bases: { first: false, second: false, third: false },
+          runnerMoves: ["Batter out; inning over"],
+        },
+        sourceRefs,
+      };
+    }
+
+    if (stealSucceeded) {
+      const groundball = play.kind === "groundball";
+      const runnerMoves = groundball
+        ? ["Batter out on the groundball", "Runner on first to second"]
+        : ["Batter out", "Runner returns safely to first"];
+      calculations.push(groundball
+        ? "Groundball with successful steal -> batter out; runner reaches second"
+        : "Pop-up with successful steal -> batter out; runner returns safely to first");
+      return {
+        supported: true,
+        outcomeCode: groundball ? "hit-and-run-possible-error-groundball-out" : "hit-and-run-possible-error-popup-out",
+        classification: "hit-and-run",
+        mss,
+        modifiedStealRoll,
+        modifiedDef,
+        play,
+        score: play.score,
+        summary: groundball ? "Groundball out; runner reaches second." : "Pop-up; runner returns safely.",
+        detail: runnerMoves.join("; ") + ".",
+        calculations,
+        stateDelta: {
+          outsBefore: input.outs,
+          outsAfter: input.outs + 1,
+          outsAdded: 1,
+          runsScored: 0,
+          bases: groundball
+            ? { first: false, second: true, third: false }
+            : { first: true, second: false, third: false },
+          runnerMoves,
+        },
+        sourceRefs,
+      };
+    }
+
+    const outsAfter = Math.min(3, input.outs + 2);
+    const runnerMoves = play.kind === "groundball"
+      ? ["Runner on first out on the groundball", "Batter out at first"]
+      : ["Batter out", "Runner doubled off first"];
+    calculations.push(`${play.kind === "groundball" ? "Groundball" : "Pop-up"} with failed steal -> double play`);
+    return {
+      supported: true,
+      outcomeCode: "hit-and-run-possible-error-double-play",
+      classification: "hit-and-run",
+      mss,
+      modifiedStealRoll,
+      modifiedDef,
+      play,
+      score: "DP",
+      summary: "Hit & Run double play.",
+      detail: runnerMoves.join("; ") + (outsAfter === 3 ? "; inning over." : "."),
+      calculations,
+      stateDelta: {
+        outsBefore: input.outs,
+        outsAfter,
+        outsAdded: 2,
+        runsScored: 0,
+        bases: { first: false, second: false, third: false },
+        runnerMoves,
+      },
+      sourceRefs,
     };
   }
 
@@ -723,7 +925,7 @@ export function resolveHitAndRunAttempt(input) {
         bases: { first: true, second: true, third: false },
         runnerMoves,
       },
-      sourceRefs: ["Deadball 2E pp. 26-27, 32-33"],
+      sourceRefs: addPitchDieSources(["Deadball 2E pp. 26-27, 32-33"]),
     };
   }
 
@@ -753,7 +955,7 @@ export function resolveHitAndRunAttempt(input) {
         bases: nextBases,
         runnerMoves,
       },
-      sourceRefs: ["Deadball 2E pp. 24, 32-33"],
+      sourceRefs: addPitchDieSources(["Deadball 2E pp. 24, 26-27, 32-33"]),
     };
   }
 
@@ -788,7 +990,7 @@ export function resolveHitAndRunAttempt(input) {
         bases: { first: false, second: false, third: false },
         runnerMoves: ["Batter out; inning over"],
       },
-      sourceRefs: ["Deadball 2E pp. 24, 29, 32-33"],
+      sourceRefs: addPitchDieSources(["Deadball 2E pp. 24, 26-27, 29, 32-33"]),
     };
   }
 
@@ -822,7 +1024,7 @@ export function resolveHitAndRunAttempt(input) {
         bases: nextBases,
         runnerMoves,
       },
-      sourceRefs: ["Deadball 2E pp. 24, 29, 32-33"],
+      sourceRefs: addPitchDieSources(["Deadball 2E pp. 24, 26-27, 29, 32-33"]),
     };
   }
 
@@ -850,7 +1052,7 @@ export function resolveHitAndRunAttempt(input) {
       bases: { first: false, second: false, third: false },
       runnerMoves,
     },
-    sourceRefs: ["Deadball 2E pp. 24, 29, 32-33"],
+    sourceRefs: addPitchDieSources(["Deadball 2E pp. 24, 26-27, 29, 32-33"]),
   };
 }
 
@@ -1049,9 +1251,8 @@ function resolveDefensiveHit({ bases, calculations, input, mss, tableResult }) {
   }
 
   const modifiedDef = input.defRoll + input.defModifier;
-  calculations.push(
-    `DEF ${input.defRoll} ${input.defModifier >= 0 ? "+" : "-"} ${Math.abs(input.defModifier)} = modified DEF ${modifiedDef}`,
-  );
+  const defenseLabel = defResultLabel(input.defModifier);
+  calculations.push(describeDefRoll(input.defRoll, input.defModifier));
 
   if (modifiedDef <= 2) {
     const doubleWithError = tableResult.score === "2B";
@@ -1059,8 +1260,8 @@ function resolveDefensiveHit({ bases, calculations, input, mss, tableResult }) {
       ? moveRunnersOnHit(bases, tableResult.batterBases + 1, tableResult.runnerAdvance + 1)
       : advanceAllOnError(bases);
     calculations.push(doubleWithError
-      ? "Modified DEF 0-2 -> error after double; batter reaches third and runners take one extra base"
-      : "Modified DEF 0-2 -> error; batter safe and runners advance one base");
+      ? `${defenseLabel} 0-2 -> error after double; batter reaches third and runners take one extra base`
+      : `${defenseLabel} 0-2 -> error; batter safe and runners advance one base`);
     return {
       supported: true,
       outcomeCode: doubleWithError ? "double-with-error" : "error",
@@ -1093,7 +1294,7 @@ function resolveDefensiveHit({ bases, calculations, input, mss, tableResult }) {
       ? { first: false, second: false, third: false }
       : copyBases(bases);
     const runnerMoves = Object.values(bases).some(Boolean) ? ["Existing runners hold"] : [];
-    calculations.push("Modified DEF 12+ -> hit turned into an out");
+    calculations.push(`${defenseLabel} 12+ -> hit turned into an out`);
     return {
       supported: true,
       outcomeCode: "defensive-out",
@@ -1128,11 +1329,11 @@ function resolveDefensiveHit({ bases, calculations, input, mss, tableResult }) {
     label = "Single";
     batterBases = 1;
     runnerAdvance = 1;
-    calculations.push("Modified DEF 10-11 -> double reduced one level to a single");
+    calculations.push(`${defenseLabel} 10-11 -> double reduced one level to a single`);
   } else if (modifiedDef >= 10) {
-    calculations.push("Modified DEF 10-11 -> single remains a single; only 12+ turns it into an out");
+    calculations.push(`${defenseLabel} 10-11 -> single remains a single; only 12+ turns it into an out`);
   } else {
-    calculations.push("Modified DEF 3-9 -> hit unchanged");
+    calculations.push(`${defenseLabel} 3-9 -> hit unchanged`);
   }
 
   const movement = moveRunnersOnHit(bases, batterBases, runnerAdvance);
@@ -1722,7 +1923,7 @@ function resolveOut({ bases, classification, input, mss }) {
       ? resolved.stateDelta.runnerMoves.join("; ") + "."
       : "No runners advance.",
     calculations,
-    sourceRefs: ["Deadball 2E pp. 24, 27, 29-30"],
+    sourceRefs: ["Deadball 2E pp. 24, 26-27, 29-30"],
   };
 }
 
@@ -1744,13 +1945,10 @@ export function resolveAtBat(input) {
   const bases = copyBases(input.bases);
   const mss = input.swingRoll + signedPitchResult(pitchDie.sides, input.pitchRoll);
   const classification = classifyMss(mss, targets.bt, targets.obt, input.odditiesEnabled !== false);
-  const finalizeResult = (result) => {
-    if (!pitchDie.calculations.some((calculation) => calculation.startsWith("Same-handed matchup"))) return result;
-    return {
-      ...result,
-      sourceRefs: [...(result.sourceRefs ?? []), "Deadball 2E p. 34"],
-    };
-  };
+  const finalizeResult = (result) => ({
+    ...result,
+    sourceRefs: mergeSourceRefs(result.sourceRefs, pitchDieSourceRefs(input, pitchDie)),
+  });
 
   if (classification === "oddity") {
     return finalizeResult(resolveOddity({ bases, input: effectiveInput, mss }));
@@ -1793,18 +1991,19 @@ export function resolveAtBat(input) {
   const lastDigit = Math.abs(mss) % 10;
   const play = POSSIBLE_ERROR_PLAYS[lastDigit];
   const modifiedDef = input.defRoll + input.defModifier;
+  const defenseLabel = defResultLabel(input.defModifier);
   const calculations = [
     describeMssCalculation(effectiveInput, mss),
     ...(effectiveInput.targetCalculations ?? []),
     `OBT ${effectiveInput.obt} -> possible-error range ${effectiveInput.obt + 1}-${effectiveInput.obt + 5}`,
     `Last digit ${lastDigit} -> ${play.kind === "popup" ? "pop-up" : "groundball"} to ${play.position}`,
-    `DEF ${input.defRoll} ${input.defModifier >= 0 ? "+" : "-"} ${Math.abs(input.defModifier)} = modified DEF ${modifiedDef}`,
+    describeDefRoll(input.defRoll, input.defModifier),
   ];
 
   if (modifiedDef <= 2) {
     const errorState = advanceAllOnError(bases);
     const outsAfter = input.outs;
-    calculations.push("Modified DEF 2 or less -> error; batter safe and all runners advance one base");
+    calculations.push(`${defenseLabel} 2 or less -> error; batter safe and all runners advance one base`);
     return finalizeResult({
       supported: true,
       outcomeCode: "error",
@@ -1824,12 +2023,12 @@ export function resolveAtBat(input) {
         bases: errorState.bases,
         runnerMoves: errorState.runnerMoves,
       },
-      sourceRefs: ["Deadball 2E pp. 24, 27-29"],
+      sourceRefs: ["Deadball 2E pp. 24, 26-29"],
     });
   }
 
   const successfulOut = resolveSuccessfulOut({ bases, mss, outs: input.outs, play });
-  calculations.push("Modified DEF 3 or higher -> make the out normally");
+  calculations.push(`${defenseLabel} 3 or higher -> make the out normally`);
   return finalizeResult({
     supported: true,
     classification,
@@ -1839,7 +2038,7 @@ export function resolveAtBat(input) {
     ...successfulOut,
     detail: successfulOut.stateDelta.runnerMoves.join("; ") || "No runners advance.",
     calculations,
-    sourceRefs: ["Deadball 2E pp. 24, 27-30"],
+    sourceRefs: ["Deadball 2E pp. 24, 26-30"],
   });
 }
 

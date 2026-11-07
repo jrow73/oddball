@@ -385,6 +385,8 @@ Date: 2026-11-05
 - Page 33: a pop-up or strikeout with a successful steal retires the batter and returns the runner safely to first; a failed steal produces a double play.
 - Page 33: a groundball with a successful steal retires the batter and advances the runner to second; a failed steal produces a double play.
 - Pages 24 and 31: the normal d8 stolen-base threshold and the runner S+/S- and catcher D+/D- modifiers apply.
+- Page 29: an MSS from OBT+1 through OBT+5 is a possible error. Endings 0-1 become groundballs to shortstop, ending 2 becomes a groundball to second, and the other endings use their normal Out Table fielder.
+- Page 28: modified DEF 0-2 is an error, 3-9 makes no change, 10-11 lowers a hit one level, and 12+ turns a hit into an out.
 
 ### Implementation decisions
 
@@ -395,6 +397,34 @@ Date: 2026-11-05
 - K+ Out Table result 3 and GB+ Out Table result 2 retain their established strikeout and groundball conversions before choosing the Hit & Run row.
 - A walk reverts to the standard walk rules: the batter takes first and the runner is forced from first to second. The simultaneous stolen-base result does not change that final placement.
 - With two outs, an out by the batter ends the inning and only one out is recorded; the bases clear before a second out can occur.
-- The Hit & Run table does not state how to combine a possible error or oddity with the simultaneous steal. Those classifications are shown as requiring a manual ruling rather than inventing advancement.
+- A possible error during Hit & Run continues through a DEF check. This combines the page 29 possible-error play with the applicable Hit & Run groundball, pop-up, or hit row.
+- On modified DEF 0-2, the error places the batter at first and advances the original runner one base to second.
+- On modified DEF 3-9, the play is unchanged: use the applicable Hit & Run groundball or pop-up result.
+- On modified DEF 10-11, treat the lowered result as a single and use the Hit & Run hit placement: first and third after a successful steal, or first and second after a failed steal.
+- On modified DEF 12+, the batter is out and the applicable Hit & Run groundball or pop-up result determines the runner.
+- Oddities remain manual because their interaction with the simultaneous steal is not specified and can require broader game state.
 - Both app-generated and manual Swing, Pitch Die, and stolen-base d8 rolls are supported.
+
+## RD-020 — Release-candidate citation and manual-boundary audit
+
+Status: **Ready for acceptance testing**
+Date: 2026-11-06
+
+### Verified source rules
+
+- Page 23 defines the Pitch Die range, including negative dice.
+- Page 24 collects the implemented batter and pitcher trait effects.
+- Pages 26-30 cover MSS classification, hits, walks, possible errors, the Out Table, and ordinary runner advancement.
+- Pages 31-33 cover stolen bases, bunts, and Hit & Run play.
+- Page 34 covers the same-handed matchup adjustment.
+- Pages 42-44 contain the Oddities Table and its result instructions.
+
+### Implementation decisions
+
+- A result that begins with a negative Pitch Die cites page 23 even when no handedness adjustment occurs.
+- A result affected by the same-handed matchup rule separately cites page 34.
+- Core plate-appearance and Hit & Run citations include the batting-classification pages used to reach the displayed result, not only the final movement table.
+- Hit & Run possible errors combine the DEF procedure with the applicable Hit & Run result; only oddity interactions remain manual.
+- Oddities requiring game, roster, injury, strategy, or era state remain manual until the corresponding state is part of ODDBALL.
+- The full audit and coverage boundary are recorded in `RULES-CITATION-AUDIT.md`.
 

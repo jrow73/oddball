@@ -120,7 +120,7 @@ for (const expected of [
   'id="pitcher-groundball-plus"',
   'id="effective-pitch-die"',
   'href="./prototype.css?v=0.27"',
-  'src="./companion.mjs?v=0.27"',
+  'src="./companion.mjs?v=0.28"',
 ]) {
   if (!prototype.includes(expected)) {
     failures.push(`prototype.html is missing: ${expected}`);

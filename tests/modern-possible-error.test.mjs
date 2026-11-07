@@ -949,6 +949,18 @@ test("same-handed acceptance fixture crosses from -d4 to d4 and produces a walk"
   assert.ok(result.sourceRefs.includes("Deadball 2E p. 34"));
 });
 
+test("negative Pitch Die results cite the rule that defines negative dice", () => {
+  const result = resolveAtBat({
+    ...example,
+    pitchDieSides: -8,
+    swingRoll: 39,
+    pitchRoll: 8,
+  });
+
+  assert.equal(result.mss, 31);
+  assert.ok(result.sourceRefs.includes("Deadball 2E p. 23"));
+});
+
 test("rejects unknown handedness and pitcher roles", () => {
   const result = resolveAtBat({
     ...example,
@@ -1545,6 +1557,18 @@ test("C+ Hit & Run acceptance fixture turns MSS 41 into a hit and puts runners a
   assert.match(result.calculations.join(" "), /BT 31 to 41; OBT 42 to 52/);
 });
 
+test("Hit & Run results retain Pitch Die citations", () => {
+  const result = resolveHitAndRunAttempt({
+    ...hitAndRunExample,
+    pitchDieSides: -8,
+    swingRoll: 49,
+    pitchRoll: 8,
+  });
+
+  assert.equal(result.mss, 41);
+  assert.ok(result.sourceRefs.includes("Deadball 2E p. 23"));
+});
+
 test("a Hit & Run hit with a failed steal leaves runners at first and second", () => {
   const result = resolveHitAndRunAttempt({ ...hitAndRunExample, hitRunStealRoll: 3 });
 
@@ -1625,17 +1649,127 @@ test("C- receives no Hit & Run target bonus and a walk uses standard forced adva
   assert.match(result.detail, /Runner on first to second on the force/);
 });
 
-test("Hit & Run leaves possible-error interactions unresolved instead of inventing movement", () => {
+test("Hit & Run possible-error pop-up resolves an error at modified DEF 2", () => {
   const result = resolveHitAndRunAttempt({
     ...hitAndRunExample,
     hitterContactPlus: false,
     swingRoll: 40,
     pitchRoll: 8,
+    defRoll: 2,
+    defModifier: 0,
   });
 
   assert.equal(result.mss, 48);
-  assert.equal(result.classification, "possible-error");
-  assert.equal(result.supported, false);
+  assert.equal(result.outcomeCode, "hit-and-run-error");
+  assert.equal(result.play.position, "CF");
+  assert.equal(result.score, "E-8");
+  assert.equal(result.stateDelta.outsAfter, 0);
+  assert.deepEqual(result.stateDelta.bases, { first: true, second: true, third: false });
+});
+
+test("Hit & Run possible-error pop-up is unchanged at modified DEF 3-9", () => {
+  const result = resolveHitAndRunAttempt({
+    ...hitAndRunExample,
+    hitterContactPlus: false,
+    swingRoll: 40,
+    pitchRoll: 8,
+    defRoll: 6,
+    defModifier: 0,
+  });
+
+  assert.equal(result.outcomeCode, "hit-and-run-possible-error-popup-out");
+  assert.equal(result.score, "F-8");
+  assert.equal(result.stateDelta.outsAfter, 1);
+  assert.deepEqual(result.stateDelta.bases, { first: true, second: false, third: false });
+});
+
+test("neutral Hit & Run checks do not call unchanged rolls modified", () => {
+  const result = resolveHitAndRunAttempt({
+    ...hitAndRunExample,
+    swingRoll: 46,
+    pitchRoll: 8,
+    hitRunStealRoll: 4,
+    defRoll: 4,
+    defModifier: 0,
+  });
+
+  assert.equal(result.mss, 54);
+  assert.ok(result.calculations.includes("Stolen-base roll 4 -> success"));
+  assert.ok(result.calculations.includes("DEF roll 4 (no modifier)"));
+  assert.ok(result.calculations.includes("DEF 3-9 -> no change"));
+  assert.equal(result.calculations.some((line) => line.includes("Modified")), false);
+});
+
+test("Hit & Run checks retain modified wording when a trait changes DEF", () => {
+  const result = resolveHitAndRunAttempt({
+    ...hitAndRunExample,
+    swingRoll: 46,
+    pitchRoll: 8,
+    hitRunStealRoll: 4,
+    defRoll: 4,
+    defModifier: 1,
+  });
+
+  assert.ok(result.calculations.includes("DEF 4 + 1 = modified DEF 5"));
+  assert.ok(result.calculations.includes("Modified DEF 3-9 -> no change"));
+});
+
+test("Hit & Run possible-error becomes a single at modified DEF 10-11", () => {
+  const result = resolveHitAndRunAttempt({
+    ...hitAndRunExample,
+    hitterContactPlus: false,
+    swingRoll: 40,
+    pitchRoll: 8,
+    defRoll: 10,
+    defModifier: 0,
+  });
+
+  assert.equal(result.outcomeCode, "hit-and-run-def-single-success");
+  assert.equal(result.score, "1B");
+  assert.equal(result.stateDelta.outsAfter, 0);
+  assert.deepEqual(result.stateDelta.bases, { first: true, second: false, third: true });
+});
+
+test("Hit & Run possible-error pop-up remains an out at modified DEF 12", () => {
+  const result = resolveHitAndRunAttempt({
+    ...hitAndRunExample,
+    hitterContactPlus: false,
+    swingRoll: 40,
+    pitchRoll: 8,
+    defRoll: 12,
+    defModifier: 0,
+  });
+
+  assert.equal(result.outcomeCode, "hit-and-run-possible-error-popup-out");
+  assert.equal(result.score, "F-8");
+  assert.equal(result.stateDelta.outsAfter, 1);
+  assert.deepEqual(result.stateDelta.bases, { first: true, second: false, third: false });
+});
+
+test("Hit & Run possible-error endings 0-2 use the special groundball mapping", () => {
+  const shortstop = resolveHitAndRunAttempt({
+    ...hitAndRunExample,
+    hitterContactPlus: false,
+    swingRoll: 42,
+    pitchRoll: 8,
+    defRoll: 6,
+    defModifier: 0,
+  });
+  const secondBase = resolveHitAndRunAttempt({
+    ...hitAndRunExample,
+    hitterContactPlus: false,
+    swingRoll: 44,
+    pitchRoll: 8,
+    defRoll: 6,
+    defModifier: 0,
+  });
+
+  assert.equal(shortstop.mss, 50);
+  assert.equal(shortstop.play.position, "SS");
+  assert.equal(shortstop.outcomeCode, "hit-and-run-possible-error-groundball-out");
+  assert.deepEqual(shortstop.stateDelta.bases, { first: false, second: true, third: false });
+  assert.equal(secondBase.mss, 52);
+  assert.equal(secondBase.play.position, "2B");
 });
 
 test("Hit & Run validates its runner-on-first situation and d8 roll", () => {

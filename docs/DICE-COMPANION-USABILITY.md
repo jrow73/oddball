@@ -74,7 +74,7 @@ On wide desktop layouts, the calculated-result panel remains in view while the s
 7. At a wide desktop width, scroll the setup and confirm the result panel remains visible without overlapping the page.
 8. At tablet and mobile widths, confirm the result panel returns to normal document flow and no horizontal scrolling appears.
 9. In manual Plate appearance mode, use BT 29, OBT 35, Swing 35, Pitch Die 4, and no occupied bases. Resolve the MSS 39 possible-error play and confirm the result pauses for the right fielder's DEF check.
-10. Confirm the checkpoint initially selects **None**. Enter DEF 1, finish the ruling, and confirm the trail says `DEF 1 + 0 = modified DEF 1`.
+10. Confirm the checkpoint initially selects **None**. Enter DEF 1, finish the ruling, and confirm the trail says `DEF roll 1 (no modifier)`.
 11. Resolve the same play again with DEF 1 and D+. Confirm the original Swing and Pitch Die remain unchanged and the trail says `DEF 1 + 1 = modified DEF 2`.
 12. In automatic mode, resolve a play that calls for DEF and confirm ODDBALL supplies the DEF d12 but still waits for the visible fielder-trait choice.
 13. In manual Bunt mode, select S+, enter a Bunt Table roll of 6, and confirm the checkpoint identifies the third baseman and asks for the physical DEF d12.

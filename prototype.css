@@ -265,6 +265,16 @@ legend,
   margin-top: 1rem;
 }
 
+#hit-run-controls .steal-options {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+#hit-run-manual-roll {
+  grid-column: 1 / -1;
+  min-width: 0;
+  margin-top: 0;
+}
+
 .steal-roll-card {
   display: flex;
   align-items: center;

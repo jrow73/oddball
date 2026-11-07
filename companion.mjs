@@ -1,4 +1,4 @@
-import { PITCH_DIE_SIDES, calculateEffectivePitchDie, calculateEffectiveTargets, classifyMss, formatPitchDie, requiresHitDefense, resolveAtBat, resolveBuntAttempt, resolveHitAndRunAttempt, resolveStealAttempt } from "./rules/deadball/modern.mjs?v=0.19";
+import { PITCH_DIE_SIDES, calculateEffectivePitchDie, calculateEffectiveTargets, classifyMss, formatPitchDie, requiresHitDefense, resolveAtBat, resolveBuntAttempt, resolveHitAndRunAttempt, resolveStealAttempt } from "./rules/deadball/modern.mjs?v=0.20";
 import { readDeadballAcknowledgment, writeDeadballAcknowledgment } from "./licensing.mjs?v=0.1";
 import {
   createEmptyProfileStore,
@@ -730,6 +730,8 @@ function collectInput() {
         hitRunRunnerTrait: document.querySelector("#hit-run-runner-trait").value,
         catcherStealModifier: numberValue("hit-run-catcher-modifier"),
         hitRunStealRoll: numberValue("hit-run-steal-roll"),
+        defRoll: numberValue("def-roll"),
+        defModifier: numberValue("def-modifier"),
         odditiesEnabled: document.querySelector("#oddities-enabled").checked,
       },
     };
@@ -843,6 +845,19 @@ function collectedNeedsDefense(collected) {
     const modifiedRoll = input.buntRoll + (input.buntContactPlus ? 1 : 0) - (input.buntFreeSwinger ? 1 : 0);
     return input.buntSpeedPlus && modifiedRoll >= 6;
   }
+  if (collected.playType === "hit-and-run") {
+    const input = collected.input;
+    const effectivePitchDie = calculateEffectivePitchDie(input);
+    const targets = calculateEffectiveTargets(input);
+    const hitRunBonus = input.hitterFreeSwinger ? 0 : input.hitterContactPlus ? 10 : 5;
+    const mss = input.swingRoll + (effectivePitchDie.sides < 0 ? -input.pitchRoll : input.pitchRoll);
+    return classifyMss(
+      mss,
+      targets.bt + hitRunBonus,
+      targets.obt + hitRunBonus,
+      input.odditiesEnabled,
+    ) === "possible-error";
+  }
   if (collected.playType !== "at-bat") return false;
   const input = collected.input;
   const effectivePitchDie = calculateEffectivePitchDie(input);
@@ -863,6 +878,7 @@ function beginDefenseCheckpoint(collected) {
     ...collected,
     input: { ...collected.input, defRoll: 6, defModifier: 0 },
   });
+  document.querySelector("#mss-output").textContent = preview.mss == null ? "—" : String(preview.mss);
   const automatic = selectedDiceMode() === "automatic";
   const defRoll = document.querySelector("#def-roll");
   defRoll.disabled = automatic;
@@ -896,6 +912,7 @@ function renderResult(result) {
   overrideForm.hidden = true;
   overrideDisplay.hidden = true;
   confirmMessage.hidden = true;
+  document.querySelector("#mss-output").textContent = result.mss == null ? "—" : String(result.mss);
 
   if (result.outcomeCode === "invalid-input") {
     showErrors(result.errors);
@@ -908,7 +925,6 @@ function renderResult(result) {
   resultDetail.textContent = result.detail;
   renderCalculations(result.calculations);
 
-  document.querySelector("#mss-output").textContent = result.mss == null ? "—" : String(result.mss);
   document.querySelector("#result-source").textContent = result.supported
     ? result.sourceRefs.join(" · ")
     : "Outside the first supported rule path";
