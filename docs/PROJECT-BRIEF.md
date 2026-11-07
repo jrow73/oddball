@@ -35,13 +35,9 @@ Rules implementation must distinguish explicit source rules, interpretations, co
 
 The user reports that W. M. Akers permits homebrew companions when his specific licensing image, creator credit, and ideally a purchase link are shown. The supplied image appears to be the required “Based on Akers Games” mark. The confirmed purchase-site URL is [akersgames.com](https://akersgames.com).
 
-Before enabling the first-entry ownership acknowledgment, confirm:
+The Dice Companion first-entry welcome displays the supplied mark at a readable but secondary size, credits W. M. Akers, and links to Akers Games. The honor-system acknowledgment text is: “I own a copy of Deadball: Baseball With Dice, Second Edition.” It is remembered in that browser, and the same credit, mark, and purchase link remain available through About/Credits afterward.
 
-- The intended size and placement of the licensing image
-- Final credit wording
-- Whether the broader automated league concept warrants a follow-up with Akers
-
-The planned acknowledgment text is: “I own a copy of Deadball: Baseball With Dice, Second Edition.” It should be remembered in that browser. Credits should remain available afterward.
+The broader automated league concept may still warrant a follow-up with Akers once that feature has a concrete description.
 
 ## Data principles
 

@@ -10,6 +10,7 @@ const requiredFiles = [
   "prototype.html",
   "prototype.css",
   "companion.mjs",
+  "licensing.mjs",
   "profiles.mjs",
   "styles.css",
   "app.js",
@@ -24,6 +25,7 @@ const requiredFiles = [
   "docs/ROADMAP.md",
   "rules/deadball/modern.mjs",
   "tests/modern-possible-error.test.mjs",
+  "tests/licensing.test.mjs",
   "tests/profiles.test.mjs",
   "Based on Akers Games logo.png",
 ];
@@ -72,6 +74,13 @@ for (const expected of [
   'id="export-profiles"',
   'id="profile-backup-file"',
   'id="import-profiles"',
+  'id="open-deadball-credits"',
+  'id="deadball-credits-dialog"',
+  'id="owns-deadball"',
+  'id="continue-to-companion"',
+  "I own a copy of Deadball: Baseball With Dice, Second Edition.",
+  "Based%20on%20Akers%20Games%20logo.png",
+  "https://akersgames.com",
   "Use for this play",
   "Edit current",
   "Enter ratings manually",
@@ -110,8 +119,8 @@ for (const expected of [
   'id="hitter-speed-plus"',
   'id="pitcher-groundball-plus"',
   'id="effective-pitch-die"',
-  'href="./prototype.css?v=0.25"',
-  'src="./companion.mjs?v=0.25"',
+  'href="./prototype.css?v=0.27"',
+  'src="./companion.mjs?v=0.27"',
 ]) {
   if (!prototype.includes(expected)) {
     failures.push(`prototype.html is missing: ${expected}`);

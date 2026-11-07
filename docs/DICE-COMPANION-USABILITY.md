@@ -105,3 +105,22 @@ Importing updates the saved-player selectors but deliberately leaves the batter 
 9. Before importing, note the batter and pitcher currently shown on the rolling screen. Confirm those current-play ratings remain unchanged afterward and the selectors return to manual ratings.
 10. Reload the page and confirm the imported profile library persists.
 11. Inspect the player-library bar and backup dialog at desktop and narrow mobile widths, including keyboard focus and Escape-to-close behavior.
+
+## Slice 5 — Deadball welcome and persistent credits
+
+On first entry to the Dice Companion, a modal welcome displays the supplied **Based on Akers Games** mark, credits **W. M. Akers**, links to [Akers Games](https://akersgames.com), and explains that ODDBALL supports the original tabletop game.
+
+The user must select the honor-system statement **“I own a copy of Deadball: Baseball With Dice, Second Edition.”** before entering. The acknowledgment is versioned and remembered only in that browser. If browser storage is unavailable, the user may continue after being told the welcome will appear again next time.
+
+After acknowledgment, **About & credits** in the Dice Companion header keeps the licensing mark, creator credit, and purchase link available without showing the ownership gate again.
+
+### Acceptance checks
+
+1. Open the Dice Companion in a browser that has not previously acknowledged ownership. Confirm the welcome appears before the rolling interface can be used.
+2. Confirm the welcome displays the supplied **Based on Akers Games** image without alteration, credits W. M. Akers, and links to `https://akersgames.com` in a new tab.
+3. Confirm **Enter Dice Companion** is disabled until the ownership checkbox is selected.
+4. Try Escape before acknowledging ownership and confirm the welcome remains open.
+5. Select **“I own a copy of Deadball: Baseball With Dice, Second Edition.”**, enter the companion, and reload the page. Confirm the welcome does not return.
+6. Select **About & credits** in the header. Confirm the same mark, creator credit, and purchase link remain available without another checkbox requirement.
+7. Close the About/Credits dialog using its close button, its **Close** action, and Escape.
+8. Inspect the first-entry and About/Credits layouts at desktop and narrow mobile widths. Confirm the image remains readable and no horizontal scrolling appears.

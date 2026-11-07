@@ -29,6 +29,7 @@ ODDBALL/
 ├── prototype.html
 ├── prototype.css
 ├── companion.mjs
+├── licensing.mjs
 ├── profiles.mjs
 ├── styles.css
 ├── app.js
@@ -46,6 +47,7 @@ ODDBALL/
 │   └── check-project.mjs
 ├── tests/
 │   ├── modern-possible-error.test.mjs
+│   ├── licensing.test.mjs
 │   └── profiles.test.mjs
 └── Based on Akers Games logo.png
 ```
@@ -59,11 +61,11 @@ The supplied Akers Games image remains unchanged in the project root. The rulebo
 - Show dice, modifiers, and reasoning for resolved plays; allow corrections or overrides.
 - Treat missing historical data as unknown, never automatically as zero.
 - Use `https://akersgames.com` for the Akers Games purchase link.
-- Do not enable the first-entry licensing gate until its final wording and behavior are confirmed.
+- Keep the exact ownership acknowledgment, supplied Akers Games mark, W. M. Akers credit, and confirmed purchase link available in the first-entry and About/Credits experiences.
 - Do not add backend services or paid dependencies without an explicit decision.
 - Do not assume Scorecard Studio code or data is available for reuse.
 
 ## Next decision
 
-Review the player-profile backup and restore slice. Saved batters and pitchers can be exported together, then merged into or used to replace another browser's validated player library without changing the ratings currently in use. See [docs/DICE-COMPANION-USABILITY.md](docs/DICE-COMPANION-USABILITY.md) and open `prototype.html` with Live Server.
+Review the Deadball welcome and persistent credits slice. First entry now requires the agreed honor-system ownership acknowledgment, remembers it in that browser, and keeps the supplied Akers Games mark, creator credit, and purchase link available through About/Credits. See [docs/DICE-COMPANION-USABILITY.md](docs/DICE-COMPANION-USABILITY.md) and open `prototype.html` with Live Server.
 

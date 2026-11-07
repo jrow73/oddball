@@ -83,7 +83,7 @@ Goal: cover the agreed Modern-rule play-resolution scope while preserving paper 
 - Browser-local player-profile save, export, validated merge, and confirmed replacement
 - Broader save, export, and import for future lineups, games, and league data
 - Rules citations and decision log
-- Licensing welcome and persistent credits
+- First-entry Deadball ownership welcome and persistent About/Credits access
 
 ## Milestone 4 — Exhibition Game
 

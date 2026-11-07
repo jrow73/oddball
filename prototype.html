@@ -6,7 +6,7 @@
     <meta name="description" content="First functional ODDBALL Dice Companion vertical slice." />
     <title>Dice Companion | ODDBALL</title>
     <link rel="stylesheet" href="./styles.css" />
-    <link rel="stylesheet" href="./prototype.css?v=0.25" />
+    <link rel="stylesheet" href="./prototype.css?v=0.27" />
   </head>
   <body class="prototype-page">
     <a class="skip-link" href="#prototype-main">Skip to Dice Companion</a>
@@ -16,7 +16,10 @@
         <span class="brand-mark" aria-hidden="true">O</span>
         <span>ODDBALL</span>
       </a>
-      <span class="build-label">Dice Companion 0.25</span>
+      <div class="prototype-header-actions">
+        <button id="open-deadball-credits" type="button">About &amp; credits</button>
+        <span class="build-label">Dice Companion 0.27</span>
+      </div>
     </header>
 
     <main id="prototype-main" class="prototype-shell">
@@ -411,6 +414,51 @@
         </div>
       </form>
 
+      <dialog id="deadball-credits-dialog" class="licensing-dialog" aria-labelledby="deadball-credits-title">
+        <div class="licensing-dialog-shell">
+          <header class="licensing-dialog-header">
+            <div>
+              <p id="deadball-credits-kicker" class="panel-kicker">Before you roll</p>
+              <h2 id="deadball-credits-title">Welcome to the Deadball companion</h2>
+            </div>
+            <button id="close-deadball-credits" class="dialog-close" type="button" aria-label="Close About and credits" hidden>×</button>
+          </header>
+
+          <div class="licensing-content">
+            <img
+              src="./Based%20on%20Akers%20Games%20logo.png"
+              alt="Based on Akers Games"
+              width="140"
+              height="187"
+            />
+            <div>
+              <p>
+                <em>Deadball: Baseball With Dice</em> was created by <strong>W. M. Akers</strong>.
+                ODDBALL is a homebrew browser companion for resolving plays from Second Edition.
+              </p>
+              <p>
+                The original game supplies the complete rules and the tabletop experience this companion supports.
+              </p>
+              <a class="licensing-purchase-link" href="https://akersgames.com" target="_blank" rel="noopener noreferrer">
+                Visit Akers Games to purchase Deadball
+              </a>
+            </div>
+          </div>
+
+          <div id="ownership-acknowledgment" class="ownership-acknowledgment">
+            <label>
+              <input id="owns-deadball" type="checkbox" />
+              <span>I own a copy of Deadball: Baseball With Dice, Second Edition.</span>
+            </label>
+            <p id="ownership-message">This honor-system acknowledgment will be remembered in this browser.</p>
+          </div>
+
+          <footer class="licensing-dialog-actions">
+            <button id="continue-to-companion" type="button" disabled>Enter Dice Companion</button>
+          </footer>
+        </div>
+      </dialog>
+
       <dialog id="profile-library-dialog" class="profile-dialog library-dialog" aria-labelledby="profile-library-title">
         <div class="profile-dialog-shell">
           <header class="profile-dialog-header">
@@ -629,7 +677,7 @@
       </details>
     </main>
 
-    <script type="module" src="./companion.mjs?v=0.25"></script>
+    <script type="module" src="./companion.mjs?v=0.27"></script>
   </body>
 </html>
 

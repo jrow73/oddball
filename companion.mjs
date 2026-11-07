@@ -1,4 +1,5 @@
 import { PITCH_DIE_SIDES, calculateEffectivePitchDie, calculateEffectiveTargets, classifyMss, formatPitchDie, requiresHitDefense, resolveAtBat, resolveBuntAttempt, resolveHitAndRunAttempt, resolveStealAttempt } from "./rules/deadball/modern.mjs?v=0.19";
+import { readDeadballAcknowledgment, writeDeadballAcknowledgment } from "./licensing.mjs?v=0.1";
 import {
   createEmptyProfileStore,
   getPlayerProfile,
@@ -31,6 +32,7 @@ let latestResult = null;
 let profileStore;
 let pendingDefense = null;
 let pendingImportedProfileStore = null;
+let deadballCreditsMode = "about";
 const profileDialogState = new Map();
 
 try {
@@ -108,6 +110,56 @@ function setProfileLibraryMessage(message, state = "ready") {
   const display = document.querySelector("#profile-library-message");
   display.textContent = message;
   display.dataset.state = state;
+}
+
+function openDeadballCredits({ firstEntry = false } = {}) {
+  const dialog = document.querySelector("#deadball-credits-dialog");
+  const ownership = document.querySelector("#ownership-acknowledgment");
+  const checkbox = document.querySelector("#owns-deadball");
+  const continueButton = document.querySelector("#continue-to-companion");
+  deadballCreditsMode = firstEntry ? "welcome" : "about";
+
+  document.querySelector("#deadball-credits-kicker").textContent = firstEntry ? "Before you roll" : "About this ruleset";
+  document.querySelector("#deadball-credits-title").textContent = firstEntry
+    ? "Welcome to the Deadball companion"
+    : "Deadball credits";
+  document.querySelector("#close-deadball-credits").hidden = firstEntry;
+  ownership.hidden = !firstEntry;
+  checkbox.disabled = !firstEntry;
+  checkbox.checked = false;
+  document.querySelector("#ownership-message").textContent = "This honor-system acknowledgment will be remembered in this browser.";
+  document.querySelector("#ownership-message").dataset.state = "ready";
+  continueButton.textContent = firstEntry ? "Enter Dice Companion" : "Close";
+  continueButton.disabled = firstEntry;
+  dialog.showModal();
+  (firstEntry ? checkbox : continueButton).focus();
+}
+
+function finishDeadballCredits() {
+  const dialog = document.querySelector("#deadball-credits-dialog");
+  if (deadballCreditsMode === "about" || deadballCreditsMode === "unsaved") {
+    dialog.close();
+    return;
+  }
+
+  const checkbox = document.querySelector("#owns-deadball");
+  if (!checkbox.checked) return;
+  let remembered = false;
+  try {
+    remembered = writeDeadballAcknowledgment(window.localStorage);
+  } catch {
+    remembered = false;
+  }
+  if (!remembered) {
+    const message = document.querySelector("#ownership-message");
+    message.textContent = "This browser could not remember the acknowledgment. You may continue, but this welcome will appear again next time.";
+    message.dataset.state = "warning";
+    document.querySelector("#continue-to-companion").textContent = "Continue without saving";
+    deadballCreditsMode = "unsaved";
+    return;
+  }
+  deadballCreditsMode = "acknowledged";
+  dialog.close();
 }
 
 function openProfileLibraryDialog() {
@@ -984,6 +1036,27 @@ document.querySelector("#profile-library-dialog").addEventListener("cancel", (ev
   event.preventDefault();
   closeProfileLibraryDialog();
 });
+document.querySelector("#open-deadball-credits").addEventListener("click", () => openDeadballCredits());
+document.querySelector("#close-deadball-credits").addEventListener("click", () => document.querySelector("#deadball-credits-dialog").close());
+document.querySelector("#owns-deadball").addEventListener("change", (event) => {
+  document.querySelector("#continue-to-companion").disabled = !event.target.checked;
+});
+document.querySelector("#continue-to-companion").addEventListener("click", finishDeadballCredits);
+document.querySelector("#deadball-credits-dialog").addEventListener("cancel", (event) => {
+  if (deadballCreditsMode !== "about") {
+    event.preventDefault();
+    return;
+  }
+  document.querySelector("#deadball-credits-dialog").close();
+});
+document.querySelector("#deadball-credits-dialog").addEventListener("close", () => {
+  if (deadballCreditsMode !== "welcome") return;
+  window.setTimeout(() => {
+    const dialog = document.querySelector("#deadball-credits-dialog");
+    if (!dialog.open) dialog.showModal();
+    document.querySelector("#owns-deadball").focus();
+  }, 0);
+});
 
 for (const role of ["batter", "pitcher"]) {
   const dialog = document.querySelector(`#${role}-profile-dialog`);
@@ -1030,4 +1103,11 @@ setManualDiceAvailability();
 updatePlayType();
 updateContextDiamond();
 updateEffectivePitchDie();
+let ownershipAcknowledged = false;
+try {
+  ownershipAcknowledged = readDeadballAcknowledgment(window.localStorage);
+} catch {
+  ownershipAcknowledged = false;
+}
+if (!ownershipAcknowledged) openDeadballCredits({ firstEntry: true });
 
