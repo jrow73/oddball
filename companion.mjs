@@ -104,6 +104,7 @@ function updateProfileLibrarySummary() {
     ? `Download ${profileCountText()} in one portable file.`
     : "Save at least one batter or pitcher before exporting a backup.";
   document.querySelector("#export-profiles").disabled = total === 0;
+  document.querySelector("#delete-all-profiles").disabled = total === 0;
 }
 
 function setProfileLibraryMessage(message, state = "ready") {
@@ -249,6 +250,28 @@ function importProfileBackup() {
   document.querySelector("#profile-backup-file").value = "";
   document.querySelector("#import-profiles").disabled = true;
   setProfileLibraryMessage(`${importMode === "merge" ? "Merged" : "Restored"} successfully. The library now contains ${resultText}.`);
+}
+
+function deleteAllProfiles() {
+  const counts = profileCounts();
+  const total = counts.batters + counts.pitchers;
+  if (total === 0) return;
+  if (!window.confirm(`Delete all saved players (${profileCountText()}) from this browser? This cannot be undone unless you have a backup.`)) return;
+
+  const previousStore = profileStore;
+  profileStore = createEmptyProfileStore();
+  if (!persistProfiles()) {
+    profileStore = previousStore;
+    setProfileLibraryMessage("This browser could not delete the player library. No saved profiles were changed.", "error");
+    return;
+  }
+
+  for (const role of ["batter", "pitcher"]) {
+    refreshProfileSelect(role);
+    setProfileStatus(role, "Saved players deleted; current play ratings were left unchanged.");
+  }
+  updateProfileLibrarySummary();
+  setProfileLibraryMessage("Deleted all saved player profiles. Current play ratings were left unchanged.");
 }
 
 function refreshProfileSelect(role, selectedId = "") {
@@ -1048,6 +1071,7 @@ document.querySelector("#close-profile-library").addEventListener("click", close
 document.querySelector("#export-profiles").addEventListener("click", exportProfileBackup);
 document.querySelector("#profile-backup-file").addEventListener("change", readProfileBackupFile);
 document.querySelector("#import-profiles").addEventListener("click", importProfileBackup);
+document.querySelector("#delete-all-profiles").addEventListener("click", deleteAllProfiles);
 document.querySelector("#profile-library-dialog").addEventListener("cancel", (event) => {
   event.preventDefault();
   closeProfileLibraryDialog();

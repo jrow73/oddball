@@ -18,6 +18,7 @@ Use this checklist when promoting an accepted Dice Companion build from `develop
 - Resolve a stolen-base attempt, bunt, and Hit & Run attempt.
 - Trigger a DEF checkpoint and confirm the fielder, current MSS, DEF roll, and defender trait remain clear.
 - Create or edit a player profile, then export a player-library backup.
+- Cancel and then approve **Delete all players**; confirm the warning protects the library and the approved deletion leaves current-play ratings unchanged.
 - Confirm the result explanation, correction, override, and suggested-context controls remain usable.
 
 ## 3. Promote the accepted build

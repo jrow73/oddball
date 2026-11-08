@@ -81,7 +81,7 @@ On wide desktop layouts, the calculated-result panel remains in view while the s
 
 ## Slice 4 — Back up and restore saved players
 
-The player-library bar reports how many batters and pitchers are saved in the current browser. **Back up or restore** opens one focused dialog for the complete library.
+The player-library bar reports how many batters and pitchers are saved in the current browser. **Manage library** opens one focused dialog for backup, restore, and start-over tools.
 
 The exported JSON file contains a versioned ODDBALL player-profile backup. Before an import can run, ODDBALL validates the file type, backup version, profile schema, player identities, rating records, and their relationships. Invalid files leave browser storage unchanged.
 
@@ -95,7 +95,7 @@ Importing updates the saved-player selectors but deliberately leaves the batter 
 ### Acceptance checks
 
 1. Save at least one batter and one pitcher. Confirm the player-library bar reports the correct counts.
-2. Open **Back up or restore** and download a backup. Confirm the filename begins with `oddball-player-profiles-` and ends in `.json`.
+2. Open **Manage library** and download a backup. Confirm the filename begins with `oddball-player-profiles-` and ends in `.json`.
 3. Add another saved profile after downloading. Import the backup using **Merge** and confirm all profiles remain available.
 4. Change a profile that came from the backup, then merge the same backup again. Confirm the matching saved record returns to the backed-up values rather than creating another copy.
 5. Import the backup using **Replace**, confirm the warning, and verify profiles created after the backup are removed.
@@ -105,6 +105,7 @@ Importing updates the saved-player selectors but deliberately leaves the batter 
 9. Before importing, note the batter and pitcher currently shown on the rolling screen. Confirm those current-play ratings remain unchanged afterward and the selectors return to manual ratings.
 10. Reload the page and confirm the imported profile library persists.
 11. Inspect the player-library bar and backup dialog at desktop and narrow mobile widths, including keyboard focus and Escape-to-close behavior.
+12. With saved batters and pitchers present, choose **Delete all players**, cancel once to confirm nothing changes, then approve the warning and confirm the saved library is empty while the current-play ratings remain unchanged.
 
 ## Slice 5 — Deadball welcome and persistent credits
 

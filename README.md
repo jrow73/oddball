@@ -7,7 +7,7 @@ ODDBALL is a browser-based baseball dice companion with exhibition-game and leag
 
 ## Current status
 
-This repository contains the Modern-rules Dice Companion release candidate. It resolves compatible hitter and pitcher traits, hits, defensive checks, walks, possible errors, outs, six play-state oddities, stolen-base attempts, the Bunt Table, and table-defined Hit & Run outcomes with explainable calculations, suggested state changes, and retained manual overrides. Batter and pitcher profiles can be saved locally and backed up or restored as a validated JSON file without creating a lineup or league. The public-release usability pass is complete. Saved games, trait generation, digital scorekeeping, and league simulation are not yet implemented.
+This repository contains the Modern-rules Dice Companion release candidate. It resolves compatible hitter and pitcher traits, hits, defensive checks, walks, possible errors, outs, six play-state oddities, stolen-base attempts, the Bunt Table, and table-defined Hit & Run outcomes with explainable calculations, suggested state changes, and retained manual overrides. Batter and pitcher profiles can be saved locally, cleared with confirmation, and backed up or restored as a validated JSON file without creating a lineup or league. The public-release usability pass is complete. Saved games, trait generation, digital scorekeeping, and league simulation are not yet implemented.
 
 ## Run locally
 

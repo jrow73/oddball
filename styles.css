@@ -445,7 +445,7 @@ h3 {
   }
 
   .scoreboard {
-    min-height: 500px;
+    min-height: 0;
   }
 
   .scoreboard-grid {
@@ -457,8 +457,7 @@ h3 {
   }
 
   .diamond {
-    width: 220px;
-    height: 220px;
+    display: none;
   }
 }
 

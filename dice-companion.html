@@ -6,7 +6,7 @@
     <meta name="description" content="ODDBALL Dice Companion for Deadball Second Edition Modern play resolution." />
     <title>Dice Companion | ODDBALL</title>
     <link rel="stylesheet" href="./styles.css" />
-    <link rel="stylesheet" href="./dice-companion.css?v=0.28" />
+    <link rel="stylesheet" href="./dice-companion.css?v=0.29" />
   </head>
   <body class="companion-page">
     <a class="skip-link" href="#prototype-main">Skip to Dice Companion</a>
@@ -63,7 +63,7 @@
             <fieldset>
               <legend>Occupied bases</legend>
               <div class="base-toggles">
-                <label><input type="checkbox" name="runner-first" checked /> <span>1st</span></label>
+                <label><input type="checkbox" name="runner-first" /> <span>1st</span></label>
                 <label><input type="checkbox" name="runner-second" /> <span>2nd</span></label>
                 <label><input type="checkbox" name="runner-third" /> <span>3rd</span></label>
               </div>
@@ -72,7 +72,7 @@
             <div class="mini-diamond" aria-label="Runner context is controlled above">
               <span class="mini-base second"></span>
               <span class="mini-base third"></span>
-              <span class="mini-base first occupied"></span>
+              <span class="mini-base first"></span>
               <span class="mini-base home"></span>
             </div>
 
@@ -171,7 +171,7 @@
                 <strong>Player library</strong>
                 <span id="profile-library-summary">No saved players in this browser</span>
               </div>
-              <button id="manage-profile-library" type="button">Back up or restore</button>
+              <button id="manage-profile-library" type="button">Manage library</button>
             </div>
             </div>
 
@@ -464,12 +464,12 @@
           <header class="profile-dialog-header">
             <div>
               <p class="panel-kicker">Browser-local players</p>
-              <h2 id="profile-library-title">Back up player profiles</h2>
+              <h2 id="profile-library-title">Manage player library</h2>
             </div>
-            <button id="close-profile-library" class="dialog-close" type="button" aria-label="Close player-library backup">×</button>
+            <button id="close-profile-library" class="dialog-close" type="button" aria-label="Close player library">×</button>
           </header>
           <p class="profile-dialog-description">
-            Save your batters and pitchers to a portable ODDBALL file, or restore a backup into this browser.
+            Back up, restore, or clear the batters and pitchers saved in this browser.
           </p>
           <div class="library-dialog-body">
             <section class="library-action-card" aria-labelledby="export-profiles-title">
@@ -503,6 +503,15 @@
                 </label>
               </fieldset>
               <button id="import-profiles" class="dialog-primary" type="button" disabled>Import profiles</button>
+            </section>
+
+            <section class="library-action-card library-danger-card" aria-labelledby="delete-all-profiles-title">
+              <div>
+                <p class="panel-kicker">Start over</p>
+                <h3 id="delete-all-profiles-title">Delete all saved players</h3>
+                <p>This removes every saved batter and pitcher from this browser. Ratings already entered for the current play remain in place.</p>
+              </div>
+              <button id="delete-all-profiles" class="dialog-danger" type="button">Delete all players</button>
             </section>
 
             <p id="profile-library-message" class="library-message" role="status" aria-live="polite"></p>
@@ -663,7 +672,7 @@
 
     </main>
 
-    <script type="module" src="./companion.mjs?v=0.28"></script>
+    <script type="module" src="./companion.mjs?v=0.29"></script>
   </body>
 </html>
 

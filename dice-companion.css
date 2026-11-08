@@ -691,6 +691,16 @@ legend,
   background: var(--navy);
 }
 
+.library-action-card .dialog-danger {
+  justify-self: start;
+  border-color: var(--red);
+  color: var(--red-dark);
+}
+
+.library-danger-card {
+  border-color: rgb(189 59 49 / 38%);
+}
+
 .library-action-card button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
@@ -699,6 +709,7 @@ legend,
 .library-action-card button:not(:disabled):hover,
 .library-action-card button:not(:disabled):focus-visible {
   border-color: var(--red);
+  color: white;
   background: var(--red);
 }
 

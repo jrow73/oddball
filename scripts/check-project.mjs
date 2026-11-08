@@ -77,6 +77,7 @@ for (const expected of [
   'id="export-profiles"',
   'id="profile-backup-file"',
   'id="import-profiles"',
+  'id="delete-all-profiles"',
   'id="open-deadball-credits"',
   'id="deadball-credits-dialog"',
   'id="owns-deadball"',
@@ -119,8 +120,8 @@ for (const expected of [
   'id="hitter-speed-plus"',
   'id="pitcher-groundball-plus"',
   'id="effective-pitch-die"',
-  'href="./dice-companion.css?v=0.28"',
-  'src="./companion.mjs?v=0.28"',
+  'href="./dice-companion.css?v=0.29"',
+  'src="./companion.mjs?v=0.29"',
 ]) {
   if (!companion.includes(expected)) {
     failures.push(`dice-companion.html is missing: ${expected}`);

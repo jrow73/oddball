@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-11-08 — Pre-release context and library cleanup
+
+### Added
+
+- A confirmed **Delete all players** action for clearing the browser-local player library while retaining current-play ratings
+- Automated coverage for replacing a stored player library with the empty versioned store
+
+### Changed
+
+- Defaulted the Dice Companion to zero outs with all bases empty
+- Removed the decorative field from the phone homepage layout so it cannot overlap status text
+- Renamed the player-library action and dialog to reflect backup, restore, and deletion tools
+
 ## 2026-11-07 — Public release preparation
 
 ### Added

@@ -92,6 +92,24 @@ test("round-trips the versioned store through browser-like storage", () => {
   assert.deepEqual(readProfileStore(storage), created.store);
 });
 
+test("replaces a stored player library with an empty profile store", () => {
+  const memory = new Map();
+  const storage = {
+    getItem: (key) => memory.get(key) ?? null,
+    setItem: (key, value) => memory.set(key, value),
+  };
+  const created = savePlayerProfile(createEmptyProfileStore(), {
+    name: "Player to Delete",
+    role: "batter",
+    ratings: { bt: 30 },
+  }, idFactory("identity-1", "rating-1")).store;
+
+  writeProfileStore(storage, created);
+  writeProfileStore(storage, createEmptyProfileStore());
+
+  assert.deepEqual(readProfileStore(storage), createEmptyProfileStore());
+});
+
 test("invalid or unknown stored data falls back to an empty store", () => {
   assert.deepEqual(parseProfileStore("not json"), createEmptyProfileStore());
   assert.deepEqual(parseProfileStore(JSON.stringify({ schemaVersion: 99 })), createEmptyProfileStore());
