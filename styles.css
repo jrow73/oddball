@@ -89,8 +89,7 @@ a {
   line-height: 1;
 }
 
-.build-label,
-.card-tag {
+.build-label {
   color: var(--red-dark);
   font-size: 0.74rem;
   font-weight: 800;
@@ -312,47 +311,6 @@ h3 {
   line-height: 1.1;
 }
 
-.mode-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-}
-
-.mode-card {
-  display: flex;
-  min-height: 320px;
-  padding: 1.5rem;
-  flex-direction: column;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--paper-light);
-  box-shadow: 0 8px 24px rgb(16 46 74 / 6%);
-}
-
-.mode-card:nth-child(2) {
-  margin-top: 2rem;
-}
-
-.mode-card:nth-child(3) {
-  margin-top: 4rem;
-}
-
-.card-number {
-  margin-bottom: auto;
-  color: var(--red);
-  font-family: var(--font-display);
-  font-size: 2.5rem;
-}
-
-.mode-card p {
-  margin: 1rem 0 1.5rem;
-  color: var(--ink-soft);
-}
-
-.card-tag {
-  margin-top: auto;
-}
-
 .foundation {
   color: white;
   background: var(--navy-deep);
@@ -462,18 +420,8 @@ h3 {
     min-height: 470px;
   }
 
-  .mode-grid,
   .foundation-layout {
     grid-template-columns: 1fr;
-  }
-
-  .mode-card:nth-child(2),
-  .mode-card:nth-child(3) {
-    margin-top: 0;
-  }
-
-  .mode-card {
-    min-height: 260px;
   }
 
   .site-footer {

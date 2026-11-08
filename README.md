@@ -3,11 +3,11 @@
 **Online Dice-Driven Baseball And League Lab**  
 **Roll a game. Build a league.**
 
-ODDBALL is a planned browser-based baseball dice companion and league simulator. The first supported ruleset will be *Deadball: Baseball With Dice, Second Edition* using Modern rules.
+ODDBALL is a browser-based baseball dice companion with exhibition-game and league-simulation modes planned for later milestones. The first supported ruleset is *Deadball: Baseball With Dice, Second Edition* using Modern rules.
 
 ## Current status
 
-This repository contains the foundation build and the complete Modern-rules Dice Companion engine. It resolves compatible hitter and pitcher traits, hits, defensive checks, walks, possible errors, outs, six play-state oddities, stolen-base attempts, the Bunt Table, and the table-defined Hit & Run outcomes with explainable calculations, suggested state changes, and retained manual overrides. Batter and pitcher profiles can be saved locally and backed up or restored as a validated JSON file without creating a lineup or league. A focused usability pass is now reorganizing the interface for people who only want to resolve the next play. Saved games, trait generation, digital scorekeeping, and league simulation are not yet implemented.
+This repository contains the Modern-rules Dice Companion release candidate. It resolves compatible hitter and pitcher traits, hits, defensive checks, walks, possible errors, outs, six play-state oddities, stolen-base attempts, the Bunt Table, and table-defined Hit & Run outcomes with explainable calculations, suggested state changes, and retained manual overrides. Batter and pitcher profiles can be saved locally and backed up or restored as a validated JSON file without creating a lineup or league. The public-release usability pass is complete. Saved games, trait generation, digital scorekeeping, and league simulation are not yet implemented.
 
 ## Run locally
 
@@ -26,8 +26,8 @@ The check uses Node.js built-ins only; no package installation is required.
 ```text
 ODDBALL/
 ├── index.html
-├── prototype.html
-├── prototype.css
+├── dice-companion.html
+├── dice-companion.css
 ├── companion.mjs
 ├── licensing.mjs
 ├── profiles.mjs
@@ -39,6 +39,8 @@ ODDBALL/
 │   ├── FIRST-PLAYABLE-SLICE.md
 │   ├── PLAYER-PROFILES.md
 │   ├── PROJECT-BRIEF.md
+│   ├── RELEASE-CHECKLIST.md
+│   ├── RULES-CITATION-AUDIT.md
 │   ├── RULES-DECISIONS.md
 │   └── ROADMAP.md
 ├── rules/
@@ -67,5 +69,5 @@ The supplied Akers Games image remains unchanged in the project root. The rulebo
 
 ## Next decision
 
-Review the Deadball welcome and persistent credits slice. First entry now requires the agreed honor-system ownership acknowledgment, remembers it in that browser, and keeps the supplied Akers Games mark, creator credit, and purchase link available through About/Credits. See [docs/DICE-COMPANION-USABILITY.md](docs/DICE-COMPANION-USABILITY.md) and open `prototype.html` with Live Server.
+Review the public release-candidate homepage and complete the local checks in [docs/RELEASE-CHECKLIST.md](docs/RELEASE-CHECKLIST.md). After acceptance, merge `develop` into `main`, enable GitHub Pages from the repository root, and verify the published homepage and Dice Companion before sharing the URL.
 

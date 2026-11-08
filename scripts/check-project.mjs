@@ -7,8 +7,8 @@ const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "
 
 const requiredFiles = [
   "index.html",
-  "prototype.html",
-  "prototype.css",
+  "dice-companion.html",
+  "dice-companion.css",
   "companion.mjs",
   "licensing.mjs",
   "profiles.mjs",
@@ -21,6 +21,7 @@ const requiredFiles = [
   "docs/DICE-COMPANION-USABILITY.md",
   "docs/FIRST-PLAYABLE-SLICE.md",
   "docs/PLAYER-PROFILES.md",
+  "docs/RELEASE-CHECKLIST.md",
   "docs/RULES-DECISIONS.md",
   "docs/ROADMAP.md",
   "rules/deadball/modern.mjs",
@@ -41,11 +42,13 @@ for (const relativePath of requiredFiles) {
 }
 
 const html = await readFile(path.join(projectRoot, "index.html"), "utf8");
-const prototype = await readFile(path.join(projectRoot, "prototype.html"), "utf8");
+const companion = await readFile(path.join(projectRoot, "dice-companion.html"), "utf8");
 
 for (const expected of [
-  "Online Dice-Driven Baseball And League Lab",
-  "Roll a game.",
+  "Deadball Second Edition · Modern Rules",
+  "Roll the next play.",
+  "Available now",
+  "The next play, explained.",
   "Based%20on%20Akers%20Games%20logo.png",
   "https://akersgames.com",
   'href="./styles.css"',
@@ -84,9 +87,6 @@ for (const expected of [
   "Use for this play",
   "Edit current",
   "Enter ratings manually",
-  "Developer acceptance fixture",
-  "Replay the C+ Hit &amp; Run fixture",
-  "successful steal puts the runner on third",
   '<option value="-20">−d20</option>',
   'id="pitch-operator"',
   'id="batter-hand"',
@@ -119,11 +119,11 @@ for (const expected of [
   'id="hitter-speed-plus"',
   'id="pitcher-groundball-plus"',
   'id="effective-pitch-die"',
-  'href="./prototype.css?v=0.27"',
+  'href="./dice-companion.css?v=0.28"',
   'src="./companion.mjs?v=0.28"',
 ]) {
-  if (!prototype.includes(expected)) {
-    failures.push(`prototype.html is missing: ${expected}`);
+  if (!companion.includes(expected)) {
+    failures.push(`dice-companion.html is missing: ${expected}`);
   }
 }
 

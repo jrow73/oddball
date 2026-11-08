@@ -31,7 +31,7 @@ Decisions to make:
 Deliverables:
 
 - [First playable slice specification](FIRST-PLAYABLE-SLICE.md)
-- Functional browser slice at `prototype.html`
+- Functional browser Dice Companion at `dice-companion.html`
 - Fourteen acceptance checks covering workflow, deterministic rules behavior, explanation, correction, missing data, and accessibility
 
 ## Milestone 2 — Dice Companion vertical slice
@@ -70,7 +70,7 @@ Acceptance examples now cover the documented MSS 47 possible-error scenario, wal
 
 ## Milestone 3 — Complete standalone Dice Companion
 
-Status: **Public-release usability pass in progress**
+Status: **Release candidate prepared for publication review**
 
 Goal: cover the agreed Modern-rule play-resolution scope while preserving paper scorekeeping.
 
@@ -84,6 +84,10 @@ Goal: cover the agreed Modern-rule play-resolution scope while preserving paper 
 - Broader save, export, and import for future lineups, games, and league data
 - Rules citations and decision log
 - First-entry Deadball ownership welcome and persistent About/Credits access
+- Public-facing release-candidate homepage with the Dice Companion as the primary action
+- GitHub Pages release checklist for the accepted `develop` to `main` workflow
+
+The focused usability pass is complete. The remaining Milestone 3 work is publication review, merging the accepted release candidate to `main`, enabling GitHub Pages, and verifying the live site.
 
 ## Milestone 4 — Exhibition Game
 

@@ -218,7 +218,7 @@ Date: 2026-11-03
 
 ### Implementation decisions
 
-- The prototype separates the mutually exclusive P tier into a dropdown and represents C+ and S+ as independent checkboxes.
+- The Dice Companion separates the mutually exclusive P tier into a dropdown and represents C+ and S+ as independent checkboxes.
 - P+ and C+, P+ and S+, or all three may coexist. The calculation trail shows the P adjustment before any C+ or S+ transformation.
 - When C+ and S+ both apply to modified value 2, the S+ triple takes precedence over the C+ double. At modified value 1, both lead to the same double.
 

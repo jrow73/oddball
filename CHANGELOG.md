@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-11-07 — Public release preparation
+
+### Added
+
+- Public homepage copy describing the available Modern Dice Companion and its supported workflows
+- A release checklist for reviewing, merging, publishing, and verifying the GitHub Pages build
+
+### Changed
+
+- Replaced outdated foundation and limited vertical-slice messaging with release-candidate status
+- Made the Dice Companion the homepage's primary visitor action
+- Limited the public homepage to the currently available Deadball Dice Companion without previewing future game or league modes
+- Renamed the public companion page and stylesheet from prototype filenames to `dice-companion.html` and `dice-companion.css`
+- Removed the developer acceptance fixture from the visitor interface while retaining its documented and automated coverage
+- Updated the roadmap and project status to reflect completion of the focused usability pass
+
 ## 2026-11-07 — Hit & Run possible-error resolution
 
 ### Added
