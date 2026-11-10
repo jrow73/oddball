@@ -6,13 +6,13 @@
   background: #ece6d9;
 }
 
-.prototype-header-actions {
+.companion-header-actions {
   display: flex;
   gap: 0.8rem;
   align-items: center;
 }
 
-.prototype-header-actions button {
+.companion-header-actions button {
   min-height: 38px;
   padding: 0.45rem 0.7rem;
   border: 1px solid var(--navy);
@@ -25,17 +25,17 @@
   cursor: pointer;
 }
 
-.prototype-header-actions button:hover,
-.prototype-header-actions button:focus-visible {
+.companion-header-actions button:hover,
+.companion-header-actions button:focus-visible {
   color: white;
   background: var(--navy);
 }
 
-.prototype-shell {
+.companion-shell {
   padding: 3rem 4vw 6rem;
 }
 
-.prototype-intro {
+.companion-intro {
   display: flex;
   gap: 2rem;
   align-items: end;
@@ -44,17 +44,17 @@
   margin: 0 auto 2rem;
 }
 
-.prototype-intro h1 {
+.companion-intro h1 {
   font-size: clamp(3.4rem, 7vw, 7rem);
 }
 
-.prototype-intro > div:first-child > p:last-child {
+.companion-intro > div:first-child > p:last-child {
   max-width: 680px;
   color: var(--ink-soft);
   font-size: 1.05rem;
 }
 
-.prototype-notice {
+.companion-notice {
   display: flex;
   min-width: 230px;
   padding: 0.9rem 1rem;
@@ -64,24 +64,24 @@
   background: #fff6d9;
 }
 
-.prototype-notice strong {
+.companion-notice strong {
   color: #76500b;
   font-size: 0.78rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
-.prototype-notice span {
+.companion-notice span {
   color: #6d6045;
   font-size: 0.8rem;
 }
 
-.prototype-notice.live {
+.companion-notice.live {
   border-color: var(--green);
   background: #e7f1e9;
 }
 
-.prototype-notice.live strong {
+.companion-notice.live strong {
   color: var(--green);
 }
 
@@ -1426,16 +1426,16 @@ input:disabled {
 }
 
 @media (max-width: 760px) {
-  .prototype-shell {
+  .companion-shell {
     padding: 2rem 1rem 4rem;
   }
 
-  .prototype-intro {
+  .companion-intro {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .prototype-notice {
+  .companion-notice {
     min-width: 0;
   }
 
@@ -1486,11 +1486,11 @@ input:disabled {
 }
 
 @media (max-width: 430px) {
-  .prototype-header-actions .build-label {
+  .companion-header-actions .build-label {
     display: none;
   }
 
-  .prototype-header-actions button {
+  .companion-header-actions button {
     font-size: 0.68rem;
   }
 

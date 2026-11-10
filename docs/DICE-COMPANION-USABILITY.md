@@ -12,7 +12,7 @@ The initial participant view keeps these controls visible:
 
 Names, handedness, pitcher role, traits, and profile-management actions remain available under expandable detail sections. No rules behavior, stored profile fields, or supported play types are removed.
 
-The developer acceptance fixture is collapsed by default so it remains available for regression testing without becoming part of the normal rolling path.
+The original developer acceptance fixture was collapsed during this slice. It was later removed from the public release interface after its scenarios were retained in automated tests and project documentation.
 
 ## Acceptance checks
 
@@ -22,7 +22,7 @@ The developer acceptance fixture is collapsed by default so it remains available
 4. Expand **Pitcher details & traits** and confirm that pitcher name, profile actions, handedness, role, and every pitcher trait remain available.
 5. Load saved batter and pitcher profiles and confirm their hidden detail values still affect the ruling.
 6. Select **Enter ratings manually**, expand the relevant detail section, and confirm a second profile can still be created without overwriting the first.
-7. Confirm the developer acceptance fixture is collapsed initially and can still be expanded and replayed.
+7. Confirm the regression fixture remains covered by automated tests and no developer-only fixture appears in the public interface.
 8. Check the layout at desktop and narrow mobile widths, including keyboard focus on both expandable summaries.
 
 ## Slice 2 — Focused player setup dialogs

@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-11-09 — Final local release audit
+
+### Changed
+
+- Replaced remaining public `prototype-*` identifiers with Dice Companion naming
+- Replaced the internal slice-number header label with the supported ruleset and era
+- Updated development workflow and usability documentation to match the established Git branches and public interface
+
 ## 2026-11-08 — Pre-release context and library cleanup
 
 ### Added

@@ -2,7 +2,7 @@
 
 ## Working agreement
 
-Development happens directly in `C:\dev\ODDBALL`. The user reviews changes locally in VS Code and owns Git initialization, commits, remotes, and pushes unless that arrangement is explicitly changed.
+Development happens directly in `C:\dev\ODDBALL`. The user reviews changes locally in VS Code and owns commits, branch synchronization, merges, and pushes unless that arrangement is explicitly changed.
 
 ## Build cycle
 
@@ -24,7 +24,8 @@ Each build should be small enough to understand and test in one sitting.
 - `docs/ROADMAP.md` — Milestones and next decisions
 - `docs/DEVELOPMENT-WORKFLOW.md` — Review and acceptance process
 - `CHANGELOG.md` — Completed changes by build
-- Future `docs/RULES-DECISIONS.md` — Source citations, interpretations, contradictions, and house rules
+- `docs/RULES-DECISIONS.md` — Source citations, interpretations, contradictions, and house rules
+- `docs/RELEASE-CHECKLIST.md` — Review, promotion, publication, and live verification
 
 ## Definition of done for a build
 
@@ -38,5 +39,5 @@ Each build should be small enough to understand and test in one sitting.
 
 ## Source-control boundary
 
-No Git repository is initialized by this foundation build. The `.gitignore` file is ready for whenever the user chooses to initialize Git.
+The local repository and GitHub remote are established. Active development occurs on `develop`; accepted public releases are promoted to `main`. The user performs commits, synchronization, merges, and GitHub Pages configuration after reviewing each build.
 
